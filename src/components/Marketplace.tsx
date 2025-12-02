@@ -9,7 +9,9 @@ interface Listing {
   brand: string;
   size: string;
   condition: string;
-  estimatedValue: number;
+  estimatedValue?: number;
+  price?: number;
+  listingType: "sale" | "trade" | "both";
   ownerVerified: boolean;
   rating: number;
   image: string;
@@ -23,6 +25,8 @@ const mockListings: Listing[] = [
     size: "100ml",
     condition: "Like New",
     estimatedValue: 350,
+    price: 280,
+    listingType: "both",
     ownerVerified: true,
     rating: 4.9,
     image: "https://images.unsplash.com/photo-1541643600914-78b084683601?w=400"
@@ -34,6 +38,7 @@ const mockListings: Listing[] = [
     size: "70ml",
     condition: "New",
     estimatedValue: 325,
+    listingType: "trade",
     ownerVerified: true,
     rating: 5.0,
     image: "https://images.unsplash.com/photo-1588405748880-12d1d2a59df9?w=400"
@@ -44,7 +49,8 @@ const mockListings: Listing[] = [
     brand: "Tom Ford",
     size: "50ml",
     condition: "Excellent",
-    estimatedValue: 280,
+    price: 220,
+    listingType: "sale",
     ownerVerified: true,
     rating: 4.8,
     image: "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=400"
@@ -56,6 +62,8 @@ const mockListings: Listing[] = [
     size: "70ml",
     condition: "Like New",
     estimatedValue: 310,
+    price: 250,
+    listingType: "both",
     ownerVerified: true,
     rating: 4.9,
     image: "https://images.unsplash.com/photo-1547887537-6158d64c35b3?w=400"
@@ -112,12 +120,43 @@ export const Marketplace = () => {
                 
                 <div className="pt-2 border-t border-border">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm text-muted-foreground">Est. Value</span>
-                    <span className="font-semibold text-lg">${listing.estimatedValue}</span>
+                    {listing.listingType === "sale" ? (
+                      <>
+                        <span className="text-sm text-muted-foreground">Price</span>
+                        <span className="font-semibold text-lg">${listing.price}</span>
+                      </>
+                    ) : listing.listingType === "trade" ? (
+                      <>
+                        <span className="text-sm text-muted-foreground">Est. Value</span>
+                        <span className="font-semibold text-lg">${listing.estimatedValue}</span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex flex-col">
+                          <span className="text-sm text-muted-foreground">Price: ${listing.price}</span>
+                          <span className="text-sm text-muted-foreground">Trade Value: ${listing.estimatedValue}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
-                  <Button className="w-full" variant="default">
-                    Propose Trade
-                  </Button>
+                  {listing.listingType === "sale" ? (
+                    <Button className="w-full" variant="default">
+                      Buy Now
+                    </Button>
+                  ) : listing.listingType === "trade" ? (
+                    <Button className="w-full" variant="default">
+                      Propose Trade
+                    </Button>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button className="flex-1" variant="default">
+                        Buy
+                      </Button>
+                      <Button className="flex-1" variant="outline">
+                        Trade
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             </Card>
