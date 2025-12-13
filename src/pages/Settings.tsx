@@ -106,6 +106,32 @@ const Settings = () => {
     }
   }, [profile]);
 
+  // Realtime subscription for guardian requests
+  useEffect(() => {
+    if (!profile?.id) return;
+
+    const channel = supabase
+      .channel('guardian-requests')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles',
+          filter: `guardian_id=eq.${profile.id}`,
+        },
+        () => {
+          // Refetch when any profile links/unlinks this user as guardian
+          fetchPendingGuardianRequests();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.id]);
+
   const fetchGuardianInfo = async () => {
     if (!profile?.id) return;
     
@@ -359,6 +385,20 @@ const Settings = () => {
     } else {
       toast.success('Guardian request rejected');
       setPendingGuardianRequests(prev => prev.filter(r => r.id !== requesterId));
+    }
+  };
+
+  const handleRemoveGuardian = async () => {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ guardian_id: null, guardian_verified: false })
+      .eq('id', profile.id);
+
+    if (error) {
+      toast.error('Failed to remove guardian');
+    } else {
+      setGuardianInfo(null);
+      toast.success('Guardian link removed');
     }
   };
 
@@ -695,8 +735,8 @@ const Settings = () => {
                   </CardContent>
                 </Card>
 
-                {/* Guardian Account - Only show for users under 16 */}
-                {userAge !== null && userAge < 16 && (
+                {/* Guardian Account - Show for users under 16 OR anyone with a guardian linked */}
+                {(userAge !== null && userAge < 16) || guardianInfo ? (
                   <Card className="border-border/50">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
@@ -704,33 +744,47 @@ const Settings = () => {
                         Guardian Account
                       </CardTitle>
                       <CardDescription>
-                        Required for users under 16 to buy/trade
+                        {userAge !== null && userAge >= 16 
+                          ? 'You no longer need a guardian since you are 16+' 
+                          : 'Required for users under 16 to buy/trade'}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-                        <p className="text-sm text-amber-700 dark:text-amber-300">
-                          Since you're under 16, you need a guardian account (18+) linked to buy or trade fragrances.
-                        </p>
-                      </div>
+                      {userAge !== null && userAge < 16 && (
+                        <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                          <p className="text-sm text-amber-700 dark:text-amber-300">
+                            Since you're under 16, you need a guardian account (18+) linked to buy or trade fragrances.
+                          </p>
+                        </div>
+                      )}
 
                       {guardianInfo ? (
-                        <div className="p-4 bg-muted rounded-lg">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-medium">Linked Guardian: @{guardianInfo.username}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {guardianInfo.verified 
-                                  ? 'Connection verified' 
-                                  : 'Pending guardian verification'}
-                              </p>
+                        <div className="space-y-3">
+                          <div className="p-4 bg-muted rounded-lg">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium">Linked Guardian: @{guardianInfo.username}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {guardianInfo.verified 
+                                    ? 'Connection verified' 
+                                    : 'Pending guardian verification'}
+                                </p>
+                              </div>
+                              {guardianInfo.verified ? (
+                                <CheckCircle className="w-5 h-5 text-green-500" />
+                              ) : (
+                                <AlertCircle className="w-5 h-5 text-amber-500" />
+                              )}
                             </div>
-                            {guardianInfo.verified ? (
-                              <CheckCircle className="w-5 h-5 text-green-500" />
-                            ) : (
-                              <AlertCircle className="w-5 h-5 text-amber-500" />
-                            )}
                           </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={handleRemoveGuardian}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            Remove Guardian Link
+                          </Button>
                         </div>
                       ) : (
                         <div className="space-y-3">
@@ -750,7 +804,7 @@ const Settings = () => {
                       )}
                     </CardContent>
                   </Card>
-                )}
+                ) : null}
 
                 {/* Guardian Requests - For users 18+ to approve young users */}
                 {pendingGuardianRequests.length > 0 && (

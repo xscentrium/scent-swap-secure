@@ -52,6 +52,47 @@ export type Database = {
           },
         ]
       }
+      collection_items: {
+        Row: {
+          brand: string
+          created_at: string
+          id: string
+          image_url: string | null
+          name: string
+          notes: string | null
+          profile_id: string
+          size: string | null
+        }
+        Insert: {
+          brand: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name: string
+          notes?: string | null
+          profile_id: string
+          size?: string | null
+        }
+        Update: {
+          brand?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name?: string
+          notes?: string | null
+          profile_id?: string
+          size?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_items_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       follows: {
         Row: {
           created_at: string | null
@@ -464,6 +505,44 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      wishlist_items: {
+        Row: {
+          brand: string
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          priority: string | null
+          profile_id: string
+        }
+        Insert: {
+          brand: string
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          priority?: string | null
+          profile_id: string
+        }
+        Update: {
+          brand?: string
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          priority?: string | null
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wishlist_items_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
