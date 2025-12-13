@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useCanTrade } from '@/hooks/useCanTrade';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,6 +30,7 @@ const listingSchema = z.object({
 
 const CreateListing = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, profile, loading } = useAuth();
   const { canTrade, reason: tradeBlockReason, loading: tradeCheckLoading } = useCanTrade();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,6 +56,30 @@ const CreateListing = () => {
     description: '',
     image_url: '',
   });
+
+  // Pre-fill from URL params (when converting from collection)
+  useEffect(() => {
+    const name = searchParams.get('name');
+    const brand = searchParams.get('brand');
+    const size = searchParams.get('size');
+    const image_url = searchParams.get('image_url');
+    const notes = searchParams.get('notes');
+    
+    if (name || brand || size || image_url || notes) {
+      setFormData(prev => ({
+        ...prev,
+        name: name || prev.name,
+        brand: brand || prev.brand,
+        size: size || prev.size,
+        image_url: image_url || prev.image_url,
+        description: notes || prev.description,
+      }));
+      
+      if (name || brand) {
+        toast.info('Collection item details pre-filled');
+      }
+    }
+  }, [searchParams]);
 
   if (loading || tradeCheckLoading) {
     return (
