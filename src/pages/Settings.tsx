@@ -239,7 +239,7 @@ const Settings = () => {
                   <div className="space-y-2">
                     <Label>Profile Picture</Label>
                     <ImageUpload
-                      bucket="listing-images"
+                      bucket="avatars"
                       folder={user.id}
                       currentImage={formData.avatar_url}
                       onUpload={(url) => setFormData({ ...formData, avatar_url: url })}
