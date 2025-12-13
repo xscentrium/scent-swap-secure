@@ -14,16 +14,286 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      affiliate_links: {
+        Row: {
+          affiliate_url: string
+          brand: string
+          created_at: string | null
+          description: string | null
+          fragrance_name: string
+          id: string
+          profile_id: string
+        }
+        Insert: {
+          affiliate_url: string
+          brand: string
+          created_at?: string | null
+          description?: string | null
+          fragrance_name: string
+          id?: string
+          profile_id: string
+        }
+        Update: {
+          affiliate_url?: string
+          brand?: string
+          created_at?: string | null
+          description?: string | null
+          fragrance_name?: string
+          id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_links_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      follows: {
+        Row: {
+          created_at: string | null
+          follower_id: string
+          following_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          follower_id: string
+          following_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          follower_id?: string
+          following_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follows_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follows_following_id_fkey"
+            columns: ["following_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      influencer_content: {
+        Row: {
+          created_at: string | null
+          embed_url: string
+          id: string
+          platform: string
+          profile_id: string
+          thumbnail_url: string | null
+          title: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          embed_url: string
+          id?: string
+          platform: string
+          profile_id: string
+          thumbnail_url?: string | null
+          title?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          embed_url?: string
+          id?: string
+          platform?: string
+          profile_id?: string
+          thumbnail_url?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "influencer_content_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listings: {
+        Row: {
+          brand: string
+          condition: Database["public"]["Enums"]["fragrance_condition"]
+          created_at: string | null
+          description: string | null
+          estimated_value: number | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          listing_type: Database["public"]["Enums"]["listing_type"]
+          name: string
+          owner_id: string
+          price: number | null
+          size: string
+          updated_at: string | null
+        }
+        Insert: {
+          brand: string
+          condition?: Database["public"]["Enums"]["fragrance_condition"]
+          created_at?: string | null
+          description?: string | null
+          estimated_value?: number | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          listing_type?: Database["public"]["Enums"]["listing_type"]
+          name: string
+          owner_id: string
+          price?: number | null
+          size: string
+          updated_at?: string | null
+        }
+        Update: {
+          brand?: string
+          condition?: Database["public"]["Enums"]["fragrance_condition"]
+          created_at?: string | null
+          description?: string | null
+          estimated_value?: number | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          listing_type?: Database["public"]["Enums"]["listing_type"]
+          name?: string
+          owner_id?: string
+          price?: number | null
+          size?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listings_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          display_name: string | null
+          facebook_url: string | null
+          facebook_verified: boolean | null
+          id: string
+          instagram_url: string | null
+          instagram_verified: boolean | null
+          is_influencer: boolean | null
+          referral_code: string | null
+          referred_by: string | null
+          tiktok_url: string | null
+          tiktok_verified: boolean | null
+          twitter_url: string | null
+          twitter_verified: boolean | null
+          updated_at: string | null
+          user_id: string
+          username: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          facebook_url?: string | null
+          facebook_verified?: boolean | null
+          id?: string
+          instagram_url?: string | null
+          instagram_verified?: boolean | null
+          is_influencer?: boolean | null
+          referral_code?: string | null
+          referred_by?: string | null
+          tiktok_url?: string | null
+          tiktok_verified?: boolean | null
+          twitter_url?: string | null
+          twitter_verified?: boolean | null
+          updated_at?: string | null
+          user_id: string
+          username: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          facebook_url?: string | null
+          facebook_verified?: boolean | null
+          id?: string
+          instagram_url?: string | null
+          instagram_verified?: boolean | null
+          is_influencer?: boolean | null
+          referral_code?: string | null
+          referred_by?: string | null
+          tiktok_url?: string | null
+          tiktok_verified?: boolean | null
+          twitter_url?: string | null
+          twitter_verified?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
+      fragrance_condition: "new" | "like_new" | "excellent" | "good" | "fair"
+      listing_type: "sale" | "trade" | "both"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +420,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+      fragrance_condition: ["new", "like_new", "excellent", "good", "fair"],
+      listing_type: ["sale", "trade", "both"],
+    },
   },
 } as const
