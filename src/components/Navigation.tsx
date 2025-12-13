@@ -1,35 +1,54 @@
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Navigation = () => {
+  const { user, profile, signOut } = useAuth();
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2">
             <Sparkles className="w-6 h-6 text-primary" />
             <span className="text-xl font-serif font-bold">ScentSwap</span>
-          </div>
+          </Link>
           
           <div className="hidden md:flex items-center gap-8">
-            <a href="#marketplace" className="text-sm font-medium hover:text-primary transition-colors">
+            <Link to="/marketplace" className="text-sm font-medium hover:text-primary transition-colors">
               Marketplace
-            </a>
-            <a href="#how-it-works" className="text-sm font-medium hover:text-primary transition-colors">
-              How It Works
-            </a>
-            <a href="#about" className="text-sm font-medium hover:text-primary transition-colors">
-              About
-            </a>
+            </Link>
+            <Link to="/influencers" className="text-sm font-medium hover:text-primary transition-colors">
+              Influencers
+            </Link>
+            {user && (
+              <Link to="/my-trades" className="text-sm font-medium hover:text-primary transition-colors">
+                My Trades
+              </Link>
+            )}
           </div>
           
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm">
-              Sign In
-            </Button>
-            <Button size="sm" variant="default">
-              Get Started
-            </Button>
+            {user && profile ? (
+              <>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to={`/profile/${profile.username}`}>Profile</Link>
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => signOut()}>
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/auth">Sign In</Link>
+                </Button>
+                <Button size="sm" variant="default" asChild>
+                  <Link to="/auth">Get Started</Link>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>

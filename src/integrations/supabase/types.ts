@@ -259,6 +259,119 @@ export type Database = {
           },
         ]
       }
+      trade_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          sender_id: string
+          trade_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          sender_id: string
+          trade_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          sender_id?: string
+          trade_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trade_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trade_messages_trade_id_fkey"
+            columns: ["trade_id"]
+            isOneToOne: false
+            referencedRelation: "trades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trades: {
+        Row: {
+          created_at: string
+          escrow_amount_initiator: number | null
+          escrow_amount_receiver: number | null
+          id: string
+          initiator_confirmed: boolean | null
+          initiator_id: string
+          initiator_listing_id: string
+          receiver_confirmed: boolean | null
+          receiver_id: string
+          receiver_listing_id: string | null
+          status: Database["public"]["Enums"]["trade_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          escrow_amount_initiator?: number | null
+          escrow_amount_receiver?: number | null
+          id?: string
+          initiator_confirmed?: boolean | null
+          initiator_id: string
+          initiator_listing_id: string
+          receiver_confirmed?: boolean | null
+          receiver_id: string
+          receiver_listing_id?: string | null
+          status?: Database["public"]["Enums"]["trade_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          escrow_amount_initiator?: number | null
+          escrow_amount_receiver?: number | null
+          id?: string
+          initiator_confirmed?: boolean | null
+          initiator_id?: string
+          initiator_listing_id?: string
+          receiver_confirmed?: boolean | null
+          receiver_id?: string
+          receiver_listing_id?: string | null
+          status?: Database["public"]["Enums"]["trade_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trades_initiator_id_fkey"
+            columns: ["initiator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trades_initiator_listing_id_fkey"
+            columns: ["initiator_listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trades_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trades_receiver_listing_id_fkey"
+            columns: ["receiver_listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -294,6 +407,13 @@ export type Database = {
       app_role: "admin" | "moderator" | "user"
       fragrance_condition: "new" | "like_new" | "excellent" | "good" | "fair"
       listing_type: "sale" | "trade" | "both"
+      trade_status:
+        | "pending"
+        | "accepted"
+        | "escrow_held"
+        | "completed"
+        | "cancelled"
+        | "disputed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -424,6 +544,14 @@ export const Constants = {
       app_role: ["admin", "moderator", "user"],
       fragrance_condition: ["new", "like_new", "excellent", "good", "fair"],
       listing_type: ["sale", "trade", "both"],
+      trade_status: [
+        "pending",
+        "accepted",
+        "escrow_held",
+        "completed",
+        "cancelled",
+        "disputed",
+      ],
     },
   },
 } as const
