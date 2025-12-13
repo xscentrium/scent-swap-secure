@@ -1,22 +1,27 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Navigation } from '@/components/Navigation';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   ArrowLeft, Loader2, Shield, CheckCircle, XCircle, 
-  Clock, User, Eye, ExternalLink 
+  Clock, User, Eye, ExternalLink, UserPlus, Crown, Search
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import type { Database } from '@/integrations/supabase/types';
+
+type AppRole = Database['public']['Enums']['app_role'];
 
 type VerificationSubmission = {
   id: string;
@@ -29,13 +34,23 @@ type VerificationSubmission = {
   created_at: string | null;
 };
 
+type UserWithRole = {
+  id: string;
+  user_id: string;
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  roles: AppRole[];
+};
+
 const AdminVerification = () => {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [selectedSubmission, setSelectedSubmission] = useState<VerificationSubmission | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [userSearch, setUserSearch] = useState('');
+  const [selectedRole, setSelectedRole] = useState<AppRole>('moderator');
 
   // Check if user is admin/moderator
   const { data: isAdmin, isLoading: adminLoading } = useQuery({
@@ -94,6 +109,112 @@ const AdminVerification = () => {
       return data as VerificationSubmission[];
     },
     enabled: isAdmin === true,
+  });
+
+  // Search for users to assign roles
+  const { data: searchResults, isLoading: searchLoading } = useQuery({
+    queryKey: ['user-search', userSearch],
+    queryFn: async () => {
+      if (!userSearch.trim()) return [];
+      
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('id, user_id, username, display_name, avatar_url')
+        .or(`username.ilike.%${userSearch}%,display_name.ilike.%${userSearch}%`)
+        .limit(10);
+      
+      if (error) throw error;
+      
+      // Get roles for each user
+      const usersWithRoles: UserWithRole[] = await Promise.all(
+        (profiles || []).map(async (profile) => {
+          const { data: roles } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', profile.user_id);
+          
+          return {
+            ...profile,
+            roles: (roles || []).map(r => r.role),
+          };
+        })
+      );
+      
+      return usersWithRoles;
+    },
+    enabled: isAdmin === true && userSearch.length >= 2,
+  });
+
+  // Fetch users with roles
+  const { data: usersWithRoles, isLoading: rolesLoading } = useQuery({
+    queryKey: ['users-with-roles'],
+    queryFn: async () => {
+      const { data: roles, error } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
+      
+      if (error) throw error;
+      
+      // Get unique user IDs
+      const userIds = [...new Set((roles || []).map(r => r.user_id))];
+      
+      if (userIds.length === 0) return [];
+      
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, user_id, username, display_name, avatar_url')
+        .in('user_id', userIds);
+      
+      return (profiles || []).map(profile => ({
+        ...profile,
+        roles: (roles || []).filter(r => r.user_id === profile.user_id).map(r => r.role),
+      })) as UserWithRole[];
+    },
+    enabled: isAdmin === true,
+  });
+
+  // Assign role mutation
+  const assignRoleMutation = useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: AppRole }) => {
+      const { error } = await supabase
+        .from('user_roles')
+        .insert({ user_id: userId, role });
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Role assigned successfully');
+      queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
+      queryClient.invalidateQueries({ queryKey: ['user-search'] });
+    },
+    onError: (error: any) => {
+      if (error.code === '23505') {
+        toast.error('User already has this role');
+      } else {
+        toast.error('Failed to assign role');
+      }
+    },
+  });
+
+  // Remove role mutation
+  const removeRoleMutation = useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: AppRole }) => {
+      const { error } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId)
+        .eq('role', role);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Role removed successfully');
+      queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
+      queryClient.invalidateQueries({ queryKey: ['user-search'] });
+    },
+    onError: () => {
+      toast.error('Failed to remove role');
+    },
   });
 
   // Approve mutation
@@ -232,6 +353,10 @@ const AdminVerification = () => {
                 )}
               </TabsTrigger>
               <TabsTrigger value="history">History</TabsTrigger>
+              <TabsTrigger value="roles">
+                <Crown className="w-4 h-4 mr-1" />
+                User Roles
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="pending">
@@ -320,6 +445,136 @@ const AdminVerification = () => {
                   </CardContent>
                 </Card>
               )}
+            </TabsContent>
+
+            <TabsContent value="roles">
+              <div className="space-y-6">
+                {/* Search and Add Role */}
+                <Card className="border-border/50">
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold mb-4 flex items-center gap-2">
+                      <UserPlus className="w-5 h-5" />
+                      Assign Role to User
+                    </h3>
+                    <div className="flex gap-4 flex-col sm:flex-row">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Search users by username..."
+                          value={userSearch}
+                          onChange={(e) => setUserSearch(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                      <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as AppRole)}>
+                        <SelectTrigger className="w-40">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="moderator">Moderator</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Search Results */}
+                    {userSearch.length >= 2 && (
+                      <div className="mt-4 space-y-2">
+                        {searchLoading ? (
+                          <div className="flex justify-center py-4">
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                          </div>
+                        ) : searchResults && searchResults.length > 0 ? (
+                          searchResults.map((user) => (
+                            <div key={user.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                              <div className="flex items-center gap-3">
+                                <Avatar className="w-8 h-8">
+                                  {user.avatar_url && <AvatarImage src={user.avatar_url} />}
+                                  <AvatarFallback><User className="w-4 h-4" /></AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <p className="font-medium text-sm">{user.display_name || user.username}</p>
+                                  <p className="text-xs text-muted-foreground">@{user.username}</p>
+                                </div>
+                                <div className="flex gap-1">
+                                  {user.roles.map((role) => (
+                                    <Badge key={role} variant="secondary" className="text-xs">
+                                      {role}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                              <Button
+                                size="sm"
+                                onClick={() => assignRoleMutation.mutate({ userId: user.user_id, role: selectedRole })}
+                                disabled={assignRoleMutation.isPending || user.roles.includes(selectedRole)}
+                              >
+                                {assignRoleMutation.isPending ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <>
+                                    <UserPlus className="w-4 h-4 mr-1" />
+                                    Add {selectedRole}
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-sm text-muted-foreground text-center py-4">No users found</p>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Current Users with Roles */}
+                <Card className="border-border/50">
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold mb-4 flex items-center gap-2">
+                      <Crown className="w-5 h-5" />
+                      Users with Roles
+                    </h3>
+                    {rolesLoading ? (
+                      <div className="flex justify-center py-8">
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                      </div>
+                    ) : usersWithRoles && usersWithRoles.length > 0 ? (
+                      <div className="space-y-2">
+                        {usersWithRoles.map((user) => (
+                          <div key={user.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <Avatar className="w-10 h-10">
+                                {user.avatar_url && <AvatarImage src={user.avatar_url} />}
+                                <AvatarFallback><User className="w-4 h-4" /></AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-medium">{user.display_name || user.username}</p>
+                                <p className="text-sm text-muted-foreground">@{user.username}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {user.roles.map((role) => (
+                                <Badge
+                                  key={role}
+                                  variant={role === 'admin' ? 'default' : 'secondary'}
+                                  className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                                  onClick={() => removeRoleMutation.mutate({ userId: user.user_id, role })}
+                                >
+                                  {role}
+                                  <XCircle className="w-3 h-3 ml-1" />
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground text-center py-8">No users with special roles yet.</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
           </Tabs>
         </div>
