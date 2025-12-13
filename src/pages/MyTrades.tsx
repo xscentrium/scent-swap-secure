@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  ArrowLeftRight, Clock, CheckCircle, XCircle, Shield, Loader2, AlertCircle
+  ArrowLeftRight, Clock, CheckCircle, XCircle, Shield, Loader2, AlertCircle, Package
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -24,12 +24,14 @@ type Trade = {
     id: string;
     name: string;
     brand: string;
+    size: string;
     image_url: string | null;
   } | null;
   receiver_listing: {
     id: string;
     name: string;
     brand: string;
+    size: string;
     image_url: string | null;
   } | null;
   initiator: {
@@ -54,10 +56,10 @@ const MyTrades = () => {
         .select(`
           *,
           initiator_listing:listings!trades_initiator_listing_id_fkey (
-            id, name, brand, image_url
+            id, name, brand, size, image_url
           ),
           receiver_listing:listings!trades_receiver_listing_id_fkey (
-            id, name, brand, image_url
+            id, name, brand, size, image_url
           ),
           initiator:profiles!trades_initiator_id_fkey (
             id, username
@@ -104,6 +106,30 @@ const MyTrades = () => {
     },
   });
 
+  const importToCollection = useMutation({
+    mutationFn: async (listing: { name: string; brand: string; size: string; image_url: string | null }) => {
+      const { error } = await supabase
+        .from('collection_items')
+        .insert({
+          profile_id: profile!.id,
+          name: listing.name,
+          brand: listing.brand,
+          size: listing.size,
+          image_url: listing.image_url,
+          notes: 'Acquired through trade',
+        });
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['collection'] });
+      toast.success('Added to your collection!');
+    },
+    onError: () => {
+      toast.error('Failed to add to collection');
+    },
+  });
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
@@ -120,6 +146,15 @@ const MyTrades = () => {
         return <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20"><AlertCircle className="w-3 h-3 mr-1" />Disputed</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  // Get listing I received in trade (from the other party)
+  const getReceivedListing = (trade: Trade) => {
+    if (trade.initiator?.id === profile?.id) {
+      return trade.receiver_listing;
+    } else {
+      return trade.initiator_listing;
     }
   };
 
@@ -159,7 +194,15 @@ const MyTrades = () => {
       <Navigation />
       <main className="pt-20 pb-12">
         <div className="container mx-auto px-4 max-w-4xl">
-          <h1 className="text-3xl font-serif font-bold mb-6">My Trades</h1>
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-3xl font-serif font-bold">My Trades</h1>
+            <Button variant="outline" asChild>
+              <Link to="/trade-matches">
+                <ArrowLeftRight className="w-4 h-4 mr-2" />
+                Trade Matches
+              </Link>
+            </Button>
+          </div>
 
           <Tabs defaultValue="active">
             <TabsList className="mb-6">
@@ -294,30 +337,59 @@ const MyTrades = () => {
             <TabsContent value="history">
               {completedTrades.length > 0 ? (
                 <div className="space-y-4">
-                  {completedTrades.map((trade) => (
-                    <Card key={trade.id} className="border-border/50 opacity-75">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2">
-                              <div className="w-10 h-10 bg-muted rounded-lg" />
-                              <ArrowLeftRight className="w-4 h-4 text-muted-foreground" />
-                              <div className="w-10 h-10 bg-muted rounded-lg" />
+                  {completedTrades.map((trade) => {
+                    const receivedListing = getReceivedListing(trade);
+                    return (
+                      <Card key={trade.id} className="border-border/50">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="flex items-center gap-2">
+                                <div className="w-10 h-10 bg-muted rounded-lg overflow-hidden">
+                                  {trade.initiator_listing?.image_url ? (
+                                    <img src={trade.initiator_listing.image_url} alt="" className="w-full h-full object-cover" />
+                                  ) : null}
+                                </div>
+                                <ArrowLeftRight className="w-4 h-4 text-muted-foreground" />
+                                <div className="w-10 h-10 bg-muted rounded-lg overflow-hidden">
+                                  {trade.receiver_listing?.image_url ? (
+                                    <img src={trade.receiver_listing.image_url} alt="" className="w-full h-full object-cover" />
+                                  ) : null}
+                                </div>
+                              </div>
+                              <div>
+                                <p className="font-medium">
+                                  {trade.initiator_listing?.name} ↔ {trade.receiver_listing?.name}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  {new Date(trade.created_at).toLocaleDateString()}
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="font-medium">
-                                {trade.initiator_listing?.name} ↔ {trade.receiver_listing?.name}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                {new Date(trade.created_at).toLocaleDateString()}
-                              </p>
+                            <div className="flex items-center gap-2">
+                              {trade.status === 'completed' && receivedListing && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => importToCollection.mutate({
+                                    name: receivedListing.name,
+                                    brand: receivedListing.brand,
+                                    size: receivedListing.size,
+                                    image_url: receivedListing.image_url,
+                                  })}
+                                  disabled={importToCollection.isPending}
+                                >
+                                  <Package className="w-4 h-4 mr-1" />
+                                  Add to Collection
+                                </Button>
+                              )}
+                              {getStatusBadge(trade.status)}
                             </div>
                           </div>
-                          {getStatusBadge(trade.status)}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="text-center py-12 text-muted-foreground">

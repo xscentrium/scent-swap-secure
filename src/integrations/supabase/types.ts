@@ -291,6 +291,7 @@ export type Database = {
           referred_by: string | null
           tiktok_url: string | null
           tiktok_verified: boolean | null
+          trade_matches_enabled: boolean | null
           twitter_url: string | null
           twitter_verified: boolean | null
           updated_at: string | null
@@ -321,6 +322,7 @@ export type Database = {
           referred_by?: string | null
           tiktok_url?: string | null
           tiktok_verified?: boolean | null
+          trade_matches_enabled?: boolean | null
           twitter_url?: string | null
           twitter_verified?: boolean | null
           updated_at?: string | null
@@ -351,6 +353,7 @@ export type Database = {
           referred_by?: string | null
           tiktok_url?: string | null
           tiktok_verified?: boolean | null
+          trade_matches_enabled?: boolean | null
           twitter_url?: string | null
           twitter_verified?: boolean | null
           updated_at?: string | null
