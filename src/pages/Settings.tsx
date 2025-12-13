@@ -13,8 +13,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { 
   ArrowLeft, Loader2, User, Shield, Link as LinkIcon, Settings2,
-  Instagram, Twitter, CheckCircle, AlertCircle, Upload, Calendar, Mail, Lock, Gift, Users
+  Instagram, Twitter, CheckCircle, AlertCircle, Upload, Calendar, Mail, Lock, Gift, Users, ArrowLeftRight
 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -72,6 +73,10 @@ const Settings = () => {
   const [guardianInfo, setGuardianInfo] = useState<{ username: string; verified: boolean } | null>(null);
   const [userAge, setUserAge] = useState<number | null>(null);
   const [pendingGuardianRequests, setPendingGuardianRequests] = useState<{ id: string; username: string }[]>([]);
+  
+  // Trade matches toggle
+  const [tradeMatchesEnabled, setTradeMatchesEnabled] = useState(false);
+  const [savingTradeMatches, setSavingTradeMatches] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -103,6 +108,7 @@ const Settings = () => {
       fetchIdStatus();
       fetchGuardianInfo();
       fetchPendingGuardianRequests();
+      fetchTradeMatchesSetting();
     }
   }, [profile]);
 
@@ -183,6 +189,38 @@ const Settings = () => {
         status: data.id_verification_status || 'none',
         documentUrl: data.id_document_url || '',
       });
+    }
+  };
+
+  const fetchTradeMatchesSetting = async () => {
+    if (!profile?.id) return;
+    
+    const { data } = await supabase
+      .from('profiles')
+      .select('trade_matches_enabled')
+      .eq('id', profile.id)
+      .single();
+
+    if (data) {
+      setTradeMatchesEnabled(data.trade_matches_enabled ?? false);
+    }
+  };
+
+  const handleToggleTradeMatches = async (enabled: boolean) => {
+    setSavingTradeMatches(true);
+    
+    const { error } = await supabase
+      .from('profiles')
+      .update({ trade_matches_enabled: enabled })
+      .eq('id', profile.id);
+
+    setSavingTradeMatches(false);
+
+    if (error) {
+      toast.error('Failed to update setting');
+    } else {
+      setTradeMatchesEnabled(enabled);
+      toast.success(enabled ? 'Trade matches enabled' : 'Trade matches disabled');
     }
   };
 
@@ -696,6 +734,43 @@ const Settings = () => {
                     >
                       {changingUsername ? 'Changing...' : 'Change Username'}
                     </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Trade Matches Toggle */}
+                <Card className="border-border/50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <ArrowLeftRight className="w-5 h-5" />
+                      Trade Matches
+                    </CardTitle>
+                    <CardDescription>
+                      Get notified when someone wants a fragrance from your collection
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="trade-matches">Enable Trade Matches</Label>
+                        <p className="text-sm text-muted-foreground">
+                          We'll scan other users' wishlists and notify you of potential trades
+                        </p>
+                      </div>
+                      <Switch
+                        id="trade-matches"
+                        checked={tradeMatchesEnabled}
+                        onCheckedChange={handleToggleTradeMatches}
+                        disabled={savingTradeMatches}
+                      />
+                    </div>
+                    {tradeMatchesEnabled && (
+                      <Button variant="outline" asChild className="w-full">
+                        <Link to="/trade-matches">
+                          <ArrowLeftRight className="w-4 h-4 mr-2" />
+                          View Trade Matches
+                        </Link>
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
 

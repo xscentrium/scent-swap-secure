@@ -16,7 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, Loader2, Trash2, Heart, MessageSquare, Search, Filter } from 'lucide-react';
+import { Plus, Loader2, Trash2, Heart, MessageSquare, Search, Filter, ArrowUpDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 
@@ -30,6 +30,8 @@ type WishlistItem = {
   created_at: string;
 };
 
+type SortOption = 'newest' | 'oldest' | 'name' | 'brand' | 'priority';
+
 interface WishlistManagerProps {
   profileId: string;
   profileUsername: string;
@@ -42,6 +44,7 @@ export const WishlistManager = ({ profileId, profileUsername, isOwnProfile, curr
   const [dialogOpen, setDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [formData, setFormData] = useState({
     name: '',
     brand: '',
@@ -63,7 +66,9 @@ export const WishlistManager = ({ profileId, profileUsername, isOwnProfile, curr
     },
   });
 
-  const filteredItems = useMemo(() => {
+  const priorityOrder = { high: 0, medium: 1, low: 2 };
+
+  const filteredAndSortedItems = useMemo(() => {
     if (!items) return [];
     
     let filtered = items;
@@ -82,8 +87,25 @@ export const WishlistManager = ({ profileId, profileUsername, isOwnProfile, curr
       filtered = filtered.filter(item => item.priority === priorityFilter);
     }
     
-    return filtered;
-  }, [items, searchQuery, priorityFilter]);
+    // Apply sorting
+    return [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case 'oldest':
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'brand':
+          return a.brand.localeCompare(b.brand);
+        case 'priority':
+          return (priorityOrder[a.priority as keyof typeof priorityOrder] ?? 1) - 
+                 (priorityOrder[b.priority as keyof typeof priorityOrder] ?? 1);
+        default:
+          return 0;
+      }
+    });
+  }, [items, searchQuery, priorityFilter, sortBy]);
 
   const addItem = useMutation({
     mutationFn: async () => {
@@ -161,9 +183,9 @@ export const WishlistManager = ({ profileId, profileUsername, isOwnProfile, curr
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-3 justify-between">
-        {/* Search and Filter */}
-        <div className="flex gap-2 flex-1">
-          <div className="relative flex-1 max-w-sm">
+        {/* Search, Filter, and Sort */}
+        <div className="flex gap-2 flex-1 flex-wrap">
+          <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Search wishlist..."
@@ -173,7 +195,7 @@ export const WishlistManager = ({ profileId, profileUsername, isOwnProfile, curr
             />
           </div>
           <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-[130px]">
               <Filter className="w-4 h-4 mr-2" />
               <SelectValue placeholder="Priority" />
             </SelectTrigger>
@@ -182,6 +204,19 @@ export const WishlistManager = ({ profileId, profileUsername, isOwnProfile, curr
               <SelectItem value="high">High</SelectItem>
               <SelectItem value="medium">Medium</SelectItem>
               <SelectItem value="low">Low</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+            <SelectTrigger className="w-[130px]">
+              <ArrowUpDown className="w-4 h-4 mr-2" />
+              <SelectValue placeholder="Sort" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest First</SelectItem>
+              <SelectItem value="oldest">Oldest First</SelectItem>
+              <SelectItem value="name">Name A-Z</SelectItem>
+              <SelectItem value="brand">Brand A-Z</SelectItem>
+              <SelectItem value="priority">Priority</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -259,15 +294,15 @@ export const WishlistManager = ({ profileId, profileUsername, isOwnProfile, curr
         )}
       </div>
 
-      {items && items.length > 0 && (searchQuery || priorityFilter !== 'all') && filteredItems.length === 0 && (
+      {items && items.length > 0 && (searchQuery || priorityFilter !== 'all') && filteredAndSortedItems.length === 0 && (
         <p className="text-center text-muted-foreground py-4">
           No items match your filters
         </p>
       )}
 
-      {filteredItems.length > 0 ? (
+      {filteredAndSortedItems.length > 0 ? (
         <div className="space-y-3">
-          {filteredItems.map((item) => (
+          {filteredAndSortedItems.map((item) => (
             <Card key={item.id} className="overflow-hidden">
               <CardContent className="p-4 flex items-center justify-between gap-4">
                 <div className="flex-1 min-w-0">

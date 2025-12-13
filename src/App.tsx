@@ -17,6 +17,7 @@ import Messages from "./pages/Messages";
 import MyTrades from "./pages/MyTrades";
 import Settings from "./pages/Settings";
 import AdminVerification from "./pages/AdminVerification";
+import TradeMatches from "./pages/TradeMatches";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/influencers" element={<InfluencerHub />} />
             <Route path="/trade/:listingId" element={<Trade />} />
             <Route path="/my-trades" element={<MyTrades />} />
+            <Route path="/trade-matches" element={<TradeMatches />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/admin/verification" element={<AdminVerification />} />
