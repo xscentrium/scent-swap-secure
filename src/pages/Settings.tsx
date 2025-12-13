@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { 
   ArrowLeft, Loader2, User, Shield, Link as LinkIcon, Settings2,
-  Instagram, Twitter, CheckCircle, AlertCircle, Upload, Calendar, Mail, Lock, Gift
+  Instagram, Twitter, CheckCircle, AlertCircle, Upload, Calendar, Mail, Lock, Gift, Users
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -65,6 +65,12 @@ const Settings = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
+  
+  // Guardian settings
+  const [guardianCode, setGuardianCode] = useState('');
+  const [linkingGuardian, setLinkingGuardian] = useState(false);
+  const [guardianInfo, setGuardianInfo] = useState<{ username: string; verified: boolean } | null>(null);
+  const [userAge, setUserAge] = useState<number | null>(null);
 
   useEffect(() => {
     if (profile) {
@@ -78,13 +84,47 @@ const Settings = () => {
         tiktok_url: (profile as any).tiktok_url || '',
       });
       setNewUsername(profile.username);
-      setBirthday((profile as any).birthday || '');
+      const bday = (profile as any).birthday || '';
+      setBirthday(bday);
+      if (bday) {
+        const birthDate = new Date(bday);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        setUserAge(age);
+      }
       setUsernameLastChanged((profile as any).username_last_changed_at ? new Date((profile as any).username_last_changed_at) : null);
 
-      // Fetch ID verification status
+      // Fetch ID verification status and guardian info
       fetchIdStatus();
+      fetchGuardianInfo();
     }
   }, [profile]);
+
+  const fetchGuardianInfo = async () => {
+    if (!profile?.id) return;
+    
+    const { data } = await supabase
+      .from('profiles')
+      .select('guardian_id, guardian_verified')
+      .eq('id', profile.id)
+      .single();
+
+    if (data?.guardian_id) {
+      const { data: guardian } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', data.guardian_id)
+        .single();
+      
+      if (guardian) {
+        setGuardianInfo({ username: guardian.username, verified: data.guardian_verified || false });
+      }
+    }
+  };
 
   const fetchIdStatus = async () => {
     if (!profile?.id) return;
@@ -233,18 +273,27 @@ const Settings = () => {
     }
   };
 
+  const calculateAge = (birthDateStr: string) => {
+    const birthDate = new Date(birthDateStr);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
   const handleSaveBirthday = async () => {
     if (!birthday) {
       toast.error('Please enter your birthday');
       return;
     }
 
-    // Validate age (must be at least 18)
-    const birthDate = new Date(birthday);
-    const today = new Date();
-    const age = today.getFullYear() - birthDate.getFullYear();
-    if (age < 18) {
-      toast.error('You must be at least 18 years old');
+    // Validate age (must be at least 13)
+    const age = calculateAge(birthday);
+    if (age < 13) {
+      toast.error('You must be at least 13 years old to use this platform');
       return;
     }
 
@@ -260,7 +309,63 @@ const Settings = () => {
     if (error) {
       toast.error('Failed to save birthday');
     } else {
-      toast.success('Birthday saved!');
+      if (age < 16) {
+        toast.success('Birthday saved! Connect a guardian account to trade.');
+      } else {
+        toast.success('Birthday saved!');
+      }
+    }
+  };
+
+  const handleLinkGuardian = async () => {
+    if (!guardianCode.trim()) {
+      toast.error('Please enter a guardian username or referral code');
+      return;
+    }
+
+    setLinkingGuardian(true);
+
+    // Find guardian by username or referral code
+    const { data: guardian, error: findError } = await supabase
+      .from('profiles')
+      .select('id, username, birthday')
+      .or(`username.eq.${guardianCode.toLowerCase()},referral_code.eq.${guardianCode.toUpperCase()}`)
+      .single();
+
+    if (findError || !guardian) {
+      setLinkingGuardian(false);
+      toast.error('Guardian account not found');
+      return;
+    }
+
+    // Check guardian is 18+
+    if (guardian.birthday) {
+      const guardianAge = calculateAge(guardian.birthday);
+      if (guardianAge < 18) {
+        setLinkingGuardian(false);
+        toast.error('Guardian must be at least 18 years old');
+        return;
+      }
+    } else {
+      setLinkingGuardian(false);
+      toast.error('Guardian has not set their birthday');
+      return;
+    }
+
+    // Link guardian
+    const { error } = await supabase
+      .from('profiles')
+      .update({ guardian_id: guardian.id, guardian_verified: false })
+      .eq('id', profile.id);
+
+    setLinkingGuardian(false);
+
+    if (error) {
+      toast.error('Failed to link guardian account');
+    } else {
+      setGuardianInfo({ username: guardian.username, verified: false });
+      setGuardianCode('');
+      toast.success('Guardian account linked! They will need to verify the connection.');
     }
   };
 
@@ -507,13 +612,17 @@ const Settings = () => {
                       Birthday
                     </CardTitle>
                     <CardDescription>
-                      Required for verification. You must be 18+ to trade.
+                      Required for verification. Must be 13+ to join, 16+ for full access.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg">
                       <Gift className="w-5 h-5 text-primary" />
                       <span className="text-sm">Get a <strong>$5 credit</strong> on your birthday (verified from your ID)!</span>
+                    </div>
+                    <div className="p-3 bg-muted rounded-lg text-sm space-y-1">
+                      <p><strong>Age 13-15:</strong> Can join but need a guardian account (18+) to buy/trade</p>
+                      <p><strong>Age 16+:</strong> Full access with no restrictions</p>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="birthday">Date of Birth</Label>
@@ -522,7 +631,7 @@ const Settings = () => {
                         type="date"
                         value={birthday}
                         onChange={(e) => setBirthday(e.target.value)}
-                        max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
+                        max={new Date(new Date().setFullYear(new Date().getFullYear() - 13)).toISOString().split('T')[0]}
                       />
                     </div>
                     <Button onClick={handleSaveBirthday} disabled={savingBirthday}>
@@ -531,7 +640,63 @@ const Settings = () => {
                   </CardContent>
                 </Card>
 
-                {/* Email Change */}
+                {/* Guardian Account - Only show for users under 16 */}
+                {userAge !== null && userAge < 16 && (
+                  <Card className="border-border/50">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Users className="w-5 h-5" />
+                        Guardian Account
+                      </CardTitle>
+                      <CardDescription>
+                        Required for users under 16 to buy/trade
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                        <p className="text-sm text-amber-700 dark:text-amber-300">
+                          Since you're under 16, you need a guardian account (18+) linked to buy or trade fragrances.
+                        </p>
+                      </div>
+
+                      {guardianInfo ? (
+                        <div className="p-4 bg-muted rounded-lg">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium">Linked Guardian: @{guardianInfo.username}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {guardianInfo.verified 
+                                  ? 'Connection verified' 
+                                  : 'Pending guardian verification'}
+                              </p>
+                            </div>
+                            {guardianInfo.verified ? (
+                              <CheckCircle className="w-5 h-5 text-green-500" />
+                            ) : (
+                              <AlertCircle className="w-5 h-5 text-amber-500" />
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="space-y-2">
+                            <Label htmlFor="guardian-code">Guardian Username or Referral Code</Label>
+                            <Input
+                              id="guardian-code"
+                              value={guardianCode}
+                              onChange={(e) => setGuardianCode(e.target.value)}
+                              placeholder="Enter guardian's username or referral code"
+                            />
+                          </div>
+                          <Button onClick={handleLinkGuardian} disabled={linkingGuardian}>
+                            {linkingGuardian ? 'Linking...' : 'Link Guardian Account'}
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
                 <Card className="border-border/50">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">

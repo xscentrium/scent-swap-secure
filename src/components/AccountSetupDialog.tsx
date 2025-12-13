@@ -59,18 +59,27 @@ export const AccountSetupDialog = () => {
     }
   };
 
+  const calculateAge = (birthDateStr: string) => {
+    const birthDate = new Date(birthDateStr);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
   const handleSaveBirthday = async () => {
     if (!birthday) {
       toast.error('Please enter your birthday');
       return;
     }
 
-    // Validate age (must be at least 18)
-    const birthDate = new Date(birthday);
-    const today = new Date();
-    const age = today.getFullYear() - birthDate.getFullYear();
-    if (age < 18) {
-      toast.error('You must be at least 18 years old to use this platform');
+    // Validate age (must be at least 13)
+    const age = calculateAge(birthday);
+    if (age < 13) {
+      toast.error('You must be at least 13 years old to use this platform');
       return;
     }
 
@@ -85,7 +94,11 @@ export const AccountSetupDialog = () => {
       toast.error('Failed to save birthday');
     } else {
       setBirthdaySet(true);
-      toast.success('Birthday saved!');
+      if (age < 16) {
+        toast.success('Birthday saved! Note: Users under 16 need a guardian account to trade.');
+      } else {
+        toast.success('Birthday saved!');
+      }
       
       // Close dialog if both are complete
       if (emailVerified) {
@@ -167,7 +180,7 @@ export const AccountSetupDialog = () => {
                 <p className="text-sm text-muted-foreground mt-1">
                   {birthdaySet 
                     ? 'Your birthday has been saved!'
-                    : 'Required for account verification. You must be 18+ to trade.'
+                    : 'Required for account verification. You must be 13+ to join. Users under 16 need a guardian to trade.'
                   }
                 </p>
                 
@@ -182,7 +195,7 @@ export const AccountSetupDialog = () => {
                         type="date"
                         value={birthday}
                         onChange={(e) => setBirthday(e.target.value)}
-                        max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
+                        max={new Date(new Date().setFullYear(new Date().getFullYear() - 13)).toISOString().split('T')[0]}
                       />
                       <Button onClick={handleSaveBirthday} disabled={saving}>
                         {saving ? 'Saving...' : 'Save'}
