@@ -185,6 +185,47 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string
+          data: Json | null
+          id: string
+          message: string
+          read: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          message: string
+          read?: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          message?: string
+          read?: boolean | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -194,6 +235,10 @@ export type Database = {
           facebook_url: string | null
           facebook_verified: boolean | null
           id: string
+          id_document_url: string | null
+          id_submitted_at: string | null
+          id_verification_status: string | null
+          id_verified: boolean | null
           instagram_url: string | null
           instagram_verified: boolean | null
           is_influencer: boolean | null
@@ -215,6 +260,10 @@ export type Database = {
           facebook_url?: string | null
           facebook_verified?: boolean | null
           id?: string
+          id_document_url?: string | null
+          id_submitted_at?: string | null
+          id_verification_status?: string | null
+          id_verified?: boolean | null
           instagram_url?: string | null
           instagram_verified?: boolean | null
           is_influencer?: boolean | null
@@ -236,6 +285,10 @@ export type Database = {
           facebook_url?: string | null
           facebook_verified?: boolean | null
           id?: string
+          id_document_url?: string | null
+          id_submitted_at?: string | null
+          id_verification_status?: string | null
+          id_verified?: boolean | null
           instagram_url?: string | null
           instagram_verified?: boolean | null
           is_influencer?: boolean | null

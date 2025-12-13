@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Navigation } from '@/components/Navigation';
+import { ImageUpload } from '@/components/ImageUpload';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -153,6 +154,17 @@ const CreateListing = () => {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Image Upload */}
+                <div className="space-y-2">
+                  <Label>Fragrance Photo</Label>
+                  <ImageUpload
+                    bucket="listing-images"
+                    folder={user.id}
+                    currentImage={formData.image_url}
+                    onUpload={(url) => setFormData({ ...formData, image_url: url })}
+                  />
+                </div>
+
                 {/* Basic Info */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -269,18 +281,6 @@ const CreateListing = () => {
                       </p>
                     </div>
                   )}
-                </div>
-
-                {/* Image URL */}
-                <div className="space-y-2">
-                  <Label htmlFor="image_url">Image URL</Label>
-                  <Input
-                    id="image_url"
-                    type="url"
-                    placeholder="https://example.com/image.jpg"
-                    value={formData.image_url}
-                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                  />
                 </div>
 
                 {/* Description */}

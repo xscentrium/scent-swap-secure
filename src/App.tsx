@@ -13,6 +13,7 @@ import CreateListing from "./pages/CreateListing";
 import InfluencerHub from "./pages/InfluencerHub";
 import Trade from "./pages/Trade";
 import MyTrades from "./pages/MyTrades";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/influencers" element={<InfluencerHub />} />
             <Route path="/trade/:listingId" element={<Trade />} />
             <Route path="/my-trades" element={<MyTrades />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

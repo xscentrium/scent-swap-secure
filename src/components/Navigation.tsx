@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { NotificationBell } from "@/components/NotificationBell";
 
 export const Navigation = () => {
   const { user, profile, signOut } = useAuth();
@@ -32,6 +33,12 @@ export const Navigation = () => {
           <div className="flex items-center gap-3">
             {user && profile ? (
               <>
+                <NotificationBell />
+                <Button variant="ghost" size="icon" asChild>
+                  <Link to="/settings">
+                    <Settings className="w-5 h-5" />
+                  </Link>
+                </Button>
                 <Button variant="ghost" size="sm" asChild>
                   <Link to={`/profile/${profile.username}`}>Profile</Link>
                 </Button>
