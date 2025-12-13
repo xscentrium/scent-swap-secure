@@ -236,6 +236,8 @@ export type Database = {
           email_verified: boolean | null
           facebook_url: string | null
           facebook_verified: boolean | null
+          guardian_id: string | null
+          guardian_verified: boolean | null
           id: string
           id_document_url: string | null
           id_submitted_at: string | null
@@ -264,6 +266,8 @@ export type Database = {
           email_verified?: boolean | null
           facebook_url?: string | null
           facebook_verified?: boolean | null
+          guardian_id?: string | null
+          guardian_verified?: boolean | null
           id?: string
           id_document_url?: string | null
           id_submitted_at?: string | null
@@ -292,6 +296,8 @@ export type Database = {
           email_verified?: boolean | null
           facebook_url?: string | null
           facebook_verified?: boolean | null
+          guardian_id?: string | null
+          guardian_verified?: boolean | null
           id?: string
           id_document_url?: string | null
           id_submitted_at?: string | null
@@ -312,6 +318,13 @@ export type Database = {
           username_last_changed_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_referred_by_fkey"
             columns: ["referred_by"]
