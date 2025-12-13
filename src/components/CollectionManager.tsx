@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,7 +17,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { ImageUpload } from '@/components/ImageUpload';
-import { Plus, Loader2, Trash2, Package, Search, ArrowRight, ArrowUpDown } from 'lucide-react';
+import { Plus, Loader2, Trash2, Package, Search, ArrowRight, ArrowUpDown, Upload, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 
 type CollectionItem = {
@@ -43,8 +43,11 @@ export const CollectionManager = ({ profileId, userId, isOwnProfile }: Collectio
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+  const [bulkInput, setBulkInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     name: '',
     brand: '',
@@ -143,6 +146,74 @@ export const CollectionManager = ({ profileId, userId, isOwnProfile }: Collectio
     },
   });
 
+  const bulkImport = useMutation({
+    mutationFn: async (items: { name: string; brand: string; size?: string }[]) => {
+      const { error } = await supabase
+        .from('collection_items')
+        .insert(
+          items.map(item => ({
+            profile_id: profileId,
+            name: item.name.trim(),
+            brand: item.brand.trim(),
+            size: item.size?.trim() || null,
+          }))
+        );
+      
+      if (error) throw error;
+      return items.length;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ['collection', profileId] });
+      setBulkDialogOpen(false);
+      setBulkInput('');
+      toast.success(`Imported ${count} fragrances!`);
+    },
+    onError: () => {
+      toast.error('Failed to import items');
+    },
+  });
+
+  const parseBulkInput = (input: string): { name: string; brand: string; size?: string }[] => {
+    const lines = input.trim().split('\n').filter(line => line.trim());
+    const items: { name: string; brand: string; size?: string }[] = [];
+    
+    for (const line of lines) {
+      // Try CSV format first (Name, Brand, Size)
+      const csvParts = line.split(',').map(p => p.trim().replace(/^["']|["']$/g, ''));
+      if (csvParts.length >= 2) {
+        items.push({
+          name: csvParts[0],
+          brand: csvParts[1],
+          size: csvParts[2] || undefined,
+        });
+      }
+    }
+    
+    return items;
+  };
+
+  const handleBulkImport = () => {
+    const items = parseBulkInput(bulkInput);
+    if (items.length === 0) {
+      toast.error('No valid items found. Use format: Name, Brand, Size (one per line)');
+      return;
+    }
+    bulkImport.mutate(items);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      setBulkInput(text);
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.brand) {
@@ -200,77 +271,140 @@ export const CollectionManager = ({ profileId, userId, isOwnProfile }: Collectio
         </div>
         
         {isOwnProfile && (
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Add to Collection
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add to Your Collection</DialogTitle>
-                <DialogDescription>
-                  Add a fragrance you already own to showcase in your collection
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Photo</Label>
-                  <ImageUpload
-                    bucket="listing-images"
-                    folder={userId}
-                    currentImage={formData.image_url}
-                    onUpload={(url) => setFormData({ ...formData, image_url: url })}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Name *</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="e.g., Bleu de Chanel"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="brand">Brand *</Label>
-                    <Input
-                      id="brand"
-                      value={formData.brand}
-                      onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                      placeholder="e.g., Chanel"
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="size">Size</Label>
-                  <Input
-                    id="size"
-                    value={formData.size}
-                    onChange={(e) => setFormData({ ...formData, size: e.target.value })}
-                    placeholder="e.g., 100ml"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Notes</Label>
-                  <Textarea
-                    id="notes"
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    placeholder="Any notes about this fragrance..."
-                    rows={2}
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={addItem.isPending}>
-                  {addItem.isPending ? 'Adding...' : 'Add to Collection'}
+          <div className="flex gap-2">
+            <Dialog open={bulkDialogOpen} onOpenChange={setBulkDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Upload className="w-4 h-4 mr-2" />
+                  Bulk Import
                 </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Bulk Import Fragrances</DialogTitle>
+                  <DialogDescription>
+                    Import multiple fragrances at once from a CSV file or paste a list
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="flex gap-2">
+                    <input
+                      type="file"
+                      accept=".csv,.txt"
+                      ref={fileInputRef}
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex-1"
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      Upload CSV
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Or paste your list below</Label>
+                    <Textarea
+                      value={bulkInput}
+                      onChange={(e) => setBulkInput(e.target.value)}
+                      placeholder="Name, Brand, Size (one per line)&#10;Bleu de Chanel, Chanel, 100ml&#10;Sauvage, Dior, 50ml&#10;Aventus, Creed, 120ml"
+                      rows={8}
+                      className="font-mono text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Format: Name, Brand, Size (size is optional)
+                    </p>
+                  </div>
+                  {bulkInput && (
+                    <p className="text-sm text-muted-foreground">
+                      {parseBulkInput(bulkInput).length} fragrances detected
+                    </p>
+                  )}
+                  <Button 
+                    onClick={handleBulkImport} 
+                    className="w-full" 
+                    disabled={bulkImport.isPending || !bulkInput.trim()}
+                  >
+                    {bulkImport.isPending ? 'Importing...' : 'Import All'}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+            
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add to Collection
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add to Your Collection</DialogTitle>
+                  <DialogDescription>
+                    Add a fragrance you already own to showcase in your collection
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Photo</Label>
+                    <ImageUpload
+                      bucket="listing-images"
+                      folder={userId}
+                      currentImage={formData.image_url}
+                      onUpload={(url) => setFormData({ ...formData, image_url: url })}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Name *</Label>
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="e.g., Bleu de Chanel"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="brand">Brand *</Label>
+                      <Input
+                        id="brand"
+                        value={formData.brand}
+                        onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                        placeholder="e.g., Chanel"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="size">Size</Label>
+                    <Input
+                      id="size"
+                      value={formData.size}
+                      onChange={(e) => setFormData({ ...formData, size: e.target.value })}
+                      placeholder="e.g., 100ml"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="notes">Notes</Label>
+                    <Textarea
+                      id="notes"
+                      value={formData.notes}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      placeholder="Any notes about this fragrance..."
+                      rows={2}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={addItem.isPending}>
+                    {addItem.isPending ? 'Adding...' : 'Add to Collection'}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
         )}
       </div>
 
