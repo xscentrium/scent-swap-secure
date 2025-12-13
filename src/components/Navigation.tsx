@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Sparkles, Settings } from "lucide-react";
+import { Sparkles, Settings, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -34,6 +34,11 @@ export const Navigation = () => {
             {user && profile ? (
               <>
                 <NotificationBell />
+                <Button variant="ghost" size="icon" asChild>
+                  <Link to="/messages">
+                    <MessageCircle className="w-5 h-5" />
+                  </Link>
+                </Button>
                 <Button variant="ghost" size="icon" asChild>
                   <Link to="/settings">
                     <Settings className="w-5 h-5" />
