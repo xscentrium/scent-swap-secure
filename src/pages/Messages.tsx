@@ -1,13 +1,15 @@
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Navigation } from "@/components/Navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, MessageCircle, User } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Loader2, MessageCircle, User, Search } from "lucide-react";
 import { Link, Navigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
+import { useEffect, useState } from "react";
 
 interface Conversation {
   trade_id: string;
@@ -28,6 +30,8 @@ interface Conversation {
 
 const Messages = () => {
   const { user, profile, loading: authLoading } = useAuth();
+  const queryClient = useQueryClient();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: conversations, isLoading } = useQuery({
     queryKey: ["conversations", profile?.id],
@@ -80,6 +84,41 @@ const Messages = () => {
     enabled: !!profile?.id,
   });
 
+  // Real-time subscription for new messages
+  useEffect(() => {
+    if (!profile?.id) return;
+
+    const channel = supabase
+      .channel('messages-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'trade_messages',
+        },
+        () => {
+          // Refetch conversations when a new message arrives
+          queryClient.invalidateQueries({ queryKey: ["conversations", profile.id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.id, queryClient]);
+
+  // Filter conversations based on search query
+  const filteredConversations = conversations?.filter((conversation) => {
+    if (!searchQuery.trim()) return true;
+    const searchLower = searchQuery.toLowerCase();
+    const displayName = conversation.other_user.display_name?.toLowerCase() || "";
+    const username = conversation.other_user.username.toLowerCase();
+    const message = conversation.last_message.message.toLowerCase();
+    return displayName.includes(searchLower) || username.includes(searchLower) || message.includes(searchLower);
+  });
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -113,18 +152,29 @@ const Messages = () => {
       <Navigation />
       <main className="container mx-auto px-4 pt-24 pb-12">
         <div className="max-w-2xl mx-auto">
-          <div className="flex items-center gap-3 mb-8">
+          <div className="flex items-center gap-3 mb-6">
             <MessageCircle className="w-8 h-8 text-primary" />
             <h1 className="text-3xl font-serif font-bold">Messages</h1>
+          </div>
+
+          {/* Search Input */}
+          <div className="relative mb-6">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search conversations..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
           </div>
 
           {isLoading ? (
             <div className="flex justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
-          ) : conversations && conversations.length > 0 ? (
+          ) : filteredConversations && filteredConversations.length > 0 ? (
             <div className="space-y-3">
-              {conversations.map((conversation) => (
+              {filteredConversations.map((conversation) => (
                 <Link
                   key={conversation.trade_id}
                   to={`/trade/${conversation.trade_id}`}
