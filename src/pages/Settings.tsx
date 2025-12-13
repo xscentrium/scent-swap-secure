@@ -71,6 +71,7 @@ const Settings = () => {
   const [linkingGuardian, setLinkingGuardian] = useState(false);
   const [guardianInfo, setGuardianInfo] = useState<{ username: string; verified: boolean } | null>(null);
   const [userAge, setUserAge] = useState<number | null>(null);
+  const [pendingGuardianRequests, setPendingGuardianRequests] = useState<{ id: string; username: string }[]>([]);
 
   useEffect(() => {
     if (profile) {
@@ -101,6 +102,7 @@ const Settings = () => {
       // Fetch ID verification status and guardian info
       fetchIdStatus();
       fetchGuardianInfo();
+      fetchPendingGuardianRequests();
     }
   }, [profile]);
 
@@ -123,6 +125,21 @@ const Settings = () => {
       if (guardian) {
         setGuardianInfo({ username: guardian.username, verified: data.guardian_verified || false });
       }
+    }
+  };
+
+  const fetchPendingGuardianRequests = async () => {
+    if (!profile?.id) return;
+    
+    // Find users who have this profile as their guardian but are not verified
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, username')
+      .eq('guardian_id', profile.id)
+      .eq('guardian_verified', false);
+
+    if (data) {
+      setPendingGuardianRequests(data);
     }
   };
 
@@ -317,6 +334,34 @@ const Settings = () => {
     }
   };
 
+  const handleApproveGuardianRequest = async (requesterId: string) => {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ guardian_verified: true })
+      .eq('id', requesterId);
+
+    if (error) {
+      toast.error('Failed to approve guardian request');
+    } else {
+      toast.success('Guardian connection approved!');
+      setPendingGuardianRequests(prev => prev.filter(r => r.id !== requesterId));
+    }
+  };
+
+  const handleRejectGuardianRequest = async (requesterId: string) => {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ guardian_id: null, guardian_verified: false })
+      .eq('id', requesterId);
+
+    if (error) {
+      toast.error('Failed to reject request');
+    } else {
+      toast.success('Guardian request rejected');
+      setPendingGuardianRequests(prev => prev.filter(r => r.id !== requesterId));
+    }
+  };
+
   const handleLinkGuardian = async () => {
     if (!guardianCode.trim()) {
       toast.error('Please enter a guardian username or referral code');
@@ -352,21 +397,31 @@ const Settings = () => {
       return;
     }
 
-    // Link guardian
+    // Link guardian and create notification
     const { error } = await supabase
       .from('profiles')
       .update({ guardian_id: guardian.id, guardian_verified: false })
       .eq('id', profile.id);
 
-    setLinkingGuardian(false);
-
     if (error) {
+      setLinkingGuardian(false);
       toast.error('Failed to link guardian account');
-    } else {
-      setGuardianInfo({ username: guardian.username, verified: false });
-      setGuardianCode('');
-      toast.success('Guardian account linked! They will need to verify the connection.');
+      return;
     }
+
+    // Create notification for guardian
+    await supabase.from('notifications').insert({
+      user_id: guardian.id,
+      type: 'guardian_request',
+      title: 'Guardian Request',
+      message: `@${profile.username} wants you to be their guardian account. Please approve or reject in your settings.`,
+      data: { requester_id: profile.id, requester_username: profile.username },
+    });
+
+    setLinkingGuardian(false);
+    setGuardianInfo({ username: guardian.username, verified: false });
+    setGuardianCode('');
+    toast.success('Guardian account linked! They will receive a notification to approve.');
   };
 
   const handleChangeEmail = async () => {
@@ -693,6 +748,47 @@ const Settings = () => {
                           </Button>
                         </div>
                       )}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Guardian Requests - For users 18+ to approve young users */}
+                {pendingGuardianRequests.length > 0 && (
+                  <Card className="border-border/50 border-primary/30 bg-primary/5">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Users className="w-5 h-5 text-primary" />
+                        Pending Guardian Requests
+                      </CardTitle>
+                      <CardDescription>
+                        Young users want you to be their guardian account
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {pendingGuardianRequests.map((request) => (
+                        <div key={request.id} className="flex items-center justify-between p-4 bg-background rounded-lg border">
+                          <div>
+                            <p className="font-medium">@{request.username}</p>
+                            <p className="text-sm text-muted-foreground">Wants you to be their guardian</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => handleApproveGuardianRequest(request.id)}
+                            >
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleRejectGuardianRequest(request.id)}
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
                     </CardContent>
                   </Card>
                 )}
