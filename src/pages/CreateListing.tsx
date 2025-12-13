@@ -19,12 +19,12 @@ const listingSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
   brand: z.string().min(1, 'Brand is required').max(100),
   size: z.string().min(1, 'Size is required'),
-  condition: z.enum(['new', 'excellent', 'good', 'fair']),
+  condition: z.enum(['new', 'like_new', 'excellent', 'good', 'fair']),
   listing_type: z.enum(['sale', 'trade', 'both']),
   price: z.number().min(0).optional().nullable(),
   estimated_value: z.number().min(0).optional().nullable(),
-  description: z.string().max(1000).optional(),
-  image_url: z.string().url().optional().nullable(),
+  description: z.string().min(10, 'Description must be at least 10 characters').max(1000),
+  image_url: z.string().url('Image is required'),
 });
 
 const CreateListing = () => {
@@ -36,7 +36,7 @@ const CreateListing = () => {
     name: string;
     brand: string;
     size: string;
-    condition: 'new' | 'excellent' | 'good' | 'fair';
+    condition: 'new' | 'like_new' | 'excellent' | 'good' | 'fair';
     listing_type: 'sale' | 'trade' | 'both';
     price: string;
     estimated_value: string;
@@ -104,6 +104,18 @@ const CreateListing = () => {
       }
     }
 
+    // Validation: image is required
+    if (!data.image_url) {
+      toast.error('Fragrance photo is required');
+      return;
+    }
+
+    // Validation: description is required
+    if (!data.description || data.description.length < 10) {
+      toast.error('Description is required (at least 10 characters)');
+      return;
+    }
+
     // Validation: sale requires price
     if ((data.listing_type === 'sale' || data.listing_type === 'both') && !data.price) {
       toast.error('Price is required for sale listings');
@@ -156,13 +168,14 @@ const CreateListing = () => {
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Image Upload */}
                 <div className="space-y-2">
-                  <Label>Fragrance Photo</Label>
+                  <Label>Fragrance Photo *</Label>
                   <ImageUpload
                     bucket="listing-images"
                     folder={user.id}
                     currentImage={formData.image_url}
                     onUpload={(url) => setFormData({ ...formData, image_url: url })}
                   />
+                  <p className="text-xs text-muted-foreground">Required: Upload a clear photo of your fragrance</p>
                 </div>
 
                 {/* Basic Info */}
@@ -204,7 +217,7 @@ const CreateListing = () => {
                     <Label htmlFor="condition">Condition *</Label>
                     <Select 
                       value={formData.condition} 
-                      onValueChange={(value: 'new' | 'excellent' | 'good' | 'fair') => 
+                      onValueChange={(value: 'new' | 'like_new' | 'excellent' | 'good' | 'fair') => 
                         setFormData({ ...formData, condition: value })
                       }
                     >
@@ -212,10 +225,11 @@ const CreateListing = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="new">New (Sealed)</SelectItem>
-                        <SelectItem value="excellent">Excellent (99%+ full)</SelectItem>
-                        <SelectItem value="good">Good (90%+ full)</SelectItem>
-                        <SelectItem value="fair">Fair (Less than 90%)</SelectItem>
+                        <SelectItem value="new">New (Sealed in Box)</SelectItem>
+                        <SelectItem value="like_new">Like New (Opened, 99%+ full)</SelectItem>
+                        <SelectItem value="excellent">Excellent (95-99% full)</SelectItem>
+                        <SelectItem value="good">Good (85-95% full)</SelectItem>
+                        <SelectItem value="fair">Fair (Less than 85% full)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -285,14 +299,18 @@ const CreateListing = () => {
 
                 {/* Description */}
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="description">Description *</Label>
                   <Textarea
                     id="description"
-                    placeholder="Describe your fragrance, batch code, purchase date, etc."
+                    placeholder="Describe your fragrance, batch code, purchase date, where you bought it, etc."
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={4}
+                    required
                   />
+                  <p className="text-xs text-muted-foreground">
+                    {formData.description.length}/1000 characters (minimum 10)
+                  </p>
                 </div>
 
                 <Button type="submit" className="w-full" disabled={isSubmitting}>

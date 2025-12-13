@@ -230,8 +230,10 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          birthday: string | null
           created_at: string | null
           display_name: string | null
+          email_verified: boolean | null
           facebook_url: string | null
           facebook_verified: boolean | null
           id: string
@@ -251,12 +253,15 @@ export type Database = {
           updated_at: string | null
           user_id: string
           username: string
+          username_last_changed_at: string | null
         }
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          birthday?: string | null
           created_at?: string | null
           display_name?: string | null
+          email_verified?: boolean | null
           facebook_url?: string | null
           facebook_verified?: boolean | null
           id?: string
@@ -276,12 +281,15 @@ export type Database = {
           updated_at?: string | null
           user_id: string
           username: string
+          username_last_changed_at?: string | null
         }
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          birthday?: string | null
           created_at?: string | null
           display_name?: string | null
+          email_verified?: boolean | null
           facebook_url?: string | null
           facebook_verified?: boolean | null
           id?: string
@@ -301,6 +309,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           username?: string
+          username_last_changed_at?: string | null
         }
         Relationships: [
           {

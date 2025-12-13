@@ -72,7 +72,7 @@ const mockListings: Listing[] = [
 
 export const Marketplace = () => {
   return (
-    <section className="py-20 px-4">
+    <section id="marketplace" className="py-20 px-4">
       <div className="container mx-auto">
         <div className="text-center mb-12 animate-in fade-in duration-700">
           <h2 className="text-4xl md:text-5xl font-serif font-bold mb-4">
