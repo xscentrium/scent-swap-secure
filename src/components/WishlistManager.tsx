@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,7 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, Loader2, Trash2, Heart, MessageSquare } from 'lucide-react';
+import { Plus, Loader2, Trash2, Heart, MessageSquare, Search, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 
@@ -40,6 +40,8 @@ interface WishlistManagerProps {
 export const WishlistManager = ({ profileId, profileUsername, isOwnProfile, currentUserProfile }: WishlistManagerProps) => {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [formData, setFormData] = useState({
     name: '',
     brand: '',
@@ -60,6 +62,28 @@ export const WishlistManager = ({ profileId, profileUsername, isOwnProfile, curr
       return data as WishlistItem[];
     },
   });
+
+  const filteredItems = useMemo(() => {
+    if (!items) return [];
+    
+    let filtered = items;
+    
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(item => 
+        item.name.toLowerCase().includes(query) ||
+        item.brand.toLowerCase().includes(query)
+      );
+    }
+    
+    // Apply priority filter
+    if (priorityFilter !== 'all') {
+      filtered = filtered.filter(item => item.priority === priorityFilter);
+    }
+    
+    return filtered;
+  }, [items, searchQuery, priorityFilter]);
 
   const addItem = useMutation({
     mutationFn: async () => {
@@ -136,8 +160,33 @@ export const WishlistManager = ({ profileId, profileUsername, isOwnProfile, curr
 
   return (
     <div className="space-y-4">
-      {isOwnProfile && (
-        <div className="flex justify-end">
+      <div className="flex flex-col sm:flex-row gap-3 justify-between">
+        {/* Search and Filter */}
+        <div className="flex gap-2 flex-1">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search wishlist..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+            <SelectTrigger className="w-[140px]">
+              <Filter className="w-4 h-4 mr-2" />
+              <SelectValue placeholder="Priority" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Priorities</SelectItem>
+              <SelectItem value="high">High</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="low">Low</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        {isOwnProfile && (
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -207,12 +256,18 @@ export const WishlistManager = ({ profileId, profileUsername, isOwnProfile, curr
               </form>
             </DialogContent>
           </Dialog>
-        </div>
+        )}
+      </div>
+
+      {items && items.length > 0 && (searchQuery || priorityFilter !== 'all') && filteredItems.length === 0 && (
+        <p className="text-center text-muted-foreground py-4">
+          No items match your filters
+        </p>
       )}
 
-      {items && items.length > 0 ? (
+      {filteredItems.length > 0 ? (
         <div className="space-y-3">
-          {items.map((item) => (
+          {filteredItems.map((item) => (
             <Card key={item.id} className="overflow-hidden">
               <CardContent className="p-4 flex items-center justify-between gap-4">
                 <div className="flex-1 min-w-0">
@@ -251,7 +306,7 @@ export const WishlistManager = ({ profileId, profileUsername, isOwnProfile, curr
             </Card>
           ))}
         </div>
-      ) : (
+      ) : !(searchQuery || priorityFilter !== 'all') && (
         <div className="text-center py-12 text-muted-foreground">
           <Heart className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>No items on wishlist yet</p>

@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,7 +16,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { ImageUpload } from '@/components/ImageUpload';
-import { Plus, Loader2, Trash2, Package } from 'lucide-react';
+import { Plus, Loader2, Trash2, Package, Search, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 type CollectionItem = {
@@ -37,7 +38,9 @@ interface CollectionManagerProps {
 
 export const CollectionManager = ({ profileId, userId, isOwnProfile }: CollectionManagerProps) => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     brand: '',
@@ -59,6 +62,18 @@ export const CollectionManager = ({ profileId, userId, isOwnProfile }: Collectio
       return data as CollectionItem[];
     },
   });
+
+  const filteredItems = useMemo(() => {
+    if (!items) return [];
+    if (!searchQuery.trim()) return items;
+    
+    const query = searchQuery.toLowerCase();
+    return items.filter(item => 
+      item.name.toLowerCase().includes(query) ||
+      item.brand.toLowerCase().includes(query) ||
+      item.size?.toLowerCase().includes(query)
+    );
+  }, [items, searchQuery]);
 
   const addItem = useMutation({
     mutationFn: async () => {
@@ -113,6 +128,18 @@ export const CollectionManager = ({ profileId, userId, isOwnProfile }: Collectio
     addItem.mutate();
   };
 
+  const handleConvertToListing = (item: CollectionItem) => {
+    // Navigate to create listing with pre-filled data
+    const params = new URLSearchParams({
+      name: item.name,
+      brand: item.brand,
+      size: item.size || '',
+      image_url: item.image_url || '',
+      notes: item.notes || '',
+    });
+    navigate(`/create-listing?${params.toString()}`);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -123,8 +150,19 @@ export const CollectionManager = ({ profileId, userId, isOwnProfile }: Collectio
 
   return (
     <div className="space-y-4">
-      {isOwnProfile && (
-        <div className="flex justify-end">
+      <div className="flex flex-col sm:flex-row gap-3 justify-between">
+        {/* Search */}
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search collection..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        
+        {isOwnProfile && (
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -196,12 +234,18 @@ export const CollectionManager = ({ profileId, userId, isOwnProfile }: Collectio
               </form>
             </DialogContent>
           </Dialog>
-        </div>
+        )}
+      </div>
+
+      {items && items.length > 0 && searchQuery && filteredItems.length === 0 && (
+        <p className="text-center text-muted-foreground py-4">
+          No items match "{searchQuery}"
+        </p>
       )}
 
-      {items && items.length > 0 ? (
+      {filteredItems.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {items.map((item) => (
+          {filteredItems.map((item) => (
             <Card key={item.id} className="overflow-hidden group relative">
               <div className="aspect-square bg-muted">
                 {item.image_url ? (
@@ -222,19 +266,30 @@ export const CollectionManager = ({ profileId, userId, isOwnProfile }: Collectio
                 {item.size && <p className="text-xs text-muted-foreground">{item.size}</p>}
               </CardContent>
               {isOwnProfile && (
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
-                  onClick={() => deleteItem.mutate(item.id)}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handleConvertToListing(item)}
+                    title="Convert to Listing"
+                  >
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => deleteItem.mutate(item.id)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               )}
             </Card>
           ))}
         </div>
-      ) : (
+      ) : !searchQuery && (
         <div className="text-center py-12 text-muted-foreground">
           <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>No fragrances in collection yet</p>
