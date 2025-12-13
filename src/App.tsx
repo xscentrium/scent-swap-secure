@@ -14,6 +14,7 @@ import InfluencerHub from "./pages/InfluencerHub";
 import Trade from "./pages/Trade";
 import MyTrades from "./pages/MyTrades";
 import Settings from "./pages/Settings";
+import AdminVerification from "./pages/AdminVerification";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/trade/:listingId" element={<Trade />} />
             <Route path="/my-trades" element={<MyTrades />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/admin/verification" element={<AdminVerification />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
