@@ -3,24 +3,40 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import Auth from "./pages/Auth";
+import MarketplacePage from "./pages/MarketplacePage";
+import Profile from "./pages/Profile";
+import CreateListing from "./pages/CreateListing";
+import InfluencerHub from "./pages/InfluencerHub";
+import Trade from "./pages/Trade";
+import MyTrades from "./pages/MyTrades";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/marketplace" element={<MarketplacePage />} />
+            <Route path="/profile/:username" element={<Profile />} />
+            <Route path="/create-listing" element={<CreateListing />} />
+            <Route path="/influencers" element={<InfluencerHub />} />
+            <Route path="/trade/:listingId" element={<Trade />} />
+            <Route path="/my-trades" element={<MyTrades />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
