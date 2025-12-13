@@ -3,13 +3,14 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useCanTrade } from '@/hooks/useCanTrade';
 import { Navigation } from '@/components/Navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, ArrowRight, Shield, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Shield, Loader2, AlertCircle, CheckCircle, Users } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Listing = {
@@ -35,6 +36,7 @@ const Trade = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, profile, loading: authLoading } = useAuth();
+  const { canTrade, reason: tradeBlockReason, loading: tradeCheckLoading } = useCanTrade();
   const [selectedMyListing, setSelectedMyListing] = useState<string>('');
 
   // Fetch the target listing
@@ -127,7 +129,7 @@ const Trade = () => {
 
   const selectedMyListingData = myListings?.find(l => l.id === selectedMyListing);
 
-  if (authLoading || targetLoading) {
+  if (authLoading || targetLoading || tradeCheckLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
@@ -162,6 +164,23 @@ const Trade = () => {
           <p className="text-muted-foreground mb-4">This listing doesn't exist or is no longer available.</p>
           <Button asChild>
             <Link to="/marketplace">Browse Marketplace</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Check trading eligibility
+  if (!canTrade) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="flex flex-col items-center justify-center pt-32 px-4 text-center">
+          <Users className="w-16 h-16 text-amber-500 mb-4" />
+          <h1 className="text-2xl font-serif font-bold mb-2">Trading Restricted</h1>
+          <p className="text-muted-foreground mb-4 max-w-md">{tradeBlockReason}</p>
+          <Button asChild>
+            <Link to="/settings">Go to Settings</Link>
           </Button>
         </div>
       </div>

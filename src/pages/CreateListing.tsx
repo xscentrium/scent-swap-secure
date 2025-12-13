@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useCanTrade } from '@/hooks/useCanTrade';
 import { supabase } from '@/integrations/supabase/client';
 import { Navigation } from '@/components/Navigation';
 import { ImageUpload } from '@/components/ImageUpload';
@@ -11,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -30,6 +31,7 @@ const listingSchema = z.object({
 const CreateListing = () => {
   const navigate = useNavigate();
   const { user, profile, loading } = useAuth();
+  const { canTrade, reason: tradeBlockReason, loading: tradeCheckLoading } = useCanTrade();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState<{
@@ -54,12 +56,29 @@ const CreateListing = () => {
     image_url: '',
   });
 
-  if (loading) {
+  if (loading || tradeCheckLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
         <div className="flex items-center justify-center pt-32">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
+
+  // Check trading eligibility for trade/both listings
+  if (!canTrade) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="flex flex-col items-center justify-center pt-32 px-4 text-center">
+          <Users className="w-16 h-16 text-amber-500 mb-4" />
+          <h1 className="text-2xl font-serif font-bold mb-2">Listing Restricted</h1>
+          <p className="text-muted-foreground mb-4 max-w-md">{tradeBlockReason}</p>
+          <Button asChild>
+            <Link to="/settings">Go to Settings</Link>
+          </Button>
         </div>
       </div>
     );
