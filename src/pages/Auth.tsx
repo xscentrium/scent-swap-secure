@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -75,7 +76,21 @@ const Auth = () => {
     }
 
     setIsSubmitting(true);
-    const { error } = await signUp(signupEmail, signupPassword, signupUsername);
+
+    // Check if username is already taken
+    const { data: existingUser } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('username', signupUsername.toLowerCase())
+      .single();
+
+    if (existingUser) {
+      setIsSubmitting(false);
+      toast.error('This username is already taken. Please choose another.');
+      return;
+    }
+
+    const { error } = await signUp(signupEmail, signupPassword, signupUsername.toLowerCase());
     setIsSubmitting(false);
 
     if (error) {
@@ -85,7 +100,7 @@ const Auth = () => {
         toast.error(error.message);
       }
     } else {
-      toast.success('Account created successfully!');
+      toast.success('Account created! Please check your email to verify.');
       navigate('/');
     }
   };

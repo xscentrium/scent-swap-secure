@@ -12,8 +12,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { 
-  ArrowLeft, Loader2, User, Shield, Link as LinkIcon, 
-  Instagram, Twitter, CheckCircle, AlertCircle, Upload
+  ArrowLeft, Loader2, User, Shield, Link as LinkIcon, Settings2,
+  Instagram, Twitter, CheckCircle, AlertCircle, Upload, Calendar, Mail, Lock, Gift
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -26,6 +26,11 @@ const profileSchema = z.object({
   facebook_url: z.string().url().optional().or(z.literal('')),
   tiktok_url: z.string().url().optional().or(z.literal('')),
 });
+
+const usernameSchema = z.string()
+  .min(3, 'Username must be at least 3 characters')
+  .max(20, 'Username must be less than 20 characters')
+  .regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores');
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -48,6 +53,19 @@ const Settings = () => {
     documentUrl: '',
   });
 
+  // Account settings
+  const [newUsername, setNewUsername] = useState('');
+  const [usernameLastChanged, setUsernameLastChanged] = useState<Date | null>(null);
+  const [changingUsername, setChangingUsername] = useState(false);
+  const [birthday, setBirthday] = useState('');
+  const [savingBirthday, setSavingBirthday] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [changingEmail, setChangingEmail] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
+
   useEffect(() => {
     if (profile) {
       setFormData({
@@ -59,6 +77,9 @@ const Settings = () => {
         facebook_url: (profile as any).facebook_url || '',
         tiktok_url: (profile as any).tiktok_url || '',
       });
+      setNewUsername(profile.username);
+      setBirthday((profile as any).birthday || '');
+      setUsernameLastChanged((profile as any).username_last_changed_at ? new Date((profile as any).username_last_changed_at) : null);
 
       // Fetch ID verification status
       fetchIdStatus();
@@ -80,6 +101,18 @@ const Settings = () => {
         documentUrl: data.id_document_url || '',
       });
     }
+  };
+
+  const canChangeUsername = () => {
+    if (!usernameLastChanged) return true;
+    const daysSinceChange = (new Date().getTime() - usernameLastChanged.getTime()) / (1000 * 60 * 60 * 24);
+    return daysSinceChange >= 14;
+  };
+
+  const daysUntilUsernameChange = () => {
+    if (!usernameLastChanged) return 0;
+    const daysSinceChange = (new Date().getTime() - usernameLastChanged.getTime()) / (1000 * 60 * 60 * 24);
+    return Math.max(0, Math.ceil(14 - daysSinceChange));
   };
 
   if (loading) {
@@ -139,6 +172,146 @@ const Settings = () => {
       toast.error('Failed to update profile');
     } else {
       toast.success('Profile updated successfully');
+    }
+  };
+
+  const handleChangeUsername = async () => {
+    if (!canChangeUsername()) {
+      toast.error(`You can change your username again in ${daysUntilUsernameChange()} days`);
+      return;
+    }
+
+    try {
+      usernameSchema.parse(newUsername);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        toast.error(err.errors[0].message);
+        return;
+      }
+    }
+
+    if (newUsername === profile.username) {
+      toast.error('New username must be different');
+      return;
+    }
+
+    setChangingUsername(true);
+
+    // Check if username is taken
+    const { data: existingUser } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('username', newUsername)
+      .neq('id', profile.id)
+      .single();
+
+    if (existingUser) {
+      setChangingUsername(false);
+      toast.error('This username is already taken');
+      return;
+    }
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        username: newUsername,
+        username_last_changed_at: new Date().toISOString(),
+      })
+      .eq('id', profile.id);
+
+    setChangingUsername(false);
+
+    if (error) {
+      if (error.code === '23505') {
+        toast.error('This username is already taken');
+      } else {
+        toast.error('Failed to change username');
+      }
+    } else {
+      setUsernameLastChanged(new Date());
+      toast.success('Username changed successfully');
+    }
+  };
+
+  const handleSaveBirthday = async () => {
+    if (!birthday) {
+      toast.error('Please enter your birthday');
+      return;
+    }
+
+    // Validate age (must be at least 18)
+    const birthDate = new Date(birthday);
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+    if (age < 18) {
+      toast.error('You must be at least 18 years old');
+      return;
+    }
+
+    setSavingBirthday(true);
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ birthday })
+      .eq('id', profile.id);
+
+    setSavingBirthday(false);
+
+    if (error) {
+      toast.error('Failed to save birthday');
+    } else {
+      toast.success('Birthday saved!');
+    }
+  };
+
+  const handleChangeEmail = async () => {
+    if (!newEmail || newEmail === user.email) {
+      toast.error('Please enter a new email address');
+      return;
+    }
+
+    setChangingEmail(true);
+
+    const { error } = await supabase.auth.updateUser({
+      email: newEmail,
+    });
+
+    setChangingEmail(false);
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success('Verification email sent to your new address. Please check both inboxes.');
+      setNewEmail('');
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (newPassword.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    setChangingPassword(true);
+
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    setChangingPassword(false);
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success('Password changed successfully');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
     }
   };
 
@@ -214,10 +387,14 @@ const Settings = () => {
           <h1 className="text-3xl font-serif font-bold mb-6">Settings</h1>
 
           <Tabs defaultValue="profile">
-            <TabsList className="mb-6">
+            <TabsList className="mb-6 flex-wrap h-auto gap-1">
               <TabsTrigger value="profile">
                 <User className="w-4 h-4 mr-2" />
                 Profile
+              </TabsTrigger>
+              <TabsTrigger value="account">
+                <Settings2 className="w-4 h-4 mr-2" />
+                Account
               </TabsTrigger>
               <TabsTrigger value="verification">
                 <Shield className="w-4 h-4 mr-2" />
@@ -244,19 +421,6 @@ const Settings = () => {
                       currentImage={formData.avatar_url}
                       onUpload={(url) => setFormData({ ...formData, avatar_url: url })}
                     />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="username">Username</Label>
-                    <Input
-                      id="username"
-                      value={profile.username}
-                      disabled
-                      className="bg-muted"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Username cannot be changed
-                    </p>
                   </div>
 
                   <div className="space-y-2">
@@ -297,6 +461,144 @@ const Settings = () => {
               </Card>
             </TabsContent>
 
+            <TabsContent value="account">
+              <div className="space-y-6">
+                {/* Username Change */}
+                <Card className="border-border/50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <User className="w-5 h-5" />
+                      Change Username
+                    </CardTitle>
+                    <CardDescription>
+                      You can change your username once every 14 days
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="username">Username</Label>
+                      <Input
+                        id="username"
+                        value={newUsername}
+                        onChange={(e) => setNewUsername(e.target.value.toLowerCase())}
+                        placeholder="yourname"
+                        disabled={!canChangeUsername()}
+                      />
+                      {!canChangeUsername() && (
+                        <p className="text-xs text-muted-foreground">
+                          You can change your username again in {daysUntilUsernameChange()} days
+                        </p>
+                      )}
+                    </div>
+                    <Button 
+                      onClick={handleChangeUsername} 
+                      disabled={changingUsername || !canChangeUsername()}
+                    >
+                      {changingUsername ? 'Changing...' : 'Change Username'}
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Birthday */}
+                <Card className="border-border/50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Calendar className="w-5 h-5" />
+                      Birthday
+                    </CardTitle>
+                    <CardDescription>
+                      Required for verification. You must be 18+ to trade.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg">
+                      <Gift className="w-5 h-5 text-primary" />
+                      <span className="text-sm">Get a <strong>$5 credit</strong> on your birthday (verified from your ID)!</span>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="birthday">Date of Birth</Label>
+                      <Input
+                        id="birthday"
+                        type="date"
+                        value={birthday}
+                        onChange={(e) => setBirthday(e.target.value)}
+                        max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
+                      />
+                    </div>
+                    <Button onClick={handleSaveBirthday} disabled={savingBirthday}>
+                      {savingBirthday ? 'Saving...' : 'Save Birthday'}
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Email Change */}
+                <Card className="border-border/50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Mail className="w-5 h-5" />
+                      Change Email
+                    </CardTitle>
+                    <CardDescription>
+                      Current email: {user.email}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="new-email">New Email Address</Label>
+                      <Input
+                        id="new-email"
+                        type="email"
+                        value={newEmail}
+                        onChange={(e) => setNewEmail(e.target.value)}
+                        placeholder="newemail@example.com"
+                      />
+                    </div>
+                    <Button onClick={handleChangeEmail} disabled={changingEmail}>
+                      {changingEmail ? 'Sending...' : 'Change Email'}
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Password Change */}
+                <Card className="border-border/50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Lock className="w-5 h-5" />
+                      Change Password
+                    </CardTitle>
+                    <CardDescription>
+                      Update your account password
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="new-password">New Password</Label>
+                      <Input
+                        id="new-password"
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="••••••••"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="confirm-password">Confirm New Password</Label>
+                      <Input
+                        id="confirm-password"
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="••••••••"
+                      />
+                    </div>
+                    <Button onClick={handleChangePassword} disabled={changingPassword}>
+                      {changingPassword ? 'Changing...' : 'Change Password'}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
             <TabsContent value="verification">
               <Card className="border-border/50">
                 <CardHeader>
@@ -318,6 +620,7 @@ const Settings = () => {
                       <li>• Builds trust with other traders</li>
                       <li>• Protects against fraud and scams</li>
                       <li>• Verified badge on your profile</li>
+                      <li>• Birthday credit verification</li>
                     </ul>
                   </div>
 
