@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Navigation } from '@/components/Navigation';
+import { CollectionManager } from '@/components/CollectionManager';
+import { WishlistManager } from '@/components/WishlistManager';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   User, Shield, Star, Instagram, Twitter, Facebook, 
-  ExternalLink, Copy, CheckCircle, Loader2, Settings, Plus
+  ExternalLink, Copy, CheckCircle, Loader2, Settings, Plus, Package, Heart
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -334,8 +336,16 @@ const Profile = () => {
 
           {/* Listings */}
           <Tabs defaultValue="listings">
-            <TabsList className="mb-6">
+            <TabsList className="mb-6 flex-wrap h-auto gap-1">
               <TabsTrigger value="listings">Listings</TabsTrigger>
+              <TabsTrigger value="collection">
+                <Package className="w-4 h-4 mr-1" />
+                Collection
+              </TabsTrigger>
+              <TabsTrigger value="wishlist">
+                <Heart className="w-4 h-4 mr-1" />
+                Wishlist
+              </TabsTrigger>
               <TabsTrigger value="trades">Trade History</TabsTrigger>
             </TabsList>
 
@@ -380,6 +390,23 @@ const Profile = () => {
                   )}
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="collection">
+              <CollectionManager
+                profileId={profileData.id}
+                userId={profileData.user_id}
+                isOwnProfile={isOwnProfile}
+              />
+            </TabsContent>
+
+            <TabsContent value="wishlist">
+              <WishlistManager
+                profileId={profileData.id}
+                profileUsername={profileData.username}
+                isOwnProfile={isOwnProfile}
+                currentUserProfile={currentUserProfile}
+              />
             </TabsContent>
 
             <TabsContent value="trades">
