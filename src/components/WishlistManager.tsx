@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,7 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, Loader2, Trash2, Heart, MessageSquare, Search, Filter, ArrowUpDown } from 'lucide-react';
+import { Plus, Loader2, Trash2, Heart, MessageSquare, Search, Filter, ArrowUpDown, Upload, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 
@@ -42,6 +42,9 @@ interface WishlistManagerProps {
 export const WishlistManager = ({ profileId, profileUsername, isOwnProfile, currentUserProfile }: WishlistManagerProps) => {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+  const [bulkInput, setBulkInput] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
@@ -150,6 +153,73 @@ export const WishlistManager = ({ profileId, profileUsername, isOwnProfile, curr
     },
   });
 
+  const bulkImport = useMutation({
+    mutationFn: async (items: { name: string; brand: string; priority?: string }[]) => {
+      const { error } = await supabase
+        .from('wishlist_items')
+        .insert(
+          items.map(item => ({
+            profile_id: profileId,
+            name: item.name.trim(),
+            brand: item.brand.trim(),
+            priority: item.priority?.trim() || 'medium',
+          }))
+        );
+      
+      if (error) throw error;
+      return items.length;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ['wishlist', profileId] });
+      setBulkDialogOpen(false);
+      setBulkInput('');
+      toast.success(`Imported ${count} fragrances to wishlist!`);
+    },
+    onError: () => {
+      toast.error('Failed to import items');
+    },
+  });
+
+  const parseBulkInput = (input: string): { name: string; brand: string; priority?: string }[] => {
+    const lines = input.trim().split('\n').filter(line => line.trim());
+    const items: { name: string; brand: string; priority?: string }[] = [];
+    
+    for (const line of lines) {
+      const csvParts = line.split(',').map(p => p.trim().replace(/^["']|["']$/g, ''));
+      if (csvParts.length >= 2) {
+        items.push({
+          name: csvParts[0],
+          brand: csvParts[1],
+          priority: csvParts[2] || 'medium',
+        });
+      }
+    }
+    
+    return items;
+  };
+
+  const handleBulkImport = () => {
+    const items = parseBulkInput(bulkInput);
+    if (items.length === 0) {
+      toast.error('No valid items found. Use format: Name, Brand, Priority (one per line)');
+      return;
+    }
+    bulkImport.mutate(items);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      setBulkInput(text);
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.brand) {
@@ -222,13 +292,75 @@ export const WishlistManager = ({ profileId, profileUsername, isOwnProfile, curr
         </div>
         
         {isOwnProfile && (
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Add to Wishlist
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2">
+            <Dialog open={bulkDialogOpen} onOpenChange={setBulkDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Upload className="w-4 h-4 mr-2" />
+                  Bulk Import
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Bulk Import to Wishlist</DialogTitle>
+                  <DialogDescription>
+                    Import multiple fragrances at once from a CSV file or paste a list
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="flex gap-2">
+                    <input
+                      type="file"
+                      accept=".csv,.txt"
+                      ref={fileInputRef}
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex-1"
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      Upload CSV
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Or paste your list below</Label>
+                    <Textarea
+                      value={bulkInput}
+                      onChange={(e) => setBulkInput(e.target.value)}
+                      placeholder="Name, Brand, Priority (one per line)&#10;Aventus, Creed, high&#10;Sauvage, Dior, medium&#10;Bleu de Chanel, Chanel, low"
+                      rows={8}
+                      className="font-mono text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Format: Name, Brand, Priority (priority is optional: high/medium/low)
+                    </p>
+                  </div>
+                  {bulkInput && (
+                    <p className="text-sm text-muted-foreground">
+                      {parseBulkInput(bulkInput).length} fragrances detected
+                    </p>
+                  )}
+                  <Button 
+                    onClick={handleBulkImport} 
+                    className="w-full" 
+                    disabled={bulkImport.isPending || !bulkInput.trim()}
+                  >
+                    {bulkImport.isPending ? 'Importing...' : 'Import All'}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add to Wishlist
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Add to Your Wishlist</DialogTitle>
@@ -291,6 +423,7 @@ export const WishlistManager = ({ profileId, profileUsername, isOwnProfile, curr
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         )}
       </div>
 

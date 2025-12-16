@@ -17,6 +17,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { ImageUpload } from '@/components/ImageUpload';
+import { FragranceSearch } from '@/components/FragranceSearch';
 import { Plus, Loader2, Trash2, Package, Search, ArrowRight, ArrowUpDown, Upload, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -357,28 +358,16 @@ export const CollectionManager = ({ profileId, userId, isOwnProfile }: Collectio
                       onUpload={(url) => setFormData({ ...formData, image_url: url })}
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Name *</Label>
-                      <Input
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="e.g., Bleu de Chanel"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="brand">Brand *</Label>
-                      <Input
-                        id="brand"
-                        value={formData.brand}
-                        onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                        placeholder="e.g., Chanel"
-                        required
-                      />
-                    </div>
-                  </div>
+                  <FragranceSearch
+                    nameValue={formData.name}
+                    brandValue={formData.brand}
+                    onNameChange={(value) => setFormData({ ...formData, name: value })}
+                    onBrandChange={(value) => setFormData({ ...formData, brand: value })}
+                    onSelect={(fragrance) => setFormData({ ...formData, name: fragrance.name, brand: fragrance.brand })}
+                    nameId="collection-name"
+                    brandId="collection-brand"
+                    required
+                  />
                   <div className="space-y-2">
                     <Label htmlFor="size">Size</Label>
                     <Input
