@@ -19,6 +19,7 @@ import {
 import { Plus, Loader2, Trash2, Heart, MessageSquare, Search, Filter, ArrowUpDown, Upload, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
+import { FragranceSearch } from './FragranceSearch';
 
 type WishlistItem = {
   id: string;
@@ -369,28 +370,16 @@ export const WishlistManager = ({ profileId, profileUsername, isOwnProfile, curr
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="wish-name">Name *</Label>
-                    <Input
-                      id="wish-name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="e.g., Aventus"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="wish-brand">Brand *</Label>
-                    <Input
-                      id="wish-brand"
-                      value={formData.brand}
-                      onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                      placeholder="e.g., Creed"
-                      required
-                    />
-                  </div>
-                </div>
+                <FragranceSearch
+                  onSelect={(fragrance) => setFormData({ ...formData, name: fragrance.name, brand: fragrance.brand })}
+                  nameValue={formData.name}
+                  brandValue={formData.brand}
+                  onNameChange={(value) => setFormData({ ...formData, name: value })}
+                  onBrandChange={(value) => setFormData({ ...formData, brand: value })}
+                  nameId="wish-name"
+                  brandId="wish-brand"
+                  required
+                />
                 <div className="space-y-2">
                   <Label htmlFor="priority">Priority</Label>
                   <Select

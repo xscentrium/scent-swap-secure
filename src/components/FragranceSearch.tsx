@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 interface FragranceSuggestion {
   name: string;
   brand: string;
+  imageUrl?: string;
 }
 
 interface FragranceSearchProps {
@@ -132,19 +133,33 @@ export const FragranceSearch = ({
           </div>
           
           {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-auto">
+            <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-72 overflow-auto">
               {suggestions.map((suggestion, index) => (
                 <button
                   key={`${suggestion.name}-${suggestion.brand}`}
                   type="button"
                   className={cn(
-                    "w-full px-3 py-2 text-left hover:bg-accent transition-colors",
+                    "w-full px-3 py-2 text-left hover:bg-accent transition-colors flex items-center gap-3",
                     activeIndex === index && "bg-accent"
                   )}
                   onClick={() => handleSelect(suggestion)}
                 >
-                  <div className="font-medium text-sm">{suggestion.name}</div>
-                  <div className="text-xs text-muted-foreground">{suggestion.brand}</div>
+                  {suggestion.imageUrl ? (
+                    <img 
+                      src={suggestion.imageUrl} 
+                      alt={suggestion.name}
+                      className="w-10 h-10 rounded object-cover bg-muted flex-shrink-0"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded bg-muted flex-shrink-0" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-sm truncate">{suggestion.name}</div>
+                    <div className="text-xs text-muted-foreground truncate">{suggestion.brand}</div>
+                  </div>
                 </button>
               ))}
             </div>
