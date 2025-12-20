@@ -129,6 +129,122 @@ export type Database = {
           },
         ]
       }
+      fragrance_price_history: {
+        Row: {
+          condition: string
+          created_at: string
+          fragrance_brand: string
+          fragrance_name: string
+          id: string
+          listing_id: string | null
+          price: number
+          reported_by: string | null
+          size: string
+          source: string | null
+        }
+        Insert: {
+          condition?: string
+          created_at?: string
+          fragrance_brand: string
+          fragrance_name: string
+          id?: string
+          listing_id?: string | null
+          price: number
+          reported_by?: string | null
+          size: string
+          source?: string | null
+        }
+        Update: {
+          condition?: string
+          created_at?: string
+          fragrance_brand?: string
+          fragrance_name?: string
+          id?: string
+          listing_id?: string | null
+          price?: number
+          reported_by?: string | null
+          size?: string
+          source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fragrance_price_history_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fragrance_price_history_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fragrance_reviews: {
+        Row: {
+          cons: string[] | null
+          created_at: string
+          fragrance_brand: string
+          fragrance_name: string
+          id: string
+          longevity_rating: number | null
+          occasion_preferences: string[] | null
+          overall_rating: number
+          profile_id: string
+          pros: string[] | null
+          review_text: string | null
+          season_preferences: string[] | null
+          sillage_rating: number | null
+          updated_at: string
+          value_rating: number | null
+        }
+        Insert: {
+          cons?: string[] | null
+          created_at?: string
+          fragrance_brand: string
+          fragrance_name: string
+          id?: string
+          longevity_rating?: number | null
+          occasion_preferences?: string[] | null
+          overall_rating: number
+          profile_id: string
+          pros?: string[] | null
+          review_text?: string | null
+          season_preferences?: string[] | null
+          sillage_rating?: number | null
+          updated_at?: string
+          value_rating?: number | null
+        }
+        Update: {
+          cons?: string[] | null
+          created_at?: string
+          fragrance_brand?: string
+          fragrance_name?: string
+          id?: string
+          longevity_rating?: number | null
+          occasion_preferences?: string[] | null
+          overall_rating?: number
+          profile_id?: string
+          pros?: string[] | null
+          review_text?: string | null
+          season_preferences?: string[] | null
+          sillage_rating?: number | null
+          updated_at?: string
+          value_rating?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fragrance_reviews_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       influencer_content: {
         Row: {
           created_at: string | null

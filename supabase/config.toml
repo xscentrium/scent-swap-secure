@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.fragrance-details]
 verify_jwt = false
+
+[functions.fragrance-market-value]
+verify_jwt = false
