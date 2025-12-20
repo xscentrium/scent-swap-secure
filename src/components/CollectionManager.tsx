@@ -18,6 +18,8 @@ import {
 } from '@/components/ui/dialog';
 import { ImageUpload } from '@/components/ImageUpload';
 import { FragranceSearch } from '@/components/FragranceSearch';
+import { FragranceDetailsModal } from '@/components/FragranceDetailsModal';
+import { ShareButton } from '@/components/ShareButton';
 import { Plus, Loader2, Trash2, Package, Search, ArrowRight, ArrowUpDown, Upload, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -38,9 +40,10 @@ interface CollectionManagerProps {
   profileId: string;
   userId: string;
   isOwnProfile: boolean;
+  profileUsername: string;
 }
 
-export const CollectionManager = ({ profileId, userId, isOwnProfile }: CollectionManagerProps) => {
+export const CollectionManager = ({ profileId, userId, isOwnProfile, profileUsername }: CollectionManagerProps) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -49,6 +52,7 @@ export const CollectionManager = ({ profileId, userId, isOwnProfile }: Collectio
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedItem, setSelectedItem] = useState<{ name: string; brand: string; imageUrl?: string | null } | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     brand: '',
@@ -270,10 +274,14 @@ export const CollectionManager = ({ profileId, userId, isOwnProfile }: Collectio
             </SelectContent>
           </Select>
         </div>
-        
-        {isOwnProfile && (
-          <div className="flex gap-2">
-            <Dialog open={bulkDialogOpen} onOpenChange={setBulkDialogOpen}>
+        <div className="flex gap-2">
+          <ShareButton 
+            url={`/collection/${profileUsername}`} 
+            title={`${profileUsername}'s Fragrance Collection`} 
+          />
+          {isOwnProfile && (
+            <>
+              <Dialog open={bulkDialogOpen} onOpenChange={setBulkDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline">
                   <Upload className="w-4 h-4 mr-2" />
@@ -393,8 +401,9 @@ export const CollectionManager = ({ profileId, userId, isOwnProfile }: Collectio
                 </form>
               </DialogContent>
             </Dialog>
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </div>
 
       {items && items.length > 0 && searchQuery && filteredAndSortedItems.length === 0 && (
@@ -406,7 +415,11 @@ export const CollectionManager = ({ profileId, userId, isOwnProfile }: Collectio
       {filteredAndSortedItems.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {filteredAndSortedItems.map((item) => (
-            <Card key={item.id} className="overflow-hidden group relative">
+            <Card 
+              key={item.id} 
+              className="overflow-hidden group relative cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => setSelectedItem({ name: item.name, brand: item.brand, imageUrl: item.image_url })}
+            >
               <div className="aspect-square bg-muted">
                 {item.image_url ? (
                   <img
@@ -426,7 +439,10 @@ export const CollectionManager = ({ profileId, userId, isOwnProfile }: Collectio
                 {item.size && <p className="text-xs text-muted-foreground">{item.size}</p>}
               </CardContent>
               {isOwnProfile && (
-                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div 
+                  className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <Button
                     variant="secondary"
                     size="icon"
@@ -457,6 +473,16 @@ export const CollectionManager = ({ profileId, userId, isOwnProfile }: Collectio
             <p className="text-sm mt-2">Add fragrances you own to showcase them!</p>
           )}
         </div>
+      )}
+
+      {selectedItem && (
+        <FragranceDetailsModal
+          open={!!selectedItem}
+          onOpenChange={() => setSelectedItem(null)}
+          name={selectedItem.name}
+          brand={selectedItem.brand}
+          imageUrl={selectedItem.imageUrl}
+        />
       )}
     </div>
   );

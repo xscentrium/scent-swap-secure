@@ -20,6 +20,8 @@ import { Plus, Loader2, Trash2, Heart, MessageSquare, Search, Filter, ArrowUpDow
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { FragranceSearch } from './FragranceSearch';
+import { FragranceDetailsModal } from './FragranceDetailsModal';
+import { ShareButton } from './ShareButton';
 
 type WishlistItem = {
   id: string;
@@ -49,6 +51,7 @@ export const WishlistManager = ({ profileId, profileUsername, isOwnProfile, curr
   const [searchQuery, setSearchQuery] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [selectedItem, setSelectedItem] = useState<{ name: string; brand: string } | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     brand: '',
@@ -292,128 +295,134 @@ export const WishlistManager = ({ profileId, profileUsername, isOwnProfile, curr
           </Select>
         </div>
         
-        {isOwnProfile && (
-          <div className="flex gap-2">
-            <Dialog open={bulkDialogOpen} onOpenChange={setBulkDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline">
-                  <Upload className="w-4 h-4 mr-2" />
-                  Bulk Import
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-lg">
-                <DialogHeader>
-                  <DialogTitle>Bulk Import to Wishlist</DialogTitle>
-                  <DialogDescription>
-                    Import multiple fragrances at once from a CSV file or paste a list
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="flex gap-2">
-                    <input
-                      type="file"
-                      accept=".csv,.txt"
-                      ref={fileInputRef}
-                      onChange={handleFileUpload}
-                      className="hidden"
-                    />
-                    <Button
-                      variant="outline"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="flex-1"
+        <div className="flex gap-2">
+          <ShareButton 
+            url={`/wishlist/${profileUsername}`} 
+            title={`${profileUsername}'s Fragrance Wishlist`} 
+          />
+          {isOwnProfile && (
+            <>
+              <Dialog open={bulkDialogOpen} onOpenChange={setBulkDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline">
+                    <Upload className="w-4 h-4 mr-2" />
+                    Bulk Import
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>Bulk Import to Wishlist</DialogTitle>
+                    <DialogDescription>
+                      Import multiple fragrances at once from a CSV file or paste a list
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="flex gap-2">
+                      <input
+                        type="file"
+                        accept=".csv,.txt"
+                        ref={fileInputRef}
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                      <Button
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex-1"
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Upload CSV
+                      </Button>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Or paste your list below</Label>
+                      <Textarea
+                        value={bulkInput}
+                        onChange={(e) => setBulkInput(e.target.value)}
+                        placeholder="Name, Brand, Priority (one per line)&#10;Aventus, Creed, high&#10;Sauvage, Dior, medium&#10;Bleu de Chanel, Chanel, low"
+                        rows={8}
+                        className="font-mono text-sm"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Format: Name, Brand, Priority (priority is optional: high/medium/low)
+                      </p>
+                    </div>
+                    {bulkInput && (
+                      <p className="text-sm text-muted-foreground">
+                        {parseBulkInput(bulkInput).length} fragrances detected
+                      </p>
+                    )}
+                    <Button 
+                      onClick={handleBulkImport} 
+                      className="w-full" 
+                      disabled={bulkImport.isPending || !bulkInput.trim()}
                     >
-                      <FileText className="w-4 h-4 mr-2" />
-                      Upload CSV
+                      {bulkImport.isPending ? 'Importing...' : 'Import All'}
                     </Button>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Or paste your list below</Label>
-                    <Textarea
-                      value={bulkInput}
-                      onChange={(e) => setBulkInput(e.target.value)}
-                      placeholder="Name, Brand, Priority (one per line)&#10;Aventus, Creed, high&#10;Sauvage, Dior, medium&#10;Bleu de Chanel, Chanel, low"
-                      rows={8}
-                      className="font-mono text-sm"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Format: Name, Brand, Priority (priority is optional: high/medium/low)
-                    </p>
-                  </div>
-                  {bulkInput && (
-                    <p className="text-sm text-muted-foreground">
-                      {parseBulkInput(bulkInput).length} fragrances detected
-                    </p>
-                  )}
-                  <Button 
-                    onClick={handleBulkImport} 
-                    className="w-full" 
-                    disabled={bulkImport.isPending || !bulkInput.trim()}
-                  >
-                    {bulkImport.isPending ? 'Importing...' : 'Import All'}
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
 
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add to Wishlist
-                </Button>
-              </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add to Your Wishlist</DialogTitle>
-                <DialogDescription>
-                  Add a fragrance you're looking for so others can offer trades
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <FragranceSearch
-                  onSelect={(fragrance) => setFormData({ ...formData, name: fragrance.name, brand: fragrance.brand })}
-                  nameValue={formData.name}
-                  brandValue={formData.brand}
-                  onNameChange={(value) => setFormData({ ...formData, name: value })}
-                  onBrandChange={(value) => setFormData({ ...formData, brand: value })}
-                  nameId="wish-name"
-                  brandId="wish-brand"
-                  required
-                />
-                <div className="space-y-2">
-                  <Label htmlFor="priority">Priority</Label>
-                  <Select
-                    value={formData.priority}
-                    onValueChange={(value) => setFormData({ ...formData, priority: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="high">High Priority</SelectItem>
-                      <SelectItem value="medium">Medium Priority</SelectItem>
-                      <SelectItem value="low">Low Priority</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="wish-notes">Notes</Label>
-                  <Textarea
-                    id="wish-notes"
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    placeholder="Preferred size, batch, condition, etc..."
-                    rows={2}
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={addItem.isPending}>
-                  {addItem.isPending ? 'Adding...' : 'Add to Wishlist'}
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-          </div>
-        )}
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add to Wishlist
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add to Your Wishlist</DialogTitle>
+                    <DialogDescription>
+                      Add a fragrance you're looking for so others can offer trades
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <FragranceSearch
+                      onSelect={(fragrance) => setFormData({ ...formData, name: fragrance.name, brand: fragrance.brand })}
+                      nameValue={formData.name}
+                      brandValue={formData.brand}
+                      onNameChange={(value) => setFormData({ ...formData, name: value })}
+                      onBrandChange={(value) => setFormData({ ...formData, brand: value })}
+                      nameId="wish-name"
+                      brandId="wish-brand"
+                      required
+                    />
+                    <div className="space-y-2">
+                      <Label htmlFor="priority">Priority</Label>
+                      <Select
+                        value={formData.priority}
+                        onValueChange={(value) => setFormData({ ...formData, priority: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="high">High Priority</SelectItem>
+                          <SelectItem value="medium">Medium Priority</SelectItem>
+                          <SelectItem value="low">Low Priority</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="wish-notes">Notes</Label>
+                      <Textarea
+                        id="wish-notes"
+                        value={formData.notes}
+                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                        placeholder="Preferred size, batch, condition, etc..."
+                        rows={2}
+                      />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={addItem.isPending}>
+                      {addItem.isPending ? 'Adding...' : 'Add to Wishlist'}
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </>
+          )}
+        </div>
       </div>
 
       {items && items.length > 0 && (searchQuery || priorityFilter !== 'all') && filteredAndSortedItems.length === 0 && (
@@ -425,7 +434,11 @@ export const WishlistManager = ({ profileId, profileUsername, isOwnProfile, curr
       {filteredAndSortedItems.length > 0 ? (
         <div className="space-y-3">
           {filteredAndSortedItems.map((item) => (
-            <Card key={item.id} className="overflow-hidden">
+            <Card 
+              key={item.id} 
+              className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => setSelectedItem({ name: item.name, brand: item.brand })}
+            >
               <CardContent className="p-4 flex items-center justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
@@ -439,7 +452,7 @@ export const WishlistManager = ({ profileId, profileUsername, isOwnProfile, curr
                     <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{item.notes}</p>
                   )}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                   {!isOwnProfile && currentUserProfile && (
                     <Button size="sm" variant="outline" asChild>
                       <Link to={`/messages?to=${profileUsername}&about=wishlist:${item.name}`}>
@@ -471,6 +484,15 @@ export const WishlistManager = ({ profileId, profileUsername, isOwnProfile, curr
             <p className="text-sm mt-2">Add fragrances you're looking for!</p>
           )}
         </div>
+      )}
+
+      {selectedItem && (
+        <FragranceDetailsModal
+          open={!!selectedItem}
+          onOpenChange={() => setSelectedItem(null)}
+          name={selectedItem.name}
+          brand={selectedItem.brand}
+        />
       )}
     </div>
   );

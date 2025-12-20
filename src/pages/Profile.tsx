@@ -397,6 +397,7 @@ const Profile = () => {
                 profileId={profileData.id}
                 userId={profileData.user_id}
                 isOwnProfile={isOwnProfile}
+                profileUsername={profileData.username}
               />
             </TabsContent>
 
