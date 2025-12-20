@@ -66,15 +66,46 @@ serve(async (req) => {
       console.error('Failed to parse suggestions:', e);
     }
 
-    // Add image URLs for each fragrance
-    const suggestionsWithImages = suggestions.slice(0, 5).map((suggestion) => {
-      // Using picsum for reliable placeholder images with consistent sizing
-      const imageUrl = `https://picsum.photos/seed/${encodeURIComponent(suggestion.name + suggestion.brand)}/80/80`;
-      return {
-        ...suggestion,
-        imageUrl,
-      };
-    });
+    // Generate fragrance bottle images using AI for each suggestion (limited to first 3 for performance)
+    const suggestionsWithImages = await Promise.all(
+      suggestions.slice(0, 5).map(async (suggestion) => {
+        try {
+          const imageResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'google/gemini-2.5-flash-image-preview',
+              messages: [
+                {
+                  role: 'user',
+                  content: `Generate a photorealistic product image of a ${suggestion.brand} ${suggestion.name} perfume bottle on a clean white background. Professional product photography style, elegant lighting, high quality.`
+                }
+              ],
+              modalities: ['image', 'text']
+            }),
+          });
+
+          if (imageResponse.ok) {
+            const imageData = await imageResponse.json();
+            const imageUrl = imageData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+            if (imageUrl) {
+              return { ...suggestion, imageUrl };
+            }
+          }
+        } catch (e) {
+          console.error('Failed to generate image for', suggestion.name, e);
+        }
+        
+        // Fallback to placeholder if image generation fails
+        return {
+          ...suggestion,
+          imageUrl: `https://picsum.photos/seed/${encodeURIComponent(suggestion.name + suggestion.brand)}/80/80`,
+        };
+      })
+    );
 
     return new Response(
       JSON.stringify({ suggestions: suggestionsWithImages }),

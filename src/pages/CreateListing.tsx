@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useCanTrade } from '@/hooks/useCanTrade';
 import { supabase } from '@/integrations/supabase/client';
 import { Navigation } from '@/components/Navigation';
 import { ImageUpload } from '@/components/ImageUpload';
+import { FragranceSearch } from '@/components/FragranceSearch';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +14,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ArrowLeft, Loader2, Users } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, Loader2, Users, Sparkles, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -34,6 +37,14 @@ const CreateListing = () => {
   const { user, profile, loading } = useAuth();
   const { canTrade, reason: tradeBlockReason, loading: tradeCheckLoading } = useCanTrade();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [fragranceDetails, setFragranceDetails] = useState<{
+    topNotes?: string[];
+    heartNotes?: string[];
+    baseNotes?: string[];
+    mainAccords?: string[];
+    concentration?: string;
+  } | null>(null);
   
   const [formData, setFormData] = useState<{
     name: string;
@@ -56,6 +67,56 @@ const CreateListing = () => {
     description: '',
     image_url: '',
   });
+
+  // Fetch fragrance details when name and brand are selected
+  const fetchFragranceDetails = async (name: string, brand: string) => {
+    if (!name || !brand) return;
+    
+    setIsLoadingDetails(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fragrance-details', {
+        body: { name, brand },
+      });
+      
+      if (error) throw error;
+      
+      if (data?.details) {
+        setFragranceDetails(data.details);
+        
+        // Build auto-generated description
+        const details = data.details;
+        let autoDescription = `${name} by ${brand}`;
+        if (details.concentration) {
+          autoDescription += ` (${details.concentration})`;
+        }
+        autoDescription += '.';
+        
+        if (details.mainAccords?.length) {
+          autoDescription += ` Main accords: ${details.mainAccords.slice(0, 3).join(', ')}.`;
+        }
+        
+        if (details.topNotes?.length) {
+          autoDescription += ` Top notes include ${details.topNotes.slice(0, 3).join(', ')}.`;
+        }
+        
+        // Only update description if it's empty
+        if (!formData.description) {
+          setFormData(prev => ({ ...prev, description: autoDescription }));
+        }
+        
+        toast.success('Fragrance details loaded!');
+      }
+    } catch (e) {
+      console.error('Failed to fetch fragrance details:', e);
+    } finally {
+      setIsLoadingDetails(false);
+    }
+  };
+
+  const handleFragranceSelect = (fragrance: { name: string; brand: string }) => {
+    setFormData(prev => ({ ...prev, name: fragrance.name, brand: fragrance.brand }));
+    fetchFragranceDetails(fragrance.name, fragrance.brand);
+  };
 
   // Pre-fill from URL params (when converting from collection)
   useEffect(() => {
@@ -222,29 +283,75 @@ const CreateListing = () => {
                   <p className="text-xs text-muted-foreground">Required: Upload a clear photo of your fragrance</p>
                 </div>
 
-                {/* Basic Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Fragrance Name *</Label>
-                    <Input
-                      id="name"
-                      placeholder="e.g., Bleu de Chanel"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      required
-                    />
+                {/* Fragrance Search with Auto-populate */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Label>Search Fragrance</Label>
+                    <Badge variant="secondary" className="text-xs">
+                      <Sparkles className="w-3 h-3 mr-1" />
+                      Auto-fill details
+                    </Badge>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="brand">Brand *</Label>
-                    <Input
-                      id="brand"
-                      placeholder="e.g., Chanel"
-                      value={formData.brand}
-                      onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                      required
-                    />
-                  </div>
+                  <FragranceSearch
+                    nameValue={formData.name}
+                    brandValue={formData.brand}
+                    onNameChange={(value) => setFormData({ ...formData, name: value })}
+                    onBrandChange={(value) => setFormData({ ...formData, brand: value })}
+                    onSelect={handleFragranceSelect}
+                    nameId="listing-name"
+                    brandId="listing-brand"
+                    required
+                  />
+                  {isLoadingDetails && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Loading fragrance details...
+                    </div>
+                  )}
                 </div>
+
+                {/* Show fetched fragrance details */}
+                {fragranceDetails && (
+                  <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <Info className="w-4 h-4" />
+                      Fragrance Information
+                    </div>
+                    {fragranceDetails.concentration && (
+                      <Badge variant="outline">{fragranceDetails.concentration}</Badge>
+                    )}
+                    {fragranceDetails.mainAccords && fragranceDetails.mainAccords.length > 0 && (
+                      <div>
+                        <span className="text-xs text-muted-foreground">Main Accords: </span>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {fragranceDetails.mainAccords.map((accord) => (
+                            <Badge key={accord} variant="secondary" className="text-xs capitalize">
+                              {accord}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {fragranceDetails.topNotes && fragranceDetails.topNotes.length > 0 && (
+                      <div>
+                        <span className="text-xs text-muted-foreground">Top Notes: </span>
+                        <span className="text-xs">{fragranceDetails.topNotes.join(', ')}</span>
+                      </div>
+                    )}
+                    {fragranceDetails.heartNotes && fragranceDetails.heartNotes.length > 0 && (
+                      <div>
+                        <span className="text-xs text-muted-foreground">Heart Notes: </span>
+                        <span className="text-xs">{fragranceDetails.heartNotes.join(', ')}</span>
+                      </div>
+                    )}
+                    {fragranceDetails.baseNotes && fragranceDetails.baseNotes.length > 0 && (
+                      <div>
+                        <span className="text-xs text-muted-foreground">Base Notes: </span>
+                        <span className="text-xs">{fragranceDetails.baseNotes.join(', ')}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
