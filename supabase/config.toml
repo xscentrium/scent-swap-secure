@@ -1,1 +1,7 @@
 project_id = "neuxsthayhuzavuyuouw"
+
+[functions.fragrance-search]
+verify_jwt = false
+
+[functions.fragrance-details]
+verify_jwt = false
