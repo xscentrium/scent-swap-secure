@@ -22,6 +22,7 @@ import SharedCollection from "./pages/SharedCollection";
 import SharedWishlist from "./pages/SharedWishlist";
 import FragranceComparison from "./pages/FragranceComparison";
 import Discover from "./pages/Discover";
+import ScentQuiz from "./pages/ScentQuiz";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/wishlist/:username" element={<SharedWishlist />} />
             <Route path="/compare" element={<FragranceComparison />} />
             <Route path="/discover" element={<Discover />} />
+            <Route path="/scent-quiz" element={<ScentQuiz />} />
             <Route path="/create-listing" element={<CreateListing />} />
             <Route path="/influencers" element={<InfluencerHub />} />
             <Route path="/trade/:listingId" element={<Trade />} />
