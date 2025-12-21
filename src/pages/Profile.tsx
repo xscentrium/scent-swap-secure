@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Navigation } from '@/components/Navigation';
 import { CollectionManager } from '@/components/CollectionManager';
 import { WishlistManager } from '@/components/WishlistManager';
+import { FavoritesManager } from '@/components/FavoritesManager';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -346,6 +347,12 @@ const Profile = () => {
                 <Heart className="w-4 h-4 mr-1" />
                 Wishlist
               </TabsTrigger>
+              {isOwnProfile && (
+                <TabsTrigger value="favorites">
+                  <Heart className="w-4 h-4 mr-1 fill-current" />
+                  Favorites
+                </TabsTrigger>
+              )}
               <TabsTrigger value="trades">Trade History</TabsTrigger>
             </TabsList>
 
@@ -409,6 +416,12 @@ const Profile = () => {
                 currentUserProfile={currentUserProfile}
               />
             </TabsContent>
+
+            {isOwnProfile && (
+              <TabsContent value="favorites">
+                <FavoritesManager showCompareButton={true} />
+              </TabsContent>
+            )}
 
             <TabsContent value="trades">
               <div className="text-center py-12 text-muted-foreground">
