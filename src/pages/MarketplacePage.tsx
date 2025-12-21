@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Star, Shield, Search, Filter, ArrowUpDown, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { FavoriteButton } from '@/components/FavoriteButton';
 
 type Listing = {
   id: string;
@@ -168,6 +169,14 @@ const MarketplacePage = () => {
                         No Image
                       </div>
                     )}
+                    <div className="absolute top-3 left-3">
+                      <FavoriteButton
+                        name={listing.name}
+                        brand={listing.brand}
+                        imageUrl={listing.image_url || undefined}
+                        className="bg-background/80 hover:bg-background"
+                      />
+                    </div>
                     <div className="absolute top-3 right-3 flex flex-col gap-2">
                       {listing.listing_type === 'trade' && (
                         <Badge className="bg-accent text-accent-foreground">Trade Only</Badge>

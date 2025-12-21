@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ShieldCheck, Star } from "lucide-react";
+import { FavoriteButton } from "@/components/FavoriteButton";
 
 interface Listing {
   id: string;
@@ -96,6 +97,14 @@ export const Marketplace = () => {
                   alt={listing.name}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
+                <div className="absolute top-3 left-3">
+                  <FavoriteButton
+                    name={listing.name}
+                    brand={listing.brand}
+                    imageUrl={listing.image}
+                    className="bg-background/80 hover:bg-background"
+                  />
+                </div>
                 {listing.ownerVerified && (
                   <Badge className="absolute top-3 right-3 bg-primary text-primary-foreground border-0">
                     <ShieldCheck className="w-3 h-3 mr-1" />
