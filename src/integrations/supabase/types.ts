@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_feed: {
+        Row: {
+          activity_type: string
+          created_at: string
+          description: string | null
+          id: string
+          metadata: Json | null
+          profile_id: string
+          title: string
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          profile_id: string
+          title: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          profile_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_feed_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       affiliate_links: {
         Row: {
           affiliate_url: string
@@ -532,6 +570,56 @@ export type Database = {
           },
         ]
       }
+      samples_decants: {
+        Row: {
+          acquired_date: string | null
+          acquired_from: string | null
+          brand: string
+          created_at: string
+          id: string
+          image_url: string | null
+          name: string
+          notes: string | null
+          profile_id: string
+          size_ml: number
+          type: string
+        }
+        Insert: {
+          acquired_date?: string | null
+          acquired_from?: string | null
+          brand: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name: string
+          notes?: string | null
+          profile_id: string
+          size_ml: number
+          type?: string
+        }
+        Update: {
+          acquired_date?: string | null
+          acquired_from?: string | null
+          brand?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name?: string
+          notes?: string | null
+          profile_id?: string
+          size_ml?: number
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "samples_decants_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scent_logs: {
         Row: {
           created_at: string
@@ -617,6 +705,50 @@ export type Database = {
             columns: ["trade_id"]
             isOneToOne: false
             referencedRelation: "trades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trade_preferences: {
+        Row: {
+          avoid_notes: string[] | null
+          blind_match_enabled: boolean | null
+          id: string
+          max_value: number | null
+          min_value: number | null
+          preferred_brands: string[] | null
+          preferred_notes: string[] | null
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          avoid_notes?: string[] | null
+          blind_match_enabled?: boolean | null
+          id?: string
+          max_value?: number | null
+          min_value?: number | null
+          preferred_brands?: string[] | null
+          preferred_notes?: string[] | null
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          avoid_notes?: string[] | null
+          blind_match_enabled?: boolean | null
+          id?: string
+          max_value?: number | null
+          min_value?: number | null
+          preferred_brands?: string[] | null
+          preferred_notes?: string[] | null
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trade_preferences_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -795,6 +927,38 @@ export type Database = {
             foreignKeyName: "trust_scores_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_badges: {
+        Row: {
+          badge_name: string
+          badge_type: string
+          earned_at: string
+          id: string
+          profile_id: string
+        }
+        Insert: {
+          badge_name: string
+          badge_type: string
+          earned_at?: string
+          id?: string
+          profile_id: string
+        }
+        Update: {
+          badge_name?: string
+          badge_type?: string
+          earned_at?: string
+          id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },

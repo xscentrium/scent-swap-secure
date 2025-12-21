@@ -4,10 +4,12 @@ import { Navigation } from '@/components/Navigation';
 import { AIRecommendations } from '@/components/AIRecommendations';
 import { FragranceLayering } from '@/components/FragranceLayering';
 import { FavoritesManager } from '@/components/FavoritesManager';
+import { ActivityFeed } from '@/components/ActivityFeed';
+import { TrendingFragrances } from '@/components/TrendingFragrances';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Sparkles, Layers, Heart, GitCompare } from 'lucide-react';
+import { ArrowLeft, Sparkles, GitCompare } from 'lucide-react';
 
 const Discover = () => {
   const { profile } = useAuth();
@@ -82,8 +84,14 @@ const Discover = () => {
 
             {/* Sidebar */}
             <div className="space-y-6">
+              {/* Trending Fragrances */}
+              <TrendingFragrances />
+              
               {/* Favorites */}
               <FavoritesManager />
+              
+              {/* Activity Feed */}
+              <ActivityFeed />
             </div>
           </div>
         </div>

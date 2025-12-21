@@ -7,6 +7,8 @@ import { Navigation } from '@/components/Navigation';
 import { CollectionManager } from '@/components/CollectionManager';
 import { WishlistManager } from '@/components/WishlistManager';
 import { FavoritesManager } from '@/components/FavoritesManager';
+import { UserBadges } from '@/components/UserBadges';
+import { SampleDecantTracker } from '@/components/SampleDecantTracker';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -353,6 +355,8 @@ const Profile = () => {
                   Favorites
                 </TabsTrigger>
               )}
+              <TabsTrigger value="samples">Samples</TabsTrigger>
+              <TabsTrigger value="badges">Badges</TabsTrigger>
               <TabsTrigger value="trades">Trade History</TabsTrigger>
             </TabsList>
 
@@ -422,6 +426,14 @@ const Profile = () => {
                 <FavoritesManager showCompareButton={true} />
               </TabsContent>
             )}
+
+            <TabsContent value="samples">
+              <SampleDecantTracker />
+            </TabsContent>
+
+            <TabsContent value="badges">
+              <UserBadges profileId={profileData.id} />
+            </TabsContent>
 
             <TabsContent value="trades">
               <div className="text-center py-12 text-muted-foreground">
