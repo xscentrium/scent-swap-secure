@@ -22,6 +22,7 @@ type Recommendation = {
   similarity?: string;
   fillsGap?: string;
   versatility?: string;
+  imageUrl?: string | null;
 };
 
 interface AIRecommendationsProps {
@@ -235,8 +236,16 @@ export const AIRecommendations = ({ collection, wishlist }: AIRecommendationsPro
                 key={`${rec.name}-${rec.brand}-${idx}`}
                 className="flex gap-4 p-4 rounded-lg border bg-card hover:shadow-md transition-shadow"
               >
-                <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shrink-0">
-                  <Sparkles className="w-6 h-6 text-primary" />
+                <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shrink-0 overflow-hidden">
+                  {rec.imageUrl ? (
+                    <img 
+                      src={rec.imageUrl} 
+                      alt={`${rec.name} by ${rec.brand}`}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Sparkles className="w-6 h-6 text-primary" />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
