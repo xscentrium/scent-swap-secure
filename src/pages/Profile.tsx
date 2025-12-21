@@ -9,6 +9,9 @@ import { WishlistManager } from '@/components/WishlistManager';
 import { FavoritesManager } from '@/components/FavoritesManager';
 import { UserBadges } from '@/components/UserBadges';
 import { SampleDecantTracker } from '@/components/SampleDecantTracker';
+import { SOTDTracker } from '@/components/SOTDTracker';
+import { CollectionValueDashboard } from '@/components/CollectionValueDashboard';
+import { FragranceCalendar } from '@/components/FragranceCalendar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +19,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   User, Shield, Star, Instagram, Twitter, Facebook, 
-  ExternalLink, Copy, CheckCircle, Loader2, Settings, Plus, Package, Heart
+  ExternalLink, Copy, CheckCircle, Loader2, Settings, Plus, Package, Heart,
+  CalendarDays, TrendingUp, Sparkles
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -355,6 +359,22 @@ const Profile = () => {
                   Favorites
                 </TabsTrigger>
               )}
+              {isOwnProfile && (
+                <>
+                  <TabsTrigger value="calendar">
+                    <CalendarDays className="w-4 h-4 mr-1" />
+                    Calendar
+                  </TabsTrigger>
+                  <TabsTrigger value="sotd">
+                    <Sparkles className="w-4 h-4 mr-1" />
+                    SOTD
+                  </TabsTrigger>
+                  <TabsTrigger value="value">
+                    <TrendingUp className="w-4 h-4 mr-1" />
+                    Value
+                  </TabsTrigger>
+                </>
+              )}
               <TabsTrigger value="samples">Samples</TabsTrigger>
               <TabsTrigger value="badges">Badges</TabsTrigger>
               <TabsTrigger value="trades">Trade History</TabsTrigger>
@@ -425,6 +445,22 @@ const Profile = () => {
               <TabsContent value="favorites">
                 <FavoritesManager showCompareButton={true} />
               </TabsContent>
+            )}
+
+            {isOwnProfile && (
+              <>
+                <TabsContent value="calendar">
+                  <FragranceCalendar />
+                </TabsContent>
+
+                <TabsContent value="sotd">
+                  <SOTDTracker />
+                </TabsContent>
+
+                <TabsContent value="value">
+                  <CollectionValueDashboard />
+                </TabsContent>
+              </>
             )}
 
             <TabsContent value="samples">
