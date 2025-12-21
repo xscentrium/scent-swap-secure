@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FragranceReviews } from '@/components/FragranceReviews';
 import { PriceTracker } from '@/components/PriceTracker';
+import { FavoriteButton } from '@/components/FavoriteButton';
 import { Star, Sun, Moon, Snowflake, Leaf, Flower2, CloudSun, Clock, Wind } from 'lucide-react';
 
 type FragranceDetails = {
@@ -98,8 +99,18 @@ export const FragranceDetailsModal = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="font-serif text-xl">{name}</DialogTitle>
-          <p className="text-muted-foreground">{brand}</p>
+          <div className="flex items-start justify-between">
+            <div>
+              <DialogTitle className="font-serif text-xl">{name}</DialogTitle>
+              <p className="text-muted-foreground">{brand}</p>
+            </div>
+            <FavoriteButton 
+              name={name} 
+              brand={brand} 
+              imageUrl={imageUrl || undefined}
+              className="mr-6"
+            />
+          </div>
         </DialogHeader>
 
         {isLoading ? (

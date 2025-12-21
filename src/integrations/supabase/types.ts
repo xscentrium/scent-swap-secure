@@ -93,6 +93,41 @@ export type Database = {
           },
         ]
       }
+      favorite_fragrances: {
+        Row: {
+          created_at: string
+          fragrance_brand: string
+          fragrance_name: string
+          id: string
+          image_url: string | null
+          profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          fragrance_brand: string
+          fragrance_name: string
+          id?: string
+          image_url?: string | null
+          profile_id: string
+        }
+        Update: {
+          created_at?: string
+          fragrance_brand?: string
+          fragrance_name?: string
+          id?: string
+          image_url?: string | null
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorite_fragrances_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       follows: {
         Row: {
           created_at: string | null
