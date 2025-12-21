@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Sparkles, Settings, MessageCircle } from "lucide-react";
+import { Sparkles, Settings, MessageCircle, Heart, GitCompare } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -20,6 +20,9 @@ export const Navigation = () => {
             <Link to="/marketplace" className="text-sm font-medium hover:text-primary transition-colors">
               Marketplace
             </Link>
+            <Link to="/compare" className="text-sm font-medium hover:text-primary transition-colors">
+              Compare
+            </Link>
             <Link to="/influencers" className="text-sm font-medium hover:text-primary transition-colors">
               Influencers
             </Link>
@@ -33,7 +36,12 @@ export const Navigation = () => {
           <div className="flex items-center gap-3">
             {user && profile ? (
               <>
-                <NotificationBell />
+              <NotificationBell />
+                <Button variant="ghost" size="icon" asChild>
+                  <Link to="/favorites">
+                    <Heart className="w-5 h-5" />
+                  </Link>
+                </Button>
                 <Button variant="ghost" size="icon" asChild>
                   <Link to="/messages">
                     <MessageCircle className="w-5 h-5" />
