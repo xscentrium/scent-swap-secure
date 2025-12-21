@@ -24,8 +24,6 @@ export const NotificationBell = () => {
         return `/trade/${notification.data?.trade_id}`;
       case 'new_follower':
         return `/profile/${notification.data?.follower_username}`;
-      case 'fragrance_review':
-        return '/compare';
       default:
         return '#';
     }
@@ -43,8 +41,6 @@ export const NotificationBell = () => {
         return '🎉';
       case 'new_follower':
         return '👤';
-      case 'fragrance_review':
-        return '⭐';
       default:
         return '🔔';
     }
