@@ -23,6 +23,7 @@ import SharedWishlist from "./pages/SharedWishlist";
 import FragranceComparison from "./pages/FragranceComparison";
 import Discover from "./pages/Discover";
 import ScentQuiz from "./pages/ScentQuiz";
+import Leaderboard from "./pages/Leaderboard";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="/trade/:listingId" element={<Trade />} />
             <Route path="/my-trades" element={<MyTrades />} />
             <Route path="/trade-matches" element={<TradeMatches />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/admin/verification" element={<AdminVerification />} />

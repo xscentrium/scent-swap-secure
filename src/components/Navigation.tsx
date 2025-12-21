@@ -11,6 +11,7 @@ const navLinks = [
   { to: "/compare", label: "Compare" },
   { to: "/discover", label: "Discover" },
   { to: "/trade-matches", label: "Trade Matches" },
+  { to: "/leaderboard", label: "Leaderboard" },
   { to: "/influencers", label: "Influencers" },
 ];
 
