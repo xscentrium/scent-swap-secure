@@ -440,6 +440,7 @@ export type Database = {
           is_influencer: boolean | null
           referral_code: string | null
           referred_by: string | null
+          scent_preferences: Json | null
           tiktok_url: string | null
           tiktok_verified: boolean | null
           trade_matches_enabled: boolean | null
@@ -471,6 +472,7 @@ export type Database = {
           is_influencer?: boolean | null
           referral_code?: string | null
           referred_by?: string | null
+          scent_preferences?: Json | null
           tiktok_url?: string | null
           tiktok_verified?: boolean | null
           trade_matches_enabled?: boolean | null
@@ -502,6 +504,7 @@ export type Database = {
           is_influencer?: boolean | null
           referral_code?: string | null
           referred_by?: string | null
+          scent_preferences?: Json | null
           tiktok_url?: string | null
           tiktok_verified?: boolean | null
           trade_matches_enabled?: boolean | null
@@ -523,6 +526,56 @@ export type Database = {
           {
             foreignKeyName: "profiles_referred_by_fkey"
             columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scent_logs: {
+        Row: {
+          created_at: string
+          fragrance_brand: string
+          fragrance_name: string
+          id: string
+          logged_date: string
+          mood: string | null
+          notes: string | null
+          occasion: string | null
+          profile_id: string
+          rating: number | null
+          weather: string | null
+        }
+        Insert: {
+          created_at?: string
+          fragrance_brand: string
+          fragrance_name: string
+          id?: string
+          logged_date?: string
+          mood?: string | null
+          notes?: string | null
+          occasion?: string | null
+          profile_id: string
+          rating?: number | null
+          weather?: string | null
+        }
+        Update: {
+          created_at?: string
+          fragrance_brand?: string
+          fragrance_name?: string
+          id?: string
+          logged_date?: string
+          mood?: string | null
+          notes?: string | null
+          occasion?: string | null
+          profile_id?: string
+          rating?: number | null
+          weather?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scent_logs_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -561,6 +614,67 @@ export type Database = {
           },
           {
             foreignKeyName: "trade_messages_trade_id_fkey"
+            columns: ["trade_id"]
+            isOneToOne: false
+            referencedRelation: "trades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trade_ratings: {
+        Row: {
+          accuracy_rating: number | null
+          communication_rating: number | null
+          created_at: string
+          id: string
+          packaging_rating: number | null
+          rated_id: string
+          rater_id: string
+          rating: number
+          review_text: string | null
+          trade_id: string
+        }
+        Insert: {
+          accuracy_rating?: number | null
+          communication_rating?: number | null
+          created_at?: string
+          id?: string
+          packaging_rating?: number | null
+          rated_id: string
+          rater_id: string
+          rating: number
+          review_text?: string | null
+          trade_id: string
+        }
+        Update: {
+          accuracy_rating?: number | null
+          communication_rating?: number | null
+          created_at?: string
+          id?: string
+          packaging_rating?: number | null
+          rated_id?: string
+          rater_id?: string
+          rating?: number
+          review_text?: string | null
+          trade_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trade_ratings_rated_id_fkey"
+            columns: ["rated_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trade_ratings_rater_id_fkey"
+            columns: ["rater_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trade_ratings_trade_id_fkey"
             columns: ["trade_id"]
             isOneToOne: false
             referencedRelation: "trades"
@@ -642,6 +756,50 @@ export type Database = {
           },
         ]
       }
+      trust_scores: {
+        Row: {
+          average_rating: number | null
+          calculated_score: number
+          id: string
+          last_updated: string
+          profile_id: string
+          total_ratings: number
+          total_trades_cancelled: number
+          total_trades_completed: number
+          verification_bonus: number
+        }
+        Insert: {
+          average_rating?: number | null
+          calculated_score?: number
+          id?: string
+          last_updated?: string
+          profile_id: string
+          total_ratings?: number
+          total_trades_cancelled?: number
+          total_trades_completed?: number
+          verification_bonus?: number
+        }
+        Update: {
+          average_rating?: number | null
+          calculated_score?: number
+          id?: string
+          last_updated?: string
+          profile_id?: string
+          total_ratings?: number
+          total_trades_cancelled?: number
+          total_trades_completed?: number
+          verification_bonus?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trust_scores_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -709,6 +867,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      recalculate_trust_score: {
+        Args: { p_profile_id: string }
+        Returns: undefined
       }
     }
     Enums: {
