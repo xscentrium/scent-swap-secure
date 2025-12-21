@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Bell, MessageSquare, Award, ArrowLeftRight, FileText, Loader2 } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Bell, MessageSquare, Award, ArrowLeftRight, FileText, Loader2, Mail } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
@@ -16,13 +16,14 @@ interface NotificationPrefs {
   badge_earned: boolean;
   fragrance_reviews: boolean;
   push_enabled: boolean;
+  email_digest_enabled: boolean;
+  email_digest_frequency: 'daily' | 'weekly';
 }
 
 export const NotificationPreferences = () => {
   const { profile } = useAuth();
   const { isSupported, permission, requestPermission, isEnabled } = usePushNotifications();
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [prefs, setPrefs] = useState<NotificationPrefs>({
     trade_matches: true,
     trade_messages: true,
@@ -30,6 +31,8 @@ export const NotificationPreferences = () => {
     badge_earned: true,
     fragrance_reviews: true,
     push_enabled: false,
+    email_digest_enabled: false,
+    email_digest_frequency: 'weekly',
   });
 
   useEffect(() => {
@@ -53,9 +56,10 @@ export const NotificationPreferences = () => {
         badge_earned: data.badge_earned,
         fragrance_reviews: data.fragrance_reviews,
         push_enabled: data.push_enabled,
+        email_digest_enabled: data.email_digest_enabled,
+        email_digest_frequency: data.email_digest_frequency as 'daily' | 'weekly',
       });
     } else if (error?.code === 'PGRST116') {
-      // No record exists, create one
       await supabase.from('notification_preferences').insert({
         profile_id: profile?.id,
       });
@@ -64,7 +68,6 @@ export const NotificationPreferences = () => {
   };
 
   const handleToggle = async (key: keyof NotificationPrefs, value: boolean) => {
-    // Special handling for push_enabled
     if (key === 'push_enabled' && value && !isEnabled) {
       const granted = await requestPermission();
       if (!granted) return;
@@ -80,6 +83,19 @@ export const NotificationPreferences = () => {
     if (error) {
       toast.error('Failed to update preference');
       setPrefs(prev => ({ ...prev, [key]: !value }));
+    }
+  };
+
+  const handleFrequencyChange = async (value: 'daily' | 'weekly') => {
+    setPrefs(prev => ({ ...prev, email_digest_frequency: value }));
+    
+    const { error } = await supabase
+      .from('notification_preferences')
+      .update({ email_digest_frequency: value })
+      .eq('profile_id', profile?.id);
+
+    if (error) {
+      toast.error('Failed to update frequency');
     }
   };
 
@@ -127,51 +143,106 @@ export const NotificationPreferences = () => {
   ];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Bell className="w-5 h-5" />
-          Notification Preferences
-        </CardTitle>
-        <CardDescription>
-          Choose which notifications you want to receive
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Browser Push Toggle */}
-        {isSupported && (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="w-5 h-5" />
+            Notification Preferences
+          </CardTitle>
+          <CardDescription>
+            Choose which notifications you want to receive
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Browser Push Toggle */}
+          {isSupported && (
+            <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+              <div className="space-y-0.5">
+                <Label className="text-base font-medium">Browser Push Notifications</Label>
+                <p className="text-sm text-muted-foreground">
+                  Get alerts even when you're not on the site
+                </p>
+              </div>
+              <Switch
+                checked={prefs.push_enabled && isEnabled}
+                onCheckedChange={(checked) => handleToggle('push_enabled', checked)}
+              />
+            </div>
+          )}
+
+          <div className="space-y-4">
+            {notificationTypes.map((type) => (
+              <div key={type.key} className="flex items-center justify-between py-2">
+                <div className="flex items-center gap-3">
+                  <type.icon className="w-5 h-5 text-muted-foreground" />
+                  <div className="space-y-0.5">
+                    <Label className="font-medium">{type.label}</Label>
+                    <p className="text-sm text-muted-foreground">{type.description}</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={prefs[type.key]}
+                  onCheckedChange={(checked) => handleToggle(type.key, checked)}
+                />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Email Digest Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="w-5 h-5" />
+            Email Digest
+          </CardTitle>
+          <CardDescription>
+            Get a summary of your notifications delivered to your inbox
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
           <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
             <div className="space-y-0.5">
-              <Label className="text-base font-medium">Browser Push Notifications</Label>
+              <Label className="text-base font-medium">Enable Email Digest</Label>
               <p className="text-sm text-muted-foreground">
-                Get alerts even when you're not on the site
+                Receive notification summaries via email
               </p>
             </div>
             <Switch
-              checked={prefs.push_enabled && isEnabled}
-              onCheckedChange={(checked) => handleToggle('push_enabled', checked)}
+              checked={prefs.email_digest_enabled}
+              onCheckedChange={(checked) => handleToggle('email_digest_enabled', checked)}
             />
           </div>
-        )}
 
-        <div className="space-y-4">
-          {notificationTypes.map((type) => (
-            <div key={type.key} className="flex items-center justify-between py-2">
-              <div className="flex items-center gap-3">
-                <type.icon className="w-5 h-5 text-muted-foreground" />
-                <div className="space-y-0.5">
-                  <Label className="font-medium">{type.label}</Label>
-                  <p className="text-sm text-muted-foreground">{type.description}</p>
+          {prefs.email_digest_enabled && (
+            <div className="space-y-3 animate-fade-in">
+              <Label className="font-medium">Digest Frequency</Label>
+              <RadioGroup
+                value={prefs.email_digest_frequency}
+                onValueChange={(value) => handleFrequencyChange(value as 'daily' | 'weekly')}
+                className="space-y-2"
+              >
+                <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                  <RadioGroupItem value="daily" id="daily" />
+                  <div className="space-y-0.5">
+                    <Label htmlFor="daily" className="font-medium cursor-pointer">Daily</Label>
+                    <p className="text-sm text-muted-foreground">Get a digest every morning at 9 AM</p>
+                  </div>
                 </div>
-              </div>
-              <Switch
-                checked={prefs[type.key]}
-                onCheckedChange={(checked) => handleToggle(type.key, checked)}
-              />
+                <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                  <RadioGroupItem value="weekly" id="weekly" />
+                  <div className="space-y-0.5">
+                    <Label htmlFor="weekly" className="font-medium cursor-pointer">Weekly</Label>
+                    <p className="text-sm text-muted-foreground">Get a digest every Monday at 9 AM</p>
+                  </div>
+                </div>
+              </RadioGroup>
             </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };

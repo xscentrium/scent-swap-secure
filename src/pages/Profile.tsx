@@ -13,6 +13,7 @@ import { SOTDTracker } from '@/components/SOTDTracker';
 import { CollectionValueDashboard } from '@/components/CollectionValueDashboard';
 import { FragranceCalendar } from '@/components/FragranceCalendar';
 import { StatsCharts } from '@/components/StatsCharts';
+import { AchievementsMilestones } from '@/components/AchievementsMilestones';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,7 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   User, Shield, Star, Instagram, Twitter, Facebook, 
   ExternalLink, Copy, CheckCircle, Loader2, Settings, Plus, Package, Heart,
-  CalendarDays, TrendingUp, Sparkles
+  CalendarDays, TrendingUp, Sparkles, Award
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -378,6 +379,10 @@ const Profile = () => {
                     <TrendingUp className="w-4 h-4 mr-1" />
                     Stats
                   </TabsTrigger>
+                  <TabsTrigger value="achievements">
+                    <Award className="w-4 h-4 mr-1" />
+                    Achievements
+                  </TabsTrigger>
                 </>
               )}
               <TabsTrigger value="samples">Samples</TabsTrigger>
@@ -468,6 +473,10 @@ const Profile = () => {
 
                 <TabsContent value="stats">
                   <StatsCharts />
+                </TabsContent>
+
+                <TabsContent value="achievements">
+                  <AchievementsMilestones />
                 </TabsContent>
               </>
             )}

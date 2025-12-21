@@ -419,8 +419,11 @@ export type Database = {
         Row: {
           badge_earned: boolean
           created_at: string
+          email_digest_enabled: boolean
+          email_digest_frequency: string
           fragrance_reviews: boolean
           id: string
+          last_digest_sent_at: string | null
           profile_id: string
           push_enabled: boolean
           trade_matches: boolean
@@ -431,8 +434,11 @@ export type Database = {
         Insert: {
           badge_earned?: boolean
           created_at?: string
+          email_digest_enabled?: boolean
+          email_digest_frequency?: string
           fragrance_reviews?: boolean
           id?: string
+          last_digest_sent_at?: string | null
           profile_id: string
           push_enabled?: boolean
           trade_matches?: boolean
@@ -443,8 +449,11 @@ export type Database = {
         Update: {
           badge_earned?: boolean
           created_at?: string
+          email_digest_enabled?: boolean
+          email_digest_frequency?: string
           fragrance_reviews?: boolean
           id?: string
+          last_digest_sent_at?: string | null
           profile_id?: string
           push_enabled?: boolean
           trade_matches?: boolean
