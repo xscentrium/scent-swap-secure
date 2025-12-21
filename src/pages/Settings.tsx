@@ -12,12 +12,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { 
-  ArrowLeft, Loader2, User, Shield, Link as LinkIcon, Settings2,
+  ArrowLeft, Loader2, User, Shield, Link as LinkIcon, Settings2, Bell,
   Instagram, Twitter, CheckCircle, AlertCircle, Upload, Calendar, Mail, Lock, Gift, Users, ArrowLeftRight
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { NotificationPreferences } from '@/components/NotificationPreferences';
 
 const profileSchema = z.object({
   display_name: z.string().min(1).max(50),
@@ -634,6 +635,10 @@ const Settings = () => {
                 <Settings2 className="w-4 h-4 mr-2" />
                 Account
               </TabsTrigger>
+              <TabsTrigger value="notifications">
+                <Bell className="w-4 h-4 mr-2" />
+                Notifications
+              </TabsTrigger>
               <TabsTrigger value="verification">
                 <Shield className="w-4 h-4 mr-2" />
                 ID Verification
@@ -987,6 +992,10 @@ const Settings = () => {
                   </CardContent>
                 </Card>
               </div>
+            </TabsContent>
+
+            <TabsContent value="notifications">
+              <NotificationPreferences />
             </TabsContent>
 
             <TabsContent value="verification">

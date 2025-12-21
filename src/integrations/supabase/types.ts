@@ -415,6 +415,53 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          badge_earned: boolean
+          created_at: string
+          fragrance_reviews: boolean
+          id: string
+          profile_id: string
+          push_enabled: boolean
+          trade_matches: boolean
+          trade_messages: boolean
+          trade_proposals: boolean
+          updated_at: string
+        }
+        Insert: {
+          badge_earned?: boolean
+          created_at?: string
+          fragrance_reviews?: boolean
+          id?: string
+          profile_id: string
+          push_enabled?: boolean
+          trade_matches?: boolean
+          trade_messages?: boolean
+          trade_proposals?: boolean
+          updated_at?: string
+        }
+        Update: {
+          badge_earned?: boolean
+          created_at?: string
+          fragrance_reviews?: boolean
+          id?: string
+          profile_id?: string
+          push_enabled?: boolean
+          trade_matches?: boolean
+          trade_messages?: boolean
+          trade_proposals?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string

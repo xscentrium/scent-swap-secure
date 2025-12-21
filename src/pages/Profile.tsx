@@ -12,6 +12,7 @@ import { SampleDecantTracker } from '@/components/SampleDecantTracker';
 import { SOTDTracker } from '@/components/SOTDTracker';
 import { CollectionValueDashboard } from '@/components/CollectionValueDashboard';
 import { FragranceCalendar } from '@/components/FragranceCalendar';
+import { StatsCharts } from '@/components/StatsCharts';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -373,6 +374,10 @@ const Profile = () => {
                     <TrendingUp className="w-4 h-4 mr-1" />
                     Value
                   </TabsTrigger>
+                  <TabsTrigger value="stats">
+                    <TrendingUp className="w-4 h-4 mr-1" />
+                    Stats
+                  </TabsTrigger>
                 </>
               )}
               <TabsTrigger value="samples">Samples</TabsTrigger>
@@ -459,6 +464,10 @@ const Profile = () => {
 
                 <TabsContent value="value">
                   <CollectionValueDashboard />
+                </TabsContent>
+
+                <TabsContent value="stats">
+                  <StatsCharts />
                 </TabsContent>
               </>
             )}
