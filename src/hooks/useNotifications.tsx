@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
@@ -13,6 +13,31 @@ interface Notification {
   read: boolean;
   created_at: string;
 }
+
+// Helper to show browser push notification
+const showPushNotification = (title: string, body: string, onClick?: () => void) => {
+  if ('Notification' in window && Notification.permission === 'granted') {
+    try {
+      const notification = new Notification(title, {
+        body,
+        icon: '/favicon.ico',
+        badge: '/favicon.ico',
+        tag: `notification-${Date.now()}`,
+        requireInteraction: false
+      });
+      
+      if (onClick) {
+        notification.onclick = () => {
+          window.focus();
+          onClick();
+          notification.close();
+        };
+      }
+    } catch (error) {
+      console.error('Error showing push notification:', error);
+    }
+  }
+};
 
 export const useNotifications = () => {
   const { profile } = useAuth();
@@ -95,10 +120,39 @@ export const useNotifications = () => {
           setNotifications((prev) => [newNotification, ...prev]);
           setUnreadCount((prev) => prev + 1);
           
-          // Show toast for new notification
+          // Show in-app toast
           toast(newNotification.title, {
             description: newNotification.message,
           });
+
+          // Show browser push notification based on type
+          if (newNotification.type === 'trade_match') {
+            showPushNotification(
+              '🎯 ' + newNotification.title,
+              newNotification.message,
+              () => { window.location.href = '/trade-matches'; }
+            );
+          } else if (newNotification.type === 'trade_message') {
+            showPushNotification(
+              '💬 ' + newNotification.title,
+              newNotification.message,
+              () => { window.location.href = '/messages'; }
+            );
+          } else if (newNotification.type === 'badge_earned') {
+            showPushNotification(
+              '🏆 ' + newNotification.title,
+              newNotification.message,
+              () => { window.location.href = '/profile'; }
+            );
+          } else if (newNotification.type === 'trade_proposal') {
+            showPushNotification(
+              '🤝 ' + newNotification.title,
+              newNotification.message,
+              () => { window.location.href = '/my-trades'; }
+            );
+          } else {
+            showPushNotification(newNotification.title, newNotification.message);
+          }
         }
       )
       .subscribe();
