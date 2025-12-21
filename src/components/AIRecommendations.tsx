@@ -8,8 +8,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sparkles, Search, Calendar, Sun, Snowflake, Leaf, Flower2, Heart, DollarSign } from 'lucide-react';
+import { Sparkles, Search, Calendar, Sun, Snowflake, Leaf, Flower2, Heart, DollarSign, ImageIcon } from 'lucide-react';
 import { FavoriteButton } from '@/components/FavoriteButton';
+import { cn } from '@/lib/utils';
 
 type Recommendation = {
   name: string;
@@ -29,6 +30,43 @@ interface AIRecommendationsProps {
   collection?: { name: string; brand: string }[];
   wishlist?: { name: string; brand: string }[];
 }
+
+const FragranceImage = ({ imageUrl, name, brand }: { imageUrl?: string | null; name: string; brand: string }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+
+  if (!imageUrl || hasError) {
+    return (
+      <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shrink-0">
+        <ImageIcon className="w-6 h-6 text-primary/50" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-20 h-20 rounded-lg bg-muted shrink-0 overflow-hidden relative">
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+          <Skeleton className="w-full h-full absolute inset-0" />
+          <Sparkles className="w-5 h-5 text-primary animate-pulse z-10" />
+        </div>
+      )}
+      <img
+        src={imageUrl}
+        alt={`${name} by ${brand}`}
+        className={cn(
+          "w-full h-full object-cover transition-opacity duration-300",
+          isLoading ? "opacity-0" : "opacity-100"
+        )}
+        onLoad={() => setIsLoading(false)}
+        onError={() => {
+          setIsLoading(false);
+          setHasError(true);
+        }}
+      />
+    </div>
+  );
+};
 
 export const AIRecommendations = ({ collection, wishlist }: AIRecommendationsProps) => {
   const [filters, setFilters] = useState({
@@ -236,17 +274,11 @@ export const AIRecommendations = ({ collection, wishlist }: AIRecommendationsPro
                 key={`${rec.name}-${rec.brand}-${idx}`}
                 className="flex gap-4 p-4 rounded-lg border bg-card hover:shadow-md transition-shadow"
               >
-                <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shrink-0 overflow-hidden">
-                  {rec.imageUrl ? (
-                    <img 
-                      src={rec.imageUrl} 
-                      alt={`${rec.name} by ${rec.brand}`}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <Sparkles className="w-6 h-6 text-primary" />
-                  )}
-                </div>
+                <FragranceImage 
+                  imageUrl={rec.imageUrl} 
+                  name={rec.name} 
+                  brand={rec.brand} 
+                />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <div>
