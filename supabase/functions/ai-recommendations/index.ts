@@ -5,6 +5,37 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+async function generateFragranceImage(name: string, brand: string, apiKey: string): Promise<string | null> {
+  try {
+    const prompt = `Professional product photography of ${name} by ${brand} perfume bottle. Luxury fragrance bottle on elegant marble surface, soft studio lighting, high-end cosmetics advertisement style, photorealistic, 4K quality.`;
+    
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash-image-preview',
+        messages: [{ role: 'user', content: prompt }],
+        modalities: ['image', 'text'],
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('Image generation failed:', response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    return imageUrl || null;
+  } catch (error) {
+    console.error('Error generating image:', error);
+    return null;
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -18,12 +49,12 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    let systemPrompt = `You are a world-class fragrance expert and consultant. Your recommendations are based on extensive knowledge of perfumery, including notes, accords, performance, and how fragrances work in different contexts.`;
+    let systemPrompt = `You are a world-class fragrance expert and consultant. Your recommendations are based on extensive knowledge of perfumery, including notes, accords, performance, and how fragrances work in different contexts. Only recommend REAL fragrances that actually exist from real brands.`;
 
     let userPrompt = '';
 
     if (type === 'occasion') {
-      userPrompt = `Based on the following criteria, recommend 5 fragrances that would be perfect:
+      userPrompt = `Based on the following criteria, recommend 5 REAL fragrances that would be perfect:
       
 Occasion: ${occasion || 'any'}
 Season: ${season || 'any'}
@@ -32,7 +63,7 @@ Style: ${style || 'versatile'}
 Budget: ${budget || 'any'}
 
 For each recommendation, provide:
-1. Name and brand
+1. Name and brand (must be real existing fragrances)
 2. Why it's perfect for this occasion/season
 3. Key notes
 4. Estimated price range
@@ -42,7 +73,7 @@ Return as JSON: { "recommendations": [{ "name": string, "brand": string, "reason
     } else if (type === 'collection') {
       userPrompt = `Based on this user's fragrance collection: ${JSON.stringify(collection)}
       
-Analyze their taste profile and recommend 5 fragrances they would likely enjoy that they don't already own. Consider:
+Analyze their taste profile and recommend 5 REAL fragrances they would likely enjoy that they don't already own. Consider:
 1. Common notes they seem to prefer
 2. Brands they like
 3. Gaps in their collection (e.g., seasons, occasions)
@@ -52,14 +83,14 @@ Return as JSON: { "recommendations": [{ "name": string, "brand": string, "reason
     } else if (type === 'wishlist') {
       userPrompt = `Based on this user's wishlist: ${JSON.stringify(wishlist)}
       
-Suggest 5 alternatives or similar fragrances that might be:
+Suggest 5 REAL alternatives or similar fragrances that might be:
 1. More affordable alternatives to expensive wishlist items
 2. Similar scents they might not know about
 3. Limited editions or hard-to-find alternatives
 
 Return as JSON: { "recommendations": [{ "name": string, "brand": string, "reason": string, "similarTo": string, "advantage": string, "priceRange": string }] }`;
     } else {
-      userPrompt = `Recommend 5 popular, well-regarded fragrances that are versatile and widely loved. Include a mix of designer and niche options.
+      userPrompt = `Recommend 5 popular, well-regarded REAL fragrances that are versatile and widely loved. Include a mix of designer and niche options.
 
 Return as JSON: { "recommendations": [{ "name": string, "brand": string, "reason": string, "keyNotes": string[], "priceRange": string, "versatility": string }] }`;
     }
@@ -82,6 +113,18 @@ Return as JSON: { "recommendations": [{ "name": string, "brand": string, "reason
     });
 
     if (!response.ok) {
+      if (response.status === 429) {
+        return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again in a moment.' }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: 'AI credits exhausted. Please add credits to continue.' }), {
+          status: 402,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
       const errorText = await response.text();
       console.error('AI Gateway error:', response.status, errorText);
       throw new Error(`AI Gateway error: ${response.status}`);
@@ -99,7 +142,37 @@ Return as JSON: { "recommendations": [{ "name": string, "brand": string, "reason
 
     const recommendations = JSON.parse(jsonMatch[0]);
 
-    return new Response(JSON.stringify(recommendations), {
+    // Generate images for each recommendation (in parallel, max 2 at a time to avoid rate limits)
+    console.log('Generating images for recommendations...');
+    
+    type RecommendationType = {
+      name: string;
+      brand: string;
+      reason: string;
+      keyNotes?: string[];
+      priceRange?: string;
+      imageUrl?: string | null;
+    };
+    
+    const recsWithImages: RecommendationType[] = [];
+    
+    for (let i = 0; i < recommendations.recommendations.length; i += 2) {
+      const batch = recommendations.recommendations.slice(i, i + 2) as RecommendationType[];
+      const imagePromises = batch.map((rec) => 
+        generateFragranceImage(rec.name, rec.brand, LOVABLE_API_KEY)
+      );
+      
+      const images = await Promise.all(imagePromises);
+      
+      batch.forEach((rec, idx) => {
+        recsWithImages.push({
+          ...rec,
+          imageUrl: images[idx] || null,
+        });
+      });
+    }
+
+    return new Response(JSON.stringify({ recommendations: recsWithImages }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error: unknown) {
