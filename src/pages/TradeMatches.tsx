@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Navigation } from '@/components/Navigation';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { BlindTradeMatching } from '@/components/BlindTradeMatching';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, ArrowLeftRight, MessageSquare, User, AlertCircle, Settings } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Loader2, ArrowLeftRight, MessageSquare, User, AlertCircle, Settings, Shuffle, Users } from 'lucide-react';
 
 type TradeMatch = {
   wishlistOwner: {
@@ -161,11 +163,28 @@ const TradeMatches = () => {
       <main className="pt-20 pb-12">
         <div className="container mx-auto px-4 max-w-4xl">
           <div className="mb-8">
-            <h1 className="text-3xl font-serif font-bold mb-2">Trade Matches</h1>
+            <h1 className="text-3xl font-serif font-bold mb-2 flex items-center gap-3">
+              <Shuffle className="w-8 h-8 text-primary" />
+              Trade Matches
+            </h1>
             <p className="text-muted-foreground">
-              Users whose wishlists match items in your collection
+              Find potential trade partners through wishlist matching and preference-based matching
             </p>
           </div>
+
+          <Tabs defaultValue="wishlist" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="wishlist" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Wishlist Matches
+              </TabsTrigger>
+              <TabsTrigger value="blind" className="flex items-center gap-2">
+                <Shuffle className="h-4 w-4" />
+                Blind Matching
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="wishlist">
 
           {loadingMatches ? (
             <div className="flex items-center justify-center py-12">
@@ -229,6 +248,12 @@ const TradeMatches = () => {
               </CardContent>
             </Card>
           )}
+            </TabsContent>
+
+            <TabsContent value="blind">
+              <BlindTradeMatching />
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
     </div>

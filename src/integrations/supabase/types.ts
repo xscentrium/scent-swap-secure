@@ -670,6 +670,50 @@ export type Database = {
           },
         ]
       }
+      scheduled_fragrances: {
+        Row: {
+          created_at: string
+          fragrance_brand: string
+          fragrance_name: string
+          id: string
+          is_worn: boolean | null
+          notes: string | null
+          occasion: string | null
+          profile_id: string
+          scheduled_date: string
+        }
+        Insert: {
+          created_at?: string
+          fragrance_brand: string
+          fragrance_name: string
+          id?: string
+          is_worn?: boolean | null
+          notes?: string | null
+          occasion?: string | null
+          profile_id: string
+          scheduled_date: string
+        }
+        Update: {
+          created_at?: string
+          fragrance_brand?: string
+          fragrance_name?: string
+          id?: string
+          is_worn?: boolean | null
+          notes?: string | null
+          occasion?: string | null
+          profile_id?: string
+          scheduled_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_fragrances_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trade_messages: {
         Row: {
           created_at: string
