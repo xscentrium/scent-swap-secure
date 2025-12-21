@@ -4,7 +4,7 @@ import { Navigation } from '@/components/Navigation';
 import { AIRecommendations } from '@/components/AIRecommendations';
 import { FragranceLayering } from '@/components/FragranceLayering';
 import { FavoritesManager } from '@/components/FavoritesManager';
-import { ActivityFeed } from '@/components/ActivityFeed';
+import { SocialFeed } from '@/components/SocialFeed';
 import { TrendingFragrances } from '@/components/TrendingFragrances';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -84,14 +84,14 @@ const Discover = () => {
 
             {/* Sidebar */}
             <div className="space-y-6">
+              {/* Social Feed - Friends Activity */}
+              <SocialFeed />
+              
               {/* Trending Fragrances */}
               <TrendingFragrances />
               
               {/* Favorites */}
               <FavoritesManager />
-              
-              {/* Activity Feed */}
-              <ActivityFeed />
             </div>
           </div>
         </div>
