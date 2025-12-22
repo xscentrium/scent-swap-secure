@@ -13,6 +13,7 @@ const navLinks = [
   { to: "/discover/users", label: "Find Users" },
   { to: "/trade-matches", label: "Trade Matches" },
   { to: "/leaderboard", label: "Leaderboard" },
+  { to: "/year-in-review", label: "Year in Review" },
   { to: "/influencers", label: "Influencers" },
 ];
 

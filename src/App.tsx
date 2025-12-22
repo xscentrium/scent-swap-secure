@@ -26,6 +26,7 @@ import Discover from "./pages/Discover";
 import DiscoverUsers from "./pages/DiscoverUsers";
 import ScentQuiz from "./pages/ScentQuiz";
 import Leaderboard from "./pages/Leaderboard";
+import YearInReviewPage from "./pages/YearInReviewPage";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="/my-trades" element={<MyTrades />} />
             <Route path="/trade-matches" element={<TradeMatches />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/year-in-review" element={<YearInReviewPage />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/messages/new/:recipientId" element={<DirectMessages />} />
             <Route path="/settings" element={<Settings />} />
