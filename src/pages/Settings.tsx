@@ -19,6 +19,7 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { NotificationPreferences } from '@/components/NotificationPreferences';
+import { BlockedUsersManager } from '@/components/BlockedUsersManager';
 
 const profileSchema = z.object({
   display_name: z.string().min(1).max(50),
@@ -647,6 +648,10 @@ const Settings = () => {
                 <LinkIcon className="w-4 h-4 mr-2" />
                 Social Links
               </TabsTrigger>
+              <TabsTrigger value="privacy">
+                <Shield className="w-4 h-4 mr-2" />
+                Privacy
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="profile">
@@ -1136,6 +1141,10 @@ const Settings = () => {
                   </Button>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="privacy">
+              <BlockedUsersManager />
             </TabsContent>
           </Tabs>
         </div>

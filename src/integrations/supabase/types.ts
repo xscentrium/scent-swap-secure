@@ -131,6 +131,42 @@ export type Database = {
           },
         ]
       }
+      creator_subscriptions: {
+        Row: {
+          created_at: string
+          creator_id: string
+          id: string
+          subscriber_id: string
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          id?: string
+          subscriber_id: string
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          id?: string
+          subscriber_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_subscriptions_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_subscriptions_subscriber_id_fkey"
+            columns: ["subscriber_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       direct_messages: {
         Row: {
           created_at: string
