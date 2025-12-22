@@ -27,6 +27,7 @@ import {
 import { toast } from 'sonner';
 import { FollowButton } from '@/components/FollowButton';
 import { UserActions } from '@/components/UserActions';
+import { CreatorNotifyButton } from '@/components/CreatorNotifyButton';
 
 type ProfileData = {
   id: string;
@@ -264,6 +265,10 @@ const Profile = () => {
                       <FollowButton 
                         targetProfileId={profileData.id} 
                         targetUsername={profileData.username} 
+                      />
+                      <CreatorNotifyButton
+                        creatorId={profileData.id}
+                        creatorUsername={profileData.username}
                       />
                       <UserActions 
                         targetProfileId={profileData.id} 
