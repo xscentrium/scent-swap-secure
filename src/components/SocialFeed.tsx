@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Link } from "react-router-dom";
+import { PostInteractions } from "@/components/PostInteractions";
 
 interface ScentLog {
   id: string;
@@ -362,6 +363,7 @@ function SOTDCard({ sotd }: { sotd: ScentLog }) {
           <span className="text-sm font-medium">{sotd.rating}/5</span>
         </div>
       )}
+      <PostInteractions postId={sotd.id} postType="sotd" />
     </div>
   );
 }
@@ -390,6 +392,7 @@ function CollectionCard({ item }: { item: CollectionItem }) {
         <p className="text-xs text-muted-foreground mt-1">
           {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
         </p>
+        <PostInteractions postId={item.id} postType="collection" />
       </div>
     </div>
   );
