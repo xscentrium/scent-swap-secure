@@ -14,6 +14,7 @@ import CreateListing from "./pages/CreateListing";
 import InfluencerHub from "./pages/InfluencerHub";
 import Trade from "./pages/Trade";
 import Messages from "./pages/Messages";
+import DirectMessages from "./pages/DirectMessages";
 import MyTrades from "./pages/MyTrades";
 import Settings from "./pages/Settings";
 import AdminVerification from "./pages/AdminVerification";
@@ -52,6 +53,7 @@ const App = () => (
             <Route path="/trade-matches" element={<TradeMatches />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/messages" element={<Messages />} />
+            <Route path="/messages/new/:recipientId" element={<DirectMessages />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/admin/verification" element={<AdminVerification />} />
             <Route path="*" element={<NotFound />} />

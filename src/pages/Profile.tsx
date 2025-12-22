@@ -25,6 +25,8 @@ import {
   CalendarDays, TrendingUp, Sparkles, Award
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { FollowButton } from '@/components/FollowButton';
+import { UserActions } from '@/components/UserActions';
 
 type ProfileData = {
   id: string;
@@ -258,9 +260,16 @@ const Profile = () => {
                       </Button>
                     </>
                   ) : user ? (
-                    <Button onClick={handleFollow} variant={isFollowing ? 'outline' : 'default'}>
-                      {isFollowing ? 'Following' : 'Follow'}
-                    </Button>
+                    <>
+                      <FollowButton 
+                        targetProfileId={profileData.id} 
+                        targetUsername={profileData.username} 
+                      />
+                      <UserActions 
+                        targetProfileId={profileData.id} 
+                        targetUsername={profileData.username} 
+                      />
+                    </>
                   ) : (
                     <Button asChild>
                       <Link to="/auth">Sign in to Follow</Link>

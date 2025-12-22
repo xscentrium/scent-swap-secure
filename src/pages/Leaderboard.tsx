@@ -7,8 +7,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { Trophy, Package, Flame, Medal, Crown, TrendingUp, ArrowUp, ArrowDown, Minus } from "lucide-react";
+import { Trophy, Package, Flame, Medal, Crown, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
+import { FollowButton } from "@/components/FollowButton";
 
 interface LeaderboardEntry {
   id: string;
@@ -276,9 +277,19 @@ const Leaderboard = () => {
                 </p>
                 <p className="text-sm text-muted-foreground">@{entry.username}</p>
               </div>
-              <Badge variant={isCurrentUser ? "default" : "secondary"} className="flex-shrink-0">
+              <Badge variant={isCurrentUser ? "default" : "secondary"} className="flex-shrink-0 mr-2">
                 {entry.count} {suffix}
               </Badge>
+              {!isCurrentUser && currentUserId && (
+                <div onClick={(e) => e.preventDefault()}>
+                  <FollowButton 
+                    targetProfileId={entry.id} 
+                    targetUsername={entry.username}
+                    size="sm"
+                    showIcon={false}
+                  />
+                </div>
+              )}
             </Link>
           );
         })}
