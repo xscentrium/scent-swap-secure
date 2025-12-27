@@ -48,20 +48,20 @@ export const Hero = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 animate-in slide-in-from-bottom duration-700 delay-500">
-            <div className="p-6 rounded-xl bg-card border border-border shadow-lg hover:shadow-luxury transition-smooth">
-              <Shield className="w-8 h-8 text-primary mb-3 mx-auto" />
+            <div className="p-6 rounded-xl bg-card border border-border shadow-lg hover-lift card-premium group">
+              <Shield className="w-8 h-8 text-primary mb-3 mx-auto transition-transform duration-300 group-hover:scale-110" />
               <h3 className="font-semibold mb-2">ID Verified</h3>
               <p className="text-sm text-muted-foreground">All users verify their identity for secure trading</p>
             </div>
             
-            <div className="p-6 rounded-xl bg-card border border-border shadow-lg hover:shadow-luxury transition-smooth">
-              <div className="w-8 h-8 text-primary mb-3 mx-auto font-bold text-2xl">$</div>
+            <div className="p-6 rounded-xl bg-card border border-border shadow-lg hover-lift card-premium group">
+              <div className="w-8 h-8 text-primary mb-3 mx-auto font-bold text-2xl transition-transform duration-300 group-hover:scale-110">$</div>
               <h3 className="font-semibold mb-2">Escrow Protected</h3>
               <p className="text-sm text-muted-foreground">Hold deposits ensure fair trades for both parties</p>
             </div>
             
-            <div className="p-6 rounded-xl bg-card border border-border shadow-lg hover:shadow-luxury transition-smooth">
-              <Sparkles className="w-8 h-8 text-primary mb-3 mx-auto" />
+            <div className="p-6 rounded-xl bg-card border border-border shadow-lg hover-lift card-premium group">
+              <Sparkles className="w-8 h-8 text-primary mb-3 mx-auto transition-transform duration-300 group-hover:scale-110" />
               <h3 className="font-semibold mb-2">Premium Selection</h3>
               <p className="text-sm text-muted-foreground">Discover rare and exclusive fragrances</p>
             </div>
