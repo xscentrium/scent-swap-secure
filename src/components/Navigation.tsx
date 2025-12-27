@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Sparkles, Settings, MessageCircle, Menu, X } from "lucide-react";
+import { Sparkles, Settings, MessageCircle, Menu, Moon, Sun } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { NotificationBell } from "@/components/NotificationBell";
-
+import { useTheme } from "next-themes";
 const navLinks = [
   { to: "/marketplace", label: "Marketplace" },
   { to: "/compare", label: "Compare" },
@@ -20,8 +20,13 @@ const navLinks = [
 export const Navigation = () => {
   const { user, profile, signOut } = useAuth();
   const [open, setOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   const closeMenu = () => setOpen(false);
+
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
@@ -52,6 +57,11 @@ export const Navigation = () => {
           
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={toggleTheme}>
+              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <span className="sr-only">Toggle theme</span>
+            </Button>
             {user && profile ? (
               <>
                 <NotificationBell />
@@ -116,6 +126,14 @@ export const Navigation = () => {
                         My Trades
                       </Link>
                     )}
+                  </div>
+
+                  <div className="border-t border-border pt-4 flex flex-col gap-4">
+                    <Button variant="outline" onClick={toggleTheme} className="justify-start gap-2">
+                      <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                      <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                      <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+                    </Button>
                   </div>
 
                   <div className="border-t border-border pt-4">
