@@ -94,6 +94,14 @@ All colors MUST be HSL.
     font-family: 'Playfair Display', serif;
     font-weight: 600;
   }
+
+  /* Ripple animation */
+  @keyframes ripple {
+    to {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
 }
 
 @layer utilities {
