@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { AccountSetupDialog } from "@/components/AccountSetupDialog";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PageTransition } from "@/components/PageTransition";
+import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { AnimatePresence } from "framer-motion";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -76,6 +77,7 @@ const App = () => (
           <BrowserRouter>
             <AccountSetupDialog />
             <AnimatedRoutes />
+            <FloatingActionButton />
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>
