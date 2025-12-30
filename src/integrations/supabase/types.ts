@@ -915,6 +915,41 @@ export type Database = {
           },
         ]
       }
+      search_analytics: {
+        Row: {
+          created_at: string
+          filter_type: string
+          id: string
+          profile_id: string | null
+          query: string
+          results_count: number
+        }
+        Insert: {
+          created_at?: string
+          filter_type?: string
+          id?: string
+          profile_id?: string | null
+          query: string
+          results_count?: number
+        }
+        Update: {
+          created_at?: string
+          filter_type?: string
+          id?: string
+          profile_id?: string | null
+          query?: string
+          results_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "search_analytics_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trade_messages: {
         Row: {
           created_at: string
