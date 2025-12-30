@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, User, Package, Sparkles, X } from "lucide-react";
+import { Search, User, Package, Sparkles, Clock, TrendingUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   CommandDialog,
@@ -9,7 +9,9 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandSeparator,
 } from "@/components/ui/command";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useDebounce } from "@/hooks/useDebounce";
 
@@ -21,13 +23,40 @@ interface SearchResult {
   url: string;
 }
 
+type FilterType = "all" | "users" | "listings" | "fragrances";
+
+const STORAGE_KEY = "scentswap_recent_searches";
+const MAX_RECENT_SEARCHES = 5;
+
+const POPULAR_SUGGESTIONS = [
+  { title: "Dior Sauvage", type: "fragrance" as const, url: "/discover?search=Dior%20Sauvage" },
+  { title: "Bleu de Chanel", type: "fragrance" as const, url: "/discover?search=Bleu%20de%20Chanel" },
+  { title: "Aventus", type: "fragrance" as const, url: "/discover?search=Aventus" },
+  { title: "Tom Ford", type: "fragrance" as const, url: "/discover?search=Tom%20Ford" },
+  { title: "Le Labo", type: "fragrance" as const, url: "/discover?search=Le%20Labo" },
+];
+
 export const NavigationSearch = () => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [filter, setFilter] = useState<FilterType>("all");
+  const [recentSearches, setRecentSearches] = useState<SearchResult[]>([]);
   const debouncedQuery = useDebounce(query, 300);
   const navigate = useNavigate();
+
+  // Load recent searches from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try {
+        setRecentSearches(JSON.parse(stored));
+      } catch {
+        setRecentSearches([]);
+      }
+    }
+  }, []);
 
   // Keyboard shortcut
   useEffect(() => {
@@ -41,7 +70,28 @@ export const NavigationSearch = () => {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
-  const searchAll = useCallback(async (searchQuery: string) => {
+  const saveRecentSearch = (result: SearchResult) => {
+    const updated = [
+      result,
+      ...recentSearches.filter((r) => r.id !== result.id),
+    ].slice(0, MAX_RECENT_SEARCHES);
+    setRecentSearches(updated);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  };
+
+  const clearRecentSearches = () => {
+    setRecentSearches([]);
+    localStorage.removeItem(STORAGE_KEY);
+  };
+
+  const removeRecentSearch = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = recentSearches.filter((r) => r.id !== id);
+    setRecentSearches(updated);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  };
+
+  const searchAll = useCallback(async (searchQuery: string, activeFilter: FilterType) => {
     if (!searchQuery.trim()) {
       setResults([]);
       return;
@@ -52,69 +102,75 @@ export const NavigationSearch = () => {
 
     try {
       // Search users
-      const { data: users } = await supabase
-        .from("profiles")
-        .select("id, username, display_name")
-        .or(`username.ilike.%${searchQuery}%,display_name.ilike.%${searchQuery}%`)
-        .limit(5);
+      if (activeFilter === "all" || activeFilter === "users") {
+        const { data: users } = await supabase
+          .from("profiles")
+          .select("id, username, display_name")
+          .or(`username.ilike.%${searchQuery}%,display_name.ilike.%${searchQuery}%`)
+          .limit(activeFilter === "users" ? 10 : 5);
 
-      if (users) {
-        searchResults.push(
-          ...users.map((user) => ({
-            id: user.id,
-            type: "user" as const,
-            title: user.display_name || user.username,
-            subtitle: `@${user.username}`,
-            url: `/profile/${user.username}`,
-          }))
-        );
+        if (users) {
+          searchResults.push(
+            ...users.map((user) => ({
+              id: user.id,
+              type: "user" as const,
+              title: user.display_name || user.username,
+              subtitle: `@${user.username}`,
+              url: `/profile/${user.username}`,
+            }))
+          );
+        }
       }
 
       // Search listings
-      const { data: listings } = await supabase
-        .from("listings")
-        .select("id, name, brand")
-        .or(`name.ilike.%${searchQuery}%,brand.ilike.%${searchQuery}%`)
-        .eq("is_active", true)
-        .limit(5);
+      if (activeFilter === "all" || activeFilter === "listings") {
+        const { data: listings } = await supabase
+          .from("listings")
+          .select("id, name, brand")
+          .or(`name.ilike.%${searchQuery}%,brand.ilike.%${searchQuery}%`)
+          .eq("is_active", true)
+          .limit(activeFilter === "listings" ? 10 : 5);
 
-      if (listings) {
-        searchResults.push(
-          ...listings.map((listing) => ({
-            id: listing.id,
-            type: "listing" as const,
-            title: listing.name,
-            subtitle: listing.brand,
-            url: `/trade/${listing.id}`,
-          }))
-        );
+        if (listings) {
+          searchResults.push(
+            ...listings.map((listing) => ({
+              id: listing.id,
+              type: "listing" as const,
+              title: listing.name,
+              subtitle: listing.brand,
+              url: `/trade/${listing.id}`,
+            }))
+          );
+        }
       }
 
       // Search collection items (fragrances)
-      const { data: fragrances } = await supabase
-        .from("collection_items")
-        .select("id, name, brand")
-        .or(`name.ilike.%${searchQuery}%,brand.ilike.%${searchQuery}%`)
-        .limit(5);
+      if (activeFilter === "all" || activeFilter === "fragrances") {
+        const { data: fragrances } = await supabase
+          .from("collection_items")
+          .select("id, name, brand")
+          .or(`name.ilike.%${searchQuery}%,brand.ilike.%${searchQuery}%`)
+          .limit(activeFilter === "fragrances" ? 15 : 5);
 
-      if (fragrances) {
-        const uniqueFragrances = fragrances.reduce((acc, item) => {
-          const key = `${item.name}-${item.brand}`;
-          if (!acc.has(key)) {
-            acc.set(key, item);
-          }
-          return acc;
-        }, new Map());
+        if (fragrances) {
+          const uniqueFragrances = fragrances.reduce((acc, item) => {
+            const key = `${item.name}-${item.brand}`;
+            if (!acc.has(key)) {
+              acc.set(key, item);
+            }
+            return acc;
+          }, new Map());
 
-        searchResults.push(
-          ...Array.from(uniqueFragrances.values()).slice(0, 5).map((item: any) => ({
-            id: item.id,
-            type: "fragrance" as const,
-            title: item.name,
-            subtitle: item.brand,
-            url: `/discover?search=${encodeURIComponent(item.name)}`,
-          }))
-        );
+          searchResults.push(
+            ...Array.from(uniqueFragrances.values()).slice(0, activeFilter === "fragrances" ? 10 : 5).map((item: any) => ({
+              id: item.id,
+              type: "fragrance" as const,
+              title: item.name,
+              subtitle: item.brand,
+              url: `/discover?search=${encodeURIComponent(item.name)}`,
+            }))
+          );
+        }
       }
 
       setResults(searchResults);
@@ -126,13 +182,22 @@ export const NavigationSearch = () => {
   }, []);
 
   useEffect(() => {
-    searchAll(debouncedQuery);
-  }, [debouncedQuery, searchAll]);
+    searchAll(debouncedQuery, filter);
+  }, [debouncedQuery, filter, searchAll]);
 
-  const handleSelect = (url: string) => {
+  const handleSelect = (result: SearchResult) => {
+    saveRecentSearch(result);
     setOpen(false);
     setQuery("");
-    navigate(url);
+    setFilter("all");
+    navigate(result.url);
+  };
+
+  const handlePopularSelect = (suggestion: typeof POPULAR_SUGGESTIONS[0]) => {
+    setOpen(false);
+    setQuery("");
+    setFilter("all");
+    navigate(suggestion.url);
   };
 
   const getIcon = (type: SearchResult["type"]) => {
@@ -151,6 +216,10 @@ export const NavigationSearch = () => {
     listings: results.filter((r) => r.type === "listing"),
     fragrances: results.filter((r) => r.type === "fragrance"),
   };
+
+  const hasResults = results.length > 0;
+  const hasQuery = query.trim().length > 0;
+  const showSuggestions = !hasQuery && !isLoading;
 
   return (
     <>
@@ -174,76 +243,175 @@ export const NavigationSearch = () => {
           value={query}
           onValueChange={setQuery}
         />
-        <CommandList>
+        
+        {/* Filter Tabs */}
+        <div className="px-3 py-2 border-b">
+          <Tabs value={filter} onValueChange={(v) => setFilter(v as FilterType)}>
+            <TabsList className="h-8 w-full grid grid-cols-4 bg-muted/50">
+              <TabsTrigger value="all" className="text-xs h-7 data-[state=active]:bg-background">
+                All
+              </TabsTrigger>
+              <TabsTrigger value="users" className="text-xs h-7 data-[state=active]:bg-background">
+                <User className="w-3 h-3 mr-1" />
+                Users
+              </TabsTrigger>
+              <TabsTrigger value="listings" className="text-xs h-7 data-[state=active]:bg-background">
+                <Package className="w-3 h-3 mr-1" />
+                Listings
+              </TabsTrigger>
+              <TabsTrigger value="fragrances" className="text-xs h-7 data-[state=active]:bg-background">
+                <Sparkles className="w-3 h-3 mr-1" />
+                Fragrances
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+
+        <CommandList className="max-h-[400px]">
           {isLoading ? (
             <div className="py-6 text-center text-sm text-muted-foreground">
               Searching...
             </div>
           ) : (
             <>
-              <CommandEmpty>No results found.</CommandEmpty>
-
-              {groupedResults.users.length > 0 && (
-                <CommandGroup heading="Users">
-                  {groupedResults.users.map((result) => (
-                    <CommandItem
-                      key={result.id}
-                      value={result.title}
-                      onSelect={() => handleSelect(result.url)}
-                      className="cursor-pointer"
-                    >
-                      {getIcon(result.type)}
-                      <div className="ml-2">
-                        <p className="text-sm font-medium">{result.title}</p>
-                        {result.subtitle && (
-                          <p className="text-xs text-muted-foreground">{result.subtitle}</p>
-                        )}
-                      </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
+              {hasQuery && !hasResults && (
+                <CommandEmpty>No results found for "{query}"</CommandEmpty>
               )}
 
-              {groupedResults.listings.length > 0 && (
-                <CommandGroup heading="Listings">
-                  {groupedResults.listings.map((result) => (
-                    <CommandItem
-                      key={result.id}
-                      value={result.title}
-                      onSelect={() => handleSelect(result.url)}
-                      className="cursor-pointer"
-                    >
-                      {getIcon(result.type)}
-                      <div className="ml-2">
-                        <p className="text-sm font-medium">{result.title}</p>
-                        {result.subtitle && (
-                          <p className="text-xs text-muted-foreground">{result.subtitle}</p>
-                        )}
+              {/* Suggestions when no query */}
+              {showSuggestions && (
+                <>
+                  {/* Recent Searches */}
+                  {recentSearches.length > 0 && (
+                    <CommandGroup heading={
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-1.5">
+                          <Clock className="w-3 h-3" />
+                          Recent Searches
+                        </span>
+                        <button
+                          onClick={clearRecentSearches}
+                          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          Clear all
+                        </button>
                       </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
+                    }>
+                      {recentSearches.map((result) => (
+                        <CommandItem
+                          key={`recent-${result.id}`}
+                          value={`recent-${result.title}`}
+                          onSelect={() => handleSelect(result)}
+                          className="cursor-pointer group"
+                        >
+                          {getIcon(result.type)}
+                          <div className="ml-2 flex-1">
+                            <p className="text-sm font-medium">{result.title}</p>
+                            {result.subtitle && (
+                              <p className="text-xs text-muted-foreground">{result.subtitle}</p>
+                            )}
+                          </div>
+                          <button
+                            onClick={(e) => removeRecentSearch(result.id, e)}
+                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-muted rounded transition-opacity"
+                          >
+                            <X className="w-3 h-3 text-muted-foreground" />
+                          </button>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  )}
+
+                  {recentSearches.length > 0 && <CommandSeparator />}
+
+                  {/* Popular Suggestions */}
+                  <CommandGroup heading={
+                    <span className="flex items-center gap-1.5">
+                      <TrendingUp className="w-3 h-3" />
+                      Popular Searches
+                    </span>
+                  }>
+                    {POPULAR_SUGGESTIONS.map((suggestion, index) => (
+                      <CommandItem
+                        key={`popular-${index}`}
+                        value={`popular-${suggestion.title}`}
+                        onSelect={() => handlePopularSelect(suggestion)}
+                        className="cursor-pointer"
+                      >
+                        <Sparkles className="w-4 h-4 text-muted-foreground" />
+                        <span className="ml-2 text-sm">{suggestion.title}</span>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </>
               )}
 
-              {groupedResults.fragrances.length > 0 && (
-                <CommandGroup heading="Fragrances">
-                  {groupedResults.fragrances.map((result) => (
-                    <CommandItem
-                      key={result.id}
-                      value={result.title}
-                      onSelect={() => handleSelect(result.url)}
-                      className="cursor-pointer"
-                    >
-                      {getIcon(result.type)}
-                      <div className="ml-2">
-                        <p className="text-sm font-medium">{result.title}</p>
-                        {result.subtitle && (
-                          <p className="text-xs text-muted-foreground">{result.subtitle}</p>
-                        )}
-                      </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
+              {/* Search Results */}
+              {hasQuery && hasResults && (
+                <>
+                  {(filter === "all" || filter === "users") && groupedResults.users.length > 0 && (
+                    <CommandGroup heading="Users">
+                      {groupedResults.users.map((result) => (
+                        <CommandItem
+                          key={result.id}
+                          value={result.title}
+                          onSelect={() => handleSelect(result)}
+                          className="cursor-pointer"
+                        >
+                          {getIcon(result.type)}
+                          <div className="ml-2">
+                            <p className="text-sm font-medium">{result.title}</p>
+                            {result.subtitle && (
+                              <p className="text-xs text-muted-foreground">{result.subtitle}</p>
+                            )}
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  )}
+
+                  {(filter === "all" || filter === "listings") && groupedResults.listings.length > 0 && (
+                    <CommandGroup heading="Listings">
+                      {groupedResults.listings.map((result) => (
+                        <CommandItem
+                          key={result.id}
+                          value={result.title}
+                          onSelect={() => handleSelect(result)}
+                          className="cursor-pointer"
+                        >
+                          {getIcon(result.type)}
+                          <div className="ml-2">
+                            <p className="text-sm font-medium">{result.title}</p>
+                            {result.subtitle && (
+                              <p className="text-xs text-muted-foreground">{result.subtitle}</p>
+                            )}
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  )}
+
+                  {(filter === "all" || filter === "fragrances") && groupedResults.fragrances.length > 0 && (
+                    <CommandGroup heading="Fragrances">
+                      {groupedResults.fragrances.map((result) => (
+                        <CommandItem
+                          key={result.id}
+                          value={result.title}
+                          onSelect={() => handleSelect(result)}
+                          className="cursor-pointer"
+                        >
+                          {getIcon(result.type)}
+                          <div className="ml-2">
+                            <p className="text-sm font-medium">{result.title}</p>
+                            {result.subtitle && (
+                              <p className="text-xs text-muted-foreground">{result.subtitle}</p>
+                            )}
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  )}
+                </>
               )}
             </>
           )}
