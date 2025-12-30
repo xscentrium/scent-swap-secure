@@ -13,13 +13,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { 
   ArrowLeft, Loader2, User, Shield, Link as LinkIcon, Settings2, Bell,
-  Instagram, Twitter, CheckCircle, AlertCircle, Upload, Calendar, Mail, Lock, Gift, Users, ArrowLeftRight
+  Instagram, Twitter, CheckCircle, AlertCircle, Upload, Calendar, Mail, Lock, Gift, Users, ArrowLeftRight, ShieldAlert
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { NotificationPreferences } from '@/components/NotificationPreferences';
 import { BlockedUsersManager } from '@/components/BlockedUsersManager';
+import { AdminAlertSettings } from '@/components/AdminAlertSettings';
 
 const profileSchema = z.object({
   display_name: z.string().min(1).max(50),
@@ -79,6 +80,9 @@ const Settings = () => {
   // Trade matches toggle
   const [tradeMatchesEnabled, setTradeMatchesEnabled] = useState(false);
   const [savingTradeMatches, setSavingTradeMatches] = useState(false);
+  
+  // Admin role check
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -111,6 +115,7 @@ const Settings = () => {
       fetchGuardianInfo();
       fetchPendingGuardianRequests();
       fetchTradeMatchesSetting();
+      checkAdminRole();
     }
   }, [profile]);
 
@@ -206,6 +211,19 @@ const Settings = () => {
     if (data) {
       setTradeMatchesEnabled(data.trade_matches_enabled ?? false);
     }
+  };
+
+  const checkAdminRole = async () => {
+    if (!user?.id) return;
+    
+    const { data } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .maybeSingle();
+    
+    setIsAdmin(!!data);
   };
 
   const handleToggleTradeMatches = async (enabled: boolean) => {
@@ -652,6 +670,12 @@ const Settings = () => {
                 <Shield className="w-4 h-4 mr-2" />
                 Privacy
               </TabsTrigger>
+              {isAdmin && (
+                <TabsTrigger value="admin">
+                  <ShieldAlert className="w-4 h-4 mr-2" />
+                  Admin
+                </TabsTrigger>
+              )}
             </TabsList>
 
             <TabsContent value="profile">
@@ -1146,6 +1170,12 @@ const Settings = () => {
             <TabsContent value="privacy">
               <BlockedUsersManager />
             </TabsContent>
+
+            {isAdmin && (
+              <TabsContent value="admin">
+                <AdminAlertSettings />
+              </TabsContent>
+            )}
           </Tabs>
         </div>
       </main>
