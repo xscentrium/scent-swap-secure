@@ -12,6 +12,7 @@ import { AnimatePresence } from "framer-motion";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import MarketplacePage from "./pages/MarketplacePage";
 import Profile from "./pages/Profile";
 import CreateListing from "./pages/CreateListing";
@@ -43,6 +44,7 @@ const AnimatedRoutes = () => {
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<PageTransition><Index /></PageTransition>} />
         <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
+        <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
         <Route path="/marketplace" element={<PageTransition><MarketplacePage /></PageTransition>} />
         <Route path="/profile/:username" element={<PageTransition><Profile /></PageTransition>} />
         <Route path="/collection/:username" element={<PageTransition><SharedCollection /></PageTransition>} />

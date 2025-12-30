@@ -47,6 +47,21 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Status colors
+        success: "hsl(var(--success))",
+        warning: "hsl(var(--warning))",
+        info: "hsl(var(--info))",
+        // Gold variants
+        gold: {
+          DEFAULT: "hsl(43 53% 54%)", // Signature Gold
+          muted: "hsl(42 50% 48%)", // Muted Gold
+          glow: "hsl(45 61% 67%)", // Gold Glow
+        },
+        // Core palette
+        midnight: "hsl(240 10% 6%)", // Midnight Black
+        charcoal: "hsl(240 8% 11%)", // Charcoal Gray
+        platinum: "hsl(224 12% 81%)", // Platinum Silver
+        "soft-white": "hsl(228 33% 97%)", // Soft White
       },
       fontFamily: {
         serif: ['Playfair Display', 'serif'],

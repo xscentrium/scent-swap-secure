@@ -8,75 +8,99 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 28 20% 97%;
-    --foreground: 28 8% 12%;
+    /* Core Colors - Light Mode */
+    --background: 228 33% 97%; /* Soft White #F5F6FA */
+    --foreground: 240 10% 6%; /* Midnight Black #0E0E11 */
 
     --card: 0 0% 100%;
-    --card-foreground: 28 8% 12%;
+    --card-foreground: 240 10% 6%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 28 8% 12%;
+    --popover-foreground: 240 10% 6%;
 
-    --primary: 32 88% 48%;
-    --primary-foreground: 0 0% 100%;
+    /* Signature Gold as Primary */
+    --primary: 43 53% 54%; /* Signature Gold #C8A24D */
+    --primary-foreground: 240 10% 6%;
 
-    --secondary: 28 15% 92%;
-    --secondary-foreground: 28 8% 12%;
+    --secondary: 224 12% 81%; /* Platinum Silver #C9CCD6 */
+    --secondary-foreground: 240 10% 6%;
 
-    --muted: 28 15% 92%;
-    --muted-foreground: 28 8% 45%;
+    --muted: 224 12% 90%;
+    --muted-foreground: 240 8% 45%;
 
-    --accent: 38 92% 58%;
-    --accent-foreground: 28 8% 12%;
+    /* Muted Gold as Accent */
+    --accent: 42 50% 48%; /* Muted Gold #B8923E */
+    --accent-foreground: 228 33% 97%;
 
-    --destructive: 0 84% 60%;
+    /* Status Colors */
+    --destructive: 6 78% 57%; /* Error Red #E74C3C */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 28 20% 88%;
-    --input: 28 20% 88%;
-    --ring: 32 88% 48%;
+    --success: 145 63% 49%; /* Success Green #2ECC71 */
+    --warning: 37 91% 55%; /* Warning Amber #F5A623 */
+    --info: 213 72% 59%; /* Info Blue #4A90E2 */
+
+    --border: 224 12% 85%;
+    --input: 224 12% 85%;
+    --ring: 43 53% 54%;
 
     --radius: 0.75rem;
 
-    --gradient-primary: linear-gradient(135deg, hsl(32 88% 48%) 0%, hsl(38 92% 58%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(28 20% 97%) 0%, hsl(28 30% 94%) 100%);
-    --shadow-luxury: 0 20px 60px -15px hsl(32 88% 48% / 0.25);
+    /* Gold Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(43 53% 54%) 0%, hsl(45 61% 67%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(228 33% 97%) 0%, hsl(224 12% 93%) 100%);
+    --shadow-luxury: 0 20px 60px -15px hsl(43 53% 54% / 0.25);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Gold Glow */
+    --gold-glow: 45 61% 67%; /* #E0C77A */
   }
 
   .dark {
-    --background: 220 20% 6%;
-    --foreground: 30 15% 92%;
+    /* Core Colors - Dark Mode */
+    --background: 240 10% 6%; /* Midnight Black #0E0E11 */
+    --foreground: 228 33% 97%; /* Soft White #F5F6FA */
 
-    --card: 220 18% 10%;
-    --card-foreground: 30 15% 92%;
+    --card: 240 8% 11%; /* Charcoal Gray #1A1A1F */
+    --card-foreground: 228 33% 97%;
 
-    --popover: 220 18% 10%;
-    --popover-foreground: 30 15% 92%;
+    --popover: 240 8% 11%;
+    --popover-foreground: 228 33% 97%;
 
-    --primary: 32 90% 52%;
-    --primary-foreground: 220 20% 6%;
+    /* Signature Gold as Primary */
+    --primary: 43 53% 54%; /* Signature Gold #C8A24D */
+    --primary-foreground: 240 10% 6%;
 
-    --secondary: 220 15% 15%;
-    --secondary-foreground: 30 15% 92%;
+    --secondary: 240 8% 16%;
+    --secondary-foreground: 224 12% 81%; /* Platinum Silver */
 
-    --muted: 220 15% 18%;
-    --muted-foreground: 220 10% 55%;
+    --muted: 240 8% 18%;
+    --muted-foreground: 224 12% 60%;
 
-    --accent: 38 95% 60%;
-    --accent-foreground: 220 20% 6%;
+    /* Muted Gold as Accent */
+    --accent: 42 50% 48%; /* Muted Gold #B8923E */
+    --accent-foreground: 228 33% 97%;
 
-    --destructive: 0 72% 55%;
+    /* Status Colors */
+    --destructive: 6 78% 57%; /* Error Red #E74C3C */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 18%;
-    --input: 220 15% 15%;
-    --ring: 32 90% 52%;
+    --success: 145 63% 49%; /* Success Green #2ECC71 */
+    --warning: 37 91% 55%; /* Warning Amber #F5A623 */
+    --info: 213 72% 59%; /* Info Blue #4A90E2 */
 
-    --gradient-primary: linear-gradient(135deg, hsl(32 90% 52%) 0%, hsl(38 95% 60%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(220 20% 6%) 0%, hsl(220 18% 10%) 100%);
-    --shadow-luxury: 0 20px 60px -15px hsl(32 90% 52% / 0.3);
-    --shadow-glow: 0 0 30px hsl(32 90% 52% / 0.15);
+    --border: 240 8% 20%;
+    --input: 240 8% 16%;
+    --ring: 43 53% 54%;
+
+    /* Gold Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(43 53% 54%) 0%, hsl(45 61% 67%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(240 10% 6%) 0%, hsl(240 8% 11%) 100%);
+    --shadow-luxury: 0 20px 60px -15px hsl(43 53% 54% / 0.3);
+    --shadow-glow: 0 0 30px hsl(43 53% 54% / 0.15);
+    
+    /* Gold Glow */
+    --gold-glow: 45 61% 67%; /* #E0C77A */
   }
 }
 
@@ -206,5 +230,39 @@ All colors MUST be HSL.
     );
     background-size: 200% 100%;
     animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  /* Gold text utility */
+  .text-gold {
+    color: hsl(var(--primary));
+  }
+
+  .text-gold-glow {
+    color: hsl(var(--gold-glow));
+  }
+
+  /* Status utilities */
+  .text-success {
+    color: hsl(var(--success));
+  }
+
+  .text-warning {
+    color: hsl(var(--warning));
+  }
+
+  .text-info {
+    color: hsl(var(--info));
+  }
+
+  .bg-success {
+    background-color: hsl(var(--success));
+  }
+
+  .bg-warning {
+    background-color: hsl(var(--warning));
+  }
+
+  .bg-info {
+    background-color: hsl(var(--info));
   }
 }
