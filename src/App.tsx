@@ -31,6 +31,7 @@ import DiscoverUsers from "./pages/DiscoverUsers";
 import ScentQuiz from "./pages/ScentQuiz";
 import Leaderboard from "./pages/Leaderboard";
 import YearInReviewPage from "./pages/YearInReviewPage";
+import SearchAnalytics from "./pages/SearchAnalytics";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,7 @@ const AnimatedRoutes = () => {
         <Route path="/messages/new/:recipientId" element={<PageTransition><DirectMessages /></PageTransition>} />
         <Route path="/settings" element={<PageTransition><Settings /></PageTransition>} />
         <Route path="/admin/verification" element={<PageTransition><AdminVerification /></PageTransition>} />
+        <Route path="/admin/search-analytics" element={<PageTransition><SearchAnalytics /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>
