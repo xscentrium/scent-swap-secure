@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, User, Package, Sparkles, Clock, TrendingUp, X } from "lucide-react";
+import { Search, User, Package, Sparkles, Clock, TrendingUp, X, Mic, MicOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   CommandDialog,
@@ -14,6 +14,8 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 interface SearchResult {
   id: string;
@@ -36,6 +38,9 @@ const POPULAR_SUGGESTIONS = [
   { title: "Le Labo", type: "fragrance" as const, url: "/discover?search=Le%20Labo" },
 ];
 
+// Check if browser supports speech recognition
+const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
 export const NavigationSearch = () => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -43,8 +48,11 @@ export const NavigationSearch = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [filter, setFilter] = useState<FilterType>("all");
   const [recentSearches, setRecentSearches] = useState<SearchResult[]>([]);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
   const debouncedQuery = useDebounce(query, 300);
   const navigate = useNavigate();
+  const { profile } = useAuth();
 
   // Load recent searches from localStorage
   useEffect(() => {
@@ -58,6 +66,41 @@ export const NavigationSearch = () => {
     }
   }, []);
 
+  // Initialize speech recognition
+  useEffect(() => {
+    if (SpeechRecognition) {
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = true;
+      recognitionRef.current.lang = "en-US";
+
+      recognitionRef.current.onresult = (event: any) => {
+        const transcript = Array.from(event.results)
+          .map((result: any) => result[0].transcript)
+          .join("");
+        setQuery(transcript);
+      };
+
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onerror = (event: any) => {
+        console.error("Speech recognition error:", event.error);
+        setIsListening(false);
+        if (event.error === "not-allowed") {
+          toast.error("Microphone access denied. Please enable it in your browser settings.");
+        }
+      };
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+      }
+    };
+  }, []);
+
   // Keyboard shortcut
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -69,6 +112,26 @@ export const NavigationSearch = () => {
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
   }, []);
+
+  const toggleVoiceSearch = () => {
+    if (!SpeechRecognition) {
+      toast.error("Voice search is not supported in your browser.");
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+    } else {
+      try {
+        recognitionRef.current?.start();
+        setIsListening(true);
+      } catch (error) {
+        console.error("Failed to start voice recognition:", error);
+        toast.error("Failed to start voice recognition.");
+      }
+    }
+  };
 
   const saveRecentSearch = (result: SearchResult) => {
     const updated = [
@@ -89,6 +152,20 @@ export const NavigationSearch = () => {
     const updated = recentSearches.filter((r) => r.id !== id);
     setRecentSearches(updated);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  };
+
+  // Track search analytics
+  const trackSearch = async (searchQuery: string, filterType: FilterType, resultsCount: number) => {
+    try {
+      await supabase.from("search_analytics").insert({
+        query: searchQuery.toLowerCase().trim(),
+        filter_type: filterType,
+        results_count: resultsCount,
+        profile_id: profile?.id || null,
+      });
+    } catch (error) {
+      console.error("Failed to track search:", error);
+    }
   };
 
   const searchAll = useCallback(async (searchQuery: string, activeFilter: FilterType) => {
@@ -174,12 +251,17 @@ export const NavigationSearch = () => {
       }
 
       setResults(searchResults);
+      
+      // Track this search
+      if (searchQuery.trim().length >= 2) {
+        trackSearch(searchQuery, activeFilter, searchResults.length);
+      }
     } catch (error) {
       console.error("Search error:", error);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [profile?.id]);
 
   useEffect(() => {
     searchAll(debouncedQuery, filter);
@@ -190,6 +272,10 @@ export const NavigationSearch = () => {
     setOpen(false);
     setQuery("");
     setFilter("all");
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+    }
     navigate(result.url);
   };
 
@@ -197,6 +283,10 @@ export const NavigationSearch = () => {
     setOpen(false);
     setQuery("");
     setFilter("all");
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+    }
     navigate(suggestion.url);
   };
 
@@ -238,11 +328,33 @@ export const NavigationSearch = () => {
       </Button>
 
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput
-          placeholder="Search fragrances, users, listings..."
-          value={query}
-          onValueChange={setQuery}
-        />
+        <div className="flex items-center border-b px-3">
+          <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+          <input
+            placeholder="Search fragrances, users, listings..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+          />
+          {SpeechRecognition && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`h-8 w-8 shrink-0 ${isListening ? "text-destructive animate-pulse" : "text-muted-foreground"}`}
+              onClick={toggleVoiceSearch}
+            >
+              {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+            </Button>
+          )}
+        </div>
+        
+        {/* Voice listening indicator */}
+        {isListening && (
+          <div className="px-3 py-2 bg-destructive/10 text-destructive text-sm flex items-center gap-2">
+            <div className="w-2 h-2 bg-destructive rounded-full animate-pulse" />
+            Listening... Speak now
+          </div>
+        )}
         
         {/* Filter Tabs */}
         <div className="px-3 py-2 border-b">
