@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -11,12 +12,15 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { ShieldCheck, Star, Sparkles } from "lucide-react";
+import { ShieldCheck, Star, Sparkles, Eye } from "lucide-react";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { useNavigate } from "react-router-dom";
+import { ListingQuickView } from "@/components/ListingQuickView";
 
 export const FeaturedListings = () => {
   const navigate = useNavigate();
+  const [selectedListing, setSelectedListing] = useState<any>(null);
+  const [quickViewOpen, setQuickViewOpen] = useState(false);
 
   const { data: listings, isLoading } = useQuery({
     queryKey: ['featured-listings'],
@@ -91,14 +95,20 @@ export const FeaturedListings = () => {
           <CarouselContent className="-ml-4">
             {listings.map((listing) => (
               <CarouselItem key={listing.id} className="pl-4 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">
-                <Card className="overflow-hidden hover:shadow-luxury transition-smooth group h-full">
+                <Card 
+                  className="overflow-hidden hover:shadow-luxury transition-smooth group h-full cursor-pointer"
+                  onClick={() => {
+                    setSelectedListing(listing);
+                    setQuickViewOpen(true);
+                  }}
+                >
                   <div className="relative aspect-square overflow-hidden bg-muted">
                     <img 
                       src={listing.image_url || 'https://images.unsplash.com/photo-1541643600914-78b084683601?w=400'} 
                       alt={listing.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
-                    <div className="absolute top-3 left-3">
+                    <div className="absolute top-3 left-3" onClick={(e) => e.stopPropagation()}>
                       <FavoriteButton
                         name={listing.name}
                         brand={listing.brand}
@@ -112,10 +122,14 @@ export const FeaturedListings = () => {
                         Verified
                       </Badge>
                     )}
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3 flex items-center justify-between">
                       <Badge variant="secondary" className="bg-background/90">
                         {listing.listing_type === 'sale' ? 'For Sale' : listing.listing_type === 'trade' ? 'For Trade' : 'Sale or Trade'}
                       </Badge>
+                      <Button size="sm" variant="secondary" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Eye className="w-4 h-4 mr-1" />
+                        Quick View
+                      </Button>
                     </div>
                   </div>
                   
@@ -149,7 +163,10 @@ export const FeaturedListings = () => {
                       </div>
                       <Button 
                         className="w-full" 
-                        onClick={() => navigate(`/marketplace?listing=${listing.id}`)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/marketplace?listing=${listing.id}`);
+                        }}
                       >
                         {listing.listing_type === 'sale' ? 'Buy Now' : listing.listing_type === 'trade' ? 'Propose Trade' : 'View Details'}
                       </Button>
@@ -162,6 +179,12 @@ export const FeaturedListings = () => {
           <CarouselPrevious className="hidden md:flex -left-4" />
           <CarouselNext className="hidden md:flex -right-4" />
         </Carousel>
+
+        <ListingQuickView
+          open={quickViewOpen}
+          onOpenChange={setQuickViewOpen}
+          listing={selectedListing}
+        />
       </div>
     </section>
   );
