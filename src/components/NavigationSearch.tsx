@@ -25,6 +25,11 @@ interface SearchResult {
   url: string;
 }
 
+interface AutocompleteSuggestion {
+  query: string;
+  count: number;
+}
+
 type FilterType = "all" | "users" | "listings" | "fragrances";
 
 const STORAGE_KEY = "scentswap_recent_searches";
@@ -48,9 +53,11 @@ export const NavigationSearch = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [filter, setFilter] = useState<FilterType>("all");
   const [recentSearches, setRecentSearches] = useState<SearchResult[]>([]);
+  const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<AutocompleteSuggestion[]>([]);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
   const debouncedQuery = useDebounce(query, 300);
+  const autocompleteDebounce = useDebounce(query, 150);
   const navigate = useNavigate();
   const { profile } = useAuth();
 
@@ -65,6 +72,46 @@ export const NavigationSearch = () => {
       }
     }
   }, []);
+
+  // Fetch autocomplete suggestions based on popular searches
+  useEffect(() => {
+    const fetchAutocompleteSuggestions = async () => {
+      if (autocompleteDebounce.trim().length < 2) {
+        setAutocompleteSuggestions([]);
+        return;
+      }
+
+      try {
+        // Use RPC or direct query with aggregation
+        const { data, error } = await supabase
+          .from("search_analytics")
+          .select("query")
+          .ilike("query", `${autocompleteDebounce.toLowerCase()}%`)
+          .order("created_at", { ascending: false })
+          .limit(50);
+
+        if (error) throw error;
+
+        // Aggregate queries client-side
+        const queryCount = new Map<string, number>();
+        data?.forEach((item) => {
+          const q = item.query.toLowerCase();
+          queryCount.set(q, (queryCount.get(q) || 0) + 1);
+        });
+
+        const suggestions = Array.from(queryCount.entries())
+          .map(([query, count]) => ({ query, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 5);
+
+        setAutocompleteSuggestions(suggestions);
+      } catch (error) {
+        console.error("Failed to fetch autocomplete:", error);
+      }
+    };
+
+    fetchAutocompleteSuggestions();
+  }, [autocompleteDebounce]);
 
   // Initialize speech recognition
   useEffect(() => {
@@ -290,6 +337,10 @@ export const NavigationSearch = () => {
     navigate(suggestion.url);
   };
 
+  const handleAutocompleteSelect = (suggestion: string) => {
+    setQuery(suggestion);
+  };
+
   const getIcon = (type: SearchResult["type"]) => {
     switch (type) {
       case "user":
@@ -310,6 +361,7 @@ export const NavigationSearch = () => {
   const hasResults = results.length > 0;
   const hasQuery = query.trim().length > 0;
   const showSuggestions = !hasQuery && !isLoading;
+  const showAutocomplete = hasQuery && autocompleteSuggestions.length > 0 && !hasResults && !isLoading;
 
   return (
     <>
@@ -386,7 +438,32 @@ export const NavigationSearch = () => {
             </div>
           ) : (
             <>
-              {hasQuery && !hasResults && (
+              {/* Autocomplete suggestions while typing */}
+              {showAutocomplete && (
+                <CommandGroup heading={
+                  <span className="flex items-center gap-1.5">
+                    <TrendingUp className="w-3 h-3" />
+                    Popular Searches
+                  </span>
+                }>
+                  {autocompleteSuggestions.map((suggestion, index) => (
+                    <CommandItem
+                      key={`autocomplete-${index}`}
+                      value={`autocomplete-${suggestion.query}`}
+                      onSelect={() => handleAutocompleteSelect(suggestion.query)}
+                      className="cursor-pointer"
+                    >
+                      <Search className="w-4 h-4 text-muted-foreground" />
+                      <span className="ml-2 text-sm">{suggestion.query}</span>
+                      <span className="ml-auto text-xs text-muted-foreground">
+                        {suggestion.count} searches
+                      </span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
+
+              {hasQuery && !hasResults && !showAutocomplete && (
                 <CommandEmpty>No results found for "{query}"</CommandEmpty>
               )}
 
