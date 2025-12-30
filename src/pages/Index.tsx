@@ -2,6 +2,7 @@ import { Navigation } from "@/components/Navigation";
 import { Hero } from "@/components/Hero";
 import { HowItWorks } from "@/components/HowItWorks";
 import { Marketplace } from "@/components/Marketplace";
+import { FeaturedListings } from "@/components/FeaturedListings";
 import { StatsDashboard } from "@/components/StatsDashboard";
 import { StatsCharts } from "@/components/StatsCharts";
 import { CollectionValueDashboard } from "@/components/CollectionValueDashboard";
@@ -80,6 +81,7 @@ const Index = () => {
             </section>
           </>
         )}
+        <FeaturedListings />
         <HowItWorks />
         <Marketplace />
       </main>
