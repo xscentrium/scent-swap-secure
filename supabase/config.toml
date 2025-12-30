@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.ai-layering]
 verify_jwt = false
+
+[functions.search-volume-alert]
+verify_jwt = false
