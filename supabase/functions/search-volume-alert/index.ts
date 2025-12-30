@@ -8,10 +8,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Configuration
-const DAILY_THRESHOLD = 100; // Alert when daily searches exceed this
-const HOURLY_SPIKE_THRESHOLD = 50; // Alert when hourly searches exceed this
-const ADMIN_EMAILS = ["admin@xscentrium.com"]; // Add actual admin emails
+interface ThresholdSettings {
+  daily_threshold: number;
+  hourly_spike_threshold: number;
+  increase_percentage: number;
+}
 
 interface SearchStats {
   total_today: number;
@@ -30,6 +31,33 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Fetch settings from database
+    const { data: settingsData } = await supabase
+      .from("admin_alert_settings")
+      .select("setting_key, setting_value");
+
+    let thresholds: ThresholdSettings = {
+      daily_threshold: 100,
+      hourly_spike_threshold: 50,
+      increase_percentage: 50,
+    };
+    let adminEmails: string[] = [];
+
+    settingsData?.forEach((setting: { setting_key: string; setting_value: unknown }) => {
+      if (setting.setting_key === "search_volume_thresholds") {
+        const value = setting.setting_value as Record<string, unknown>;
+        thresholds = {
+          daily_threshold: Number(value.daily_threshold) || 100,
+          hourly_spike_threshold: Number(value.hourly_spike_threshold) || 50,
+          increase_percentage: Number(value.increase_percentage) || 50,
+        };
+      } else if (setting.setting_key === "admin_emails") {
+        if (Array.isArray(setting.setting_value)) {
+          adminEmails = setting.setting_value as string[];
+        }
+      }
+    });
 
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -92,32 +120,33 @@ const handler = async (req: Request): Promise<Response> => {
     const alerts: string[] = [];
 
     // Check daily threshold
-    if (stats.total_today >= DAILY_THRESHOLD) {
-      alerts.push(`Daily search volume (${stats.total_today}) exceeded threshold (${DAILY_THRESHOLD})`);
+    if (stats.total_today >= thresholds.daily_threshold) {
+      alerts.push(`Daily search volume (${stats.total_today}) exceeded threshold (${thresholds.daily_threshold})`);
     }
 
     // Check hourly spike
-    if (stats.hourly_count >= HOURLY_SPIKE_THRESHOLD) {
+    if (stats.hourly_count >= thresholds.hourly_spike_threshold) {
       alerts.push(`Hourly search spike detected: ${stats.hourly_count} searches in the last hour`);
     }
 
     // Check significant increase from yesterday
-    if (stats.total_yesterday > 0 && stats.total_today > stats.total_yesterday * 1.5) {
+    const increaseThreshold = 1 + (thresholds.increase_percentage / 100);
+    if (stats.total_yesterday > 0 && stats.total_today > stats.total_yesterday * increaseThreshold) {
       const increase = Math.round(((stats.total_today - stats.total_yesterday) / stats.total_yesterday) * 100);
-      alerts.push(`${increase}% increase in searches compared to yesterday`);
+      alerts.push(`${increase}% increase in searches compared to yesterday (threshold: ${thresholds.increase_percentage}%)`);
     }
 
     // If no alerts, return early
     if (alerts.length === 0) {
       console.log("No alerts triggered. Stats:", stats);
       return new Response(
-        JSON.stringify({ message: "No alerts triggered", stats }),
+        JSON.stringify({ message: "No alerts triggered", stats, thresholds }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
     // Filter out empty emails
-    const recipientEmails = ADMIN_EMAILS.filter((email) => email && email.includes("@"));
+    const recipientEmails = adminEmails.filter((email) => email && email.includes("@"));
 
     if (recipientEmails.length === 0) {
       console.log("No admin emails configured");
@@ -235,14 +264,15 @@ const handler = async (req: Request): Promise<Response> => {
         message: "Alert sent successfully", 
         stats, 
         alerts,
-        recipients: recipientEmails 
+        recipients: recipientEmails,
+        thresholds
       }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in search-volume-alert:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
