@@ -53,15 +53,16 @@ export default {
         info: "hsl(var(--info))",
         // Gold variants
         gold: {
-          DEFAULT: "hsl(43 53% 54%)", // Signature Gold
-          muted: "hsl(42 50% 48%)", // Muted Gold
-          glow: "hsl(45 61% 67%)", // Gold Glow
+          DEFAULT: "hsl(46 74% 52%)", // Signature Gold #D4AF37
+          muted: "hsl(43 87% 38%)", // Muted Gold #B8860B
+          glow: "hsl(51 100% 50%)", // Gold Glow #FFD700
         },
+        "gold-glow": "hsl(51 100% 50%)", // Gold Glow utility
         // Core palette
-        midnight: "hsl(240 10% 6%)", // Midnight Black
-        charcoal: "hsl(240 8% 11%)", // Charcoal Gray
-        platinum: "hsl(224 12% 81%)", // Platinum Silver
-        "soft-white": "hsl(228 33% 97%)", // Soft White
+        midnight: "hsl(240 10% 6%)", // Midnight Black #0E0E11
+        charcoal: "hsl(240 8% 11%)", // Charcoal Gray #1A1A1F
+        platinum: "hsl(0 0% 90%)", // Platinum Silver #E5E5E5
+        "soft-white": "hsl(0 0% 97%)", // Soft White #F8F8F8
       },
       fontFamily: {
         serif: ['Playfair Display', 'serif'],

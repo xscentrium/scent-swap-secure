@@ -8,6 +8,7 @@ import { AccountSetupDialog } from "@/components/AccountSetupDialog";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PageTransition } from "@/components/PageTransition";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
+import { ThemeProvider } from "next-themes";
 import { AnimatePresence } from "framer-motion";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -73,19 +74,21 @@ const AnimatedRoutes = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ErrorBoundary>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AccountSetupDialog />
-            <AnimatedRoutes />
-            <FloatingActionButton />
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
-    </ErrorBoundary>
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+      <ErrorBoundary>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <AccountSetupDialog />
+              <AnimatedRoutes />
+              <FloatingActionButton />
+            </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
+      </ErrorBoundary>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
