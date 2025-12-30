@@ -191,7 +191,7 @@ serve(async (req) => {
     </div>
 
     <div style="background: #f9fafb; padding: 24px; text-align: center;">
-      <a href="${Deno.env.get('SITE_URL') || 'https://scentswap.lovable.app'}/year-in-review" 
+      <a href="${Deno.env.get('SITE_URL') || 'https://xscentrium.lovable.app'}/year-in-review" 
          style="display: inline-block; background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
         View Full Year in Review
       </a>
@@ -208,7 +208,7 @@ serve(async (req) => {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'ScentSwap <noreply@resend.dev>',
+        from: 'Xscentrium <noreply@resend.dev>',
         to: user.email,
         subject: `Your ${type === 'monthly' ? 'Monthly' : 'Yearly'} Fragrance Summary - ${periodName}`,
         html: emailHtml,

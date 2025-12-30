@@ -118,7 +118,7 @@ const Auth = () => {
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-2 mb-8">
           <Sparkles className="w-8 h-8 text-primary" />
-          <span className="text-2xl font-serif font-bold">ScentSwap</span>
+          <span className="text-2xl font-serif font-bold">Xscentrium</span>
         </div>
 
         <Card className="shadow-luxury border-border/50">

@@ -32,7 +32,7 @@ interface AutocompleteSuggestion {
 
 type FilterType = "all" | "users" | "listings" | "fragrances";
 
-const STORAGE_KEY = "scentswap_recent_searches";
+const STORAGE_KEY = "xscentrium_recent_searches";
 const MAX_RECENT_SEARCHES = 5;
 
 const POPULAR_SUGGESTIONS = [
