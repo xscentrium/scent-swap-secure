@@ -1,15 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { format, subDays, startOfDay, endOfDay } from "date-fns";
+import { format, subDays } from "date-fns";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
-import { Search, TrendingUp, Calendar, Filter, ArrowLeft } from "lucide-react";
+import { Search, TrendingUp, Calendar, Filter, ArrowLeft, Download, FileText, Bell, BellOff, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigation } from "@/components/Navigation";
+import { toast } from "sonner";
 
 interface SearchAnalyticsData {
   query: string;
@@ -33,7 +36,16 @@ interface FilterDistribution {
   value: number;
 }
 
+interface SpikeAlert {
+  query: string;
+  currentCount: number;
+  previousCount: number;
+  percentageIncrease: number;
+  timestamp: Date;
+}
+
 const COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(var(--secondary))", "hsl(var(--muted))"];
+const SPIKE_THRESHOLD = 50; // 50% increase triggers an alert
 
 export default function SearchAnalytics() {
   const [timeRange, setTimeRange] = useState("7d");
@@ -44,6 +56,10 @@ export default function SearchAnalytics() {
   const [avgResultsCount, setAvgResultsCount] = useState(0);
   const [zeroResultsRate, setZeroResultsRate] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [realtimeEnabled, setRealtimeEnabled] = useState(false);
+  const [spikeAlerts, setSpikeAlerts] = useState<SpikeAlert[]>([]);
+  const [rawData, setRawData] = useState<SearchAnalyticsData[]>([]);
+  const recentSearchesRef = useRef<Map<string, number>>(new Map());
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -63,6 +79,59 @@ export default function SearchAnalytics() {
     }
   };
 
+  // Real-time subscription for spike detection
+  useEffect(() => {
+    if (!realtimeEnabled) return;
+
+    const channel = supabase
+      .channel('search-analytics-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'search_analytics'
+        },
+        (payload) => {
+          const newSearch = payload.new as SearchAnalyticsData;
+          const query = newSearch.query.toLowerCase();
+          
+          // Track recent searches in a sliding window
+          const currentCount = (recentSearchesRef.current.get(query) || 0) + 1;
+          recentSearchesRef.current.set(query, currentCount);
+          
+          // Check for spike (more than 5 searches of the same term in short period)
+          if (currentCount >= 5) {
+            const existingAlert = spikeAlerts.find(a => a.query === query);
+            if (!existingAlert || (Date.now() - existingAlert.timestamp.getTime()) > 60000) {
+              const newAlert: SpikeAlert = {
+                query,
+                currentCount,
+                previousCount: 0,
+                percentageIncrease: 100,
+                timestamp: new Date()
+              };
+              
+              setSpikeAlerts(prev => [newAlert, ...prev].slice(0, 10));
+              toast.info(`🔥 Trending: "${query}" is spiking with ${currentCount} searches!`, {
+                duration: 5000,
+              });
+            }
+          }
+          
+          // Reset counts every minute
+          setTimeout(() => {
+            recentSearchesRef.current.set(query, Math.max(0, (recentSearchesRef.current.get(query) || 0) - 1));
+          }, 60000);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [realtimeEnabled, spikeAlerts]);
+
   useEffect(() => {
     const fetchAnalytics = async () => {
       setIsLoading(true);
@@ -79,6 +148,7 @@ export default function SearchAnalytics() {
         if (error) throw error;
 
         const analytics = data as SearchAnalyticsData[];
+        setRawData(analytics);
 
         // Calculate total searches
         setTotalSearches(analytics.length);
@@ -147,6 +217,95 @@ export default function SearchAnalytics() {
     fetchAnalytics();
   }, [timeRange]);
 
+  const exportToCSV = () => {
+    if (rawData.length === 0) {
+      toast.error("No data to export");
+      return;
+    }
+
+    const headers = ["Query", "Filter Type", "Results Count", "Date"];
+    const csvContent = [
+      headers.join(","),
+      ...rawData.map(row => [
+        `"${row.query}"`,
+        row.filter_type,
+        row.results_count,
+        format(new Date(row.created_at), "yyyy-MM-dd HH:mm:ss")
+      ].join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `xscentrium-search-analytics-${format(new Date(), "yyyy-MM-dd")}.csv`;
+    link.click();
+    
+    toast.success("CSV exported successfully");
+  };
+
+  const exportToPDF = () => {
+    // Create a printable HTML report
+    const reportHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Xscentrium Search Analytics Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 40px; }
+          h1 { color: #333; border-bottom: 2px solid #d97706; padding-bottom: 10px; }
+          h2 { color: #666; margin-top: 30px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+          th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+          th { background: #f5f5f5; }
+          .stat-box { display: inline-block; padding: 20px; background: #f9fafb; border-radius: 8px; margin: 10px; }
+          .stat-value { font-size: 24px; font-weight: bold; color: #d97706; }
+          .stat-label { color: #666; font-size: 14px; }
+        </style>
+      </head>
+      <body>
+        <h1>🔍 Xscentrium Search Analytics Report</h1>
+        <p>Generated on: ${format(new Date(), "MMMM dd, yyyy 'at' HH:mm")}</p>
+        <p>Time Range: ${timeRange === "24h" ? "Last 24 hours" : timeRange === "7d" ? "Last 7 days" : timeRange === "30d" ? "Last 30 days" : "Last 90 days"}</p>
+        
+        <h2>📊 Overview</h2>
+        <div class="stat-box">
+          <div class="stat-value">${totalSearches.toLocaleString()}</div>
+          <div class="stat-label">Total Searches</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value">${avgResultsCount}</div>
+          <div class="stat-label">Avg Results</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value">${zeroResultsRate}%</div>
+          <div class="stat-label">Zero Results Rate</div>
+        </div>
+        
+        <h2>🔥 Top Searches</h2>
+        <table>
+          <tr><th>Rank</th><th>Query</th><th>Count</th></tr>
+          ${topSearches.map((s, i) => `<tr><td>${i + 1}</td><td>${s.query}</td><td>${s.count}</td></tr>`).join("")}
+        </table>
+        
+        <h2>🎯 Filter Usage</h2>
+        <table>
+          <tr><th>Filter</th><th>Count</th><th>Percentage</th></tr>
+          ${filterDistribution.map(f => `<tr><td>${f.name}</td><td>${f.value}</td><td>${Math.round((f.value / totalSearches) * 100)}%</td></tr>`).join("")}
+        </table>
+      </body>
+      </html>
+    `;
+
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(reportHtml);
+      printWindow.document.close();
+      printWindow.print();
+    }
+    
+    toast.success("PDF report opened for printing");
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-background">
@@ -163,7 +322,7 @@ export default function SearchAnalytics() {
       <Navigation />
       <div className="container mx-auto py-8 px-4 max-w-7xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-5 w-5" />
@@ -173,19 +332,72 @@ export default function SearchAnalytics() {
               <p className="text-muted-foreground">Track what users are searching for</p>
             </div>
           </div>
-          <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-[140px]">
-              <Calendar className="w-4 h-4 mr-2" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="24h">Last 24 hours</SelectItem>
-              <SelectItem value="7d">Last 7 days</SelectItem>
-              <SelectItem value="30d">Last 30 days</SelectItem>
-              <SelectItem value="90d">Last 90 days</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Real-time toggle */}
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50">
+              {realtimeEnabled ? (
+                <Bell className="w-4 h-4 text-primary animate-pulse" />
+              ) : (
+                <BellOff className="w-4 h-4 text-muted-foreground" />
+              )}
+              <Label htmlFor="realtime" className="text-sm cursor-pointer">
+                Live Alerts
+              </Label>
+              <Switch
+                id="realtime"
+                checked={realtimeEnabled}
+                onCheckedChange={setRealtimeEnabled}
+              />
+            </div>
+
+            {/* Export buttons */}
+            <Button variant="outline" size="sm" onClick={exportToCSV}>
+              <Download className="w-4 h-4 mr-2" />
+              CSV
+            </Button>
+            <Button variant="outline" size="sm" onClick={exportToPDF}>
+              <FileText className="w-4 h-4 mr-2" />
+              PDF
+            </Button>
+
+            <Select value={timeRange} onValueChange={setTimeRange}>
+              <SelectTrigger className="w-[140px]">
+                <Calendar className="w-4 h-4 mr-2" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="24h">Last 24 hours</SelectItem>
+                <SelectItem value="7d">Last 7 days</SelectItem>
+                <SelectItem value="30d">Last 30 days</SelectItem>
+                <SelectItem value="90d">Last 90 days</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
+
+        {/* Spike Alerts Banner */}
+        {spikeAlerts.length > 0 && (
+          <Card className="mb-6 border-amber-500/50 bg-amber-500/10">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-amber-500" />
+                Trending Searches
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {spikeAlerts.slice(0, 5).map((alert, index) => (
+                  <div
+                    key={`${alert.query}-${index}`}
+                    className="px-3 py-1.5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 text-sm font-medium"
+                  >
+                    🔥 {alert.query} ({alert.currentCount} searches)
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {isLoading ? (
           <div className="flex items-center justify-center py-12">

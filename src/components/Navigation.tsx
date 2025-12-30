@@ -53,7 +53,7 @@ export const Navigation = () => {
             <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-serif font-bold hidden sm:block">ScentSwap</span>
+            <span className="text-xl font-serif font-bold hidden sm:block">Xscentrium</span>
           </Link>
           
           {/* Desktop Navigation */}
@@ -201,7 +201,7 @@ export const Navigation = () => {
                     <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
                       <Sparkles className="w-5 h-5 text-primary-foreground" />
                     </div>
-                    <span className="text-xl font-serif font-bold">ScentSwap</span>
+                    <span className="text-xl font-serif font-bold">Xscentrium</span>
                   </div>
                   
                   {/* Nav Links */}
