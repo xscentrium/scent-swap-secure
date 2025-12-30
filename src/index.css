@@ -8,8 +8,8 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Core Colors - Light Mode (Soft White base) */
-    --background: 0 0% 97%; /* Soft White #F8F8F8 */
+    /* Light Mode - inverted for light theme */
+    --background: 228 33% 97%; /* Soft White #F5F6FA */
     --foreground: 240 10% 6%; /* Midnight Black #0E0E11 */
 
     --card: 0 0% 100%;
@@ -18,89 +18,89 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 6%;
 
-    /* Signature Gold as Primary */
-    --primary: 46 74% 52%; /* Signature Gold #D4AF37 */
+    /* Signature Gold as Primary - used SPARINGLY for CTAs, prices, premium */
+    --primary: 43 53% 54%; /* Signature Gold #C8A24D */
     --primary-foreground: 240 10% 6%;
 
-    --secondary: 0 0% 90%; /* Platinum Silver #E5E5E5 */
+    --secondary: 224 12% 90%;
     --secondary-foreground: 240 10% 6%;
 
-    --muted: 0 0% 93%;
+    --muted: 224 12% 93%;
     --muted-foreground: 240 8% 40%;
 
-    /* Muted Gold as Accent */
-    --accent: 43 87% 38%; /* Muted Gold #B8860B */
-    --accent-foreground: 0 0% 100%;
+    /* Muted Gold - hover states, secondary buttons */
+    --accent: 42 50% 48%; /* Muted Gold #B8923E */
+    --accent-foreground: 228 33% 97%;
 
     /* Status Colors */
     --destructive: 6 78% 57%; /* Error Red #E74C3C */
     --destructive-foreground: 0 0% 100%;
 
     --success: 145 63% 49%; /* Success Green #2ECC71 */
-    --warning: 48 88% 50%; /* Warning Amber #F1C40F */
-    --info: 204 70% 53%; /* Info Blue #3498DB */
+    --warning: 37 91% 55%; /* Warning Amber #F5A623 */
+    --info: 213 72% 59%; /* Info Blue #4A90E2 */
 
-    --border: 0 0% 85%;
-    --input: 0 0% 85%;
-    --ring: 46 74% 52%;
+    --border: 224 12% 85%;
+    --input: 224 12% 85%;
+    --ring: 43 53% 54%;
 
     --radius: 0.75rem;
 
-    /* Gold Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(46 74% 52%) 0%, hsl(51 100% 50%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(0 0% 97%) 0%, hsl(0 0% 93%) 100%);
-    --shadow-luxury: 0 20px 60px -15px hsl(46 74% 52% / 0.25);
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Gold Glow - for highlights, badges, subtle emphasis */
+    --gold-glow: 45 61% 67%; /* #E0C77A */
     
-    /* Gold Glow */
-    --gold-glow: 51 100% 50%; /* #FFD700 */
+    /* Gradients & Effects */
+    --gradient-primary: linear-gradient(135deg, hsl(43 53% 54%) 0%, hsl(45 61% 67%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(228 33% 97%) 0%, hsl(224 12% 93%) 100%);
+    --shadow-luxury: 0 20px 60px -15px hsl(43 53% 54% / 0.2);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .dark {
-    /* Core Colors - Dark Mode (Midnight Black base with Charcoal cards) */
-    --background: 240 10% 6%; /* Midnight Black #0E0E11 */
-    --foreground: 0 0% 97%; /* Soft White #F8F8F8 */
+    /* Core - Dark Mode */
+    --background: 240 10% 6%; /* Midnight Black #0E0E11 - App background */
+    --foreground: 224 12% 81%; /* Platinum Silver #C9CCD6 - Primary text */
 
-    --card: 240 8% 11%; /* Charcoal Gray #1A1A1F */
-    --card-foreground: 0 0% 97%;
+    --card: 240 8% 11%; /* Charcoal Gray #1A1A1F - Cards, modals */
+    --card-foreground: 224 12% 81%; /* Platinum Silver */
 
     --popover: 240 8% 13%;
-    --popover-foreground: 0 0% 97%;
+    --popover-foreground: 224 12% 81%;
 
-    /* Signature Gold as Primary */
-    --primary: 46 74% 52%; /* Signature Gold #D4AF37 */
+    /* Signature Gold - ONLY for money actions, premium, verification */
+    --primary: 43 53% 54%; /* Signature Gold #C8A24D */
     --primary-foreground: 240 10% 6%;
 
     --secondary: 240 8% 16%;
-    --secondary-foreground: 0 0% 90%; /* Platinum Silver */
+    --secondary-foreground: 228 33% 97%; /* Soft White #F5F6FA */
 
     --muted: 240 8% 15%;
-    --muted-foreground: 0 0% 65%;
+    --muted-foreground: 228 33% 85%; /* Soft White toned down */
 
-    /* Muted Gold as Accent */
-    --accent: 43 87% 38%; /* Muted Gold #B8860B */
-    --accent-foreground: 0 0% 100%;
+    /* Muted Gold - hover states */
+    --accent: 42 50% 48%; /* Muted Gold #B8923E */
+    --accent-foreground: 228 33% 97%;
 
     /* Status Colors */
     --destructive: 6 78% 57%; /* Error Red #E74C3C */
     --destructive-foreground: 0 0% 100%;
 
     --success: 145 63% 49%; /* Success Green #2ECC71 */
-    --warning: 48 88% 50%; /* Warning Amber #F1C40F */
-    --info: 204 70% 53%; /* Info Blue #3498DB */
+    --warning: 37 91% 55%; /* Warning Amber #F5A623 */
+    --info: 213 72% 59%; /* Info Blue #4A90E2 */
 
     --border: 240 8% 18%;
     --input: 240 8% 16%;
-    --ring: 46 74% 52%;
+    --ring: 43 53% 54%;
 
-    /* Gold Gradients & Effects */
-    --gradient-primary: linear-gradient(135deg, hsl(46 74% 52%) 0%, hsl(51 100% 50%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(240 10% 6%) 0%, hsl(240 8% 11%) 100%);
-    --shadow-luxury: 0 20px 60px -15px hsl(46 74% 52% / 0.35);
-    --shadow-glow: 0 0 40px hsl(46 74% 52% / 0.2);
+    /* Gold Glow - highlights, badges */
+    --gold-glow: 45 61% 67%; /* #E0C77A */
     
-    /* Gold Glow */
-    --gold-glow: 51 100% 50%; /* #FFD700 */
+    /* Gradients & Effects */
+    --gradient-primary: linear-gradient(135deg, hsl(43 53% 54%) 0%, hsl(45 61% 67%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(240 10% 6%) 0%, hsl(240 8% 11%) 100%);
+    --shadow-luxury: 0 20px 60px -15px hsl(43 53% 54% / 0.25);
+    --shadow-glow: 0 0 30px hsl(43 53% 54% / 0.15);
   }
 }
 

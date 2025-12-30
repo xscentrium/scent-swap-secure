@@ -51,18 +51,18 @@ export default {
         success: "hsl(var(--success))",
         warning: "hsl(var(--warning))",
         info: "hsl(var(--info))",
-        // Gold variants
+        // Gold variants - USE SPARINGLY for premium/money actions
         gold: {
-          DEFAULT: "hsl(46 74% 52%)", // Signature Gold #D4AF37
-          muted: "hsl(43 87% 38%)", // Muted Gold #B8860B
-          glow: "hsl(51 100% 50%)", // Gold Glow #FFD700
+          DEFAULT: "hsl(43 53% 54%)", // Signature Gold #C8A24D
+          muted: "hsl(42 50% 48%)", // Muted Gold #B8923E
+          glow: "hsl(45 61% 67%)", // Gold Glow #E0C77A
         },
-        "gold-glow": "hsl(51 100% 50%)", // Gold Glow utility
+        "gold-glow": "hsl(45 61% 67%)", // Gold Glow utility
         // Core palette
         midnight: "hsl(240 10% 6%)", // Midnight Black #0E0E11
         charcoal: "hsl(240 8% 11%)", // Charcoal Gray #1A1A1F
-        platinum: "hsl(0 0% 90%)", // Platinum Silver #E5E5E5
-        "soft-white": "hsl(0 0% 97%)", // Soft White #F8F8F8
+        platinum: "hsl(224 12% 81%)", // Platinum Silver #C9CCD6
+        "soft-white": "hsl(228 33% 97%)", // Soft White #F5F6FA
       },
       fontFamily: {
         serif: ['Playfair Display', 'serif'],
