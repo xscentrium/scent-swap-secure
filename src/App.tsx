@@ -10,6 +10,7 @@ import { PageTransition } from "@/components/PageTransition";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { ThemeProvider } from "next-themes";
 import { AnimatePresence } from "framer-motion";
+import { CookieConsent } from "@/components/CookieConsent";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
@@ -34,6 +35,9 @@ import ScentQuiz from "./pages/ScentQuiz";
 import Leaderboard from "./pages/Leaderboard";
 import YearInReviewPage from "./pages/YearInReviewPage";
 import SearchAnalytics from "./pages/SearchAnalytics";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+import Contact from "./pages/Contact";
 
 const queryClient = new QueryClient();
 
@@ -66,6 +70,9 @@ const AnimatedRoutes = () => {
         <Route path="/settings" element={<PageTransition><Settings /></PageTransition>} />
         <Route path="/admin/verification" element={<PageTransition><AdminVerification /></PageTransition>} />
         <Route path="/admin/search-analytics" element={<PageTransition><SearchAnalytics /></PageTransition>} />
+        <Route path="/terms" element={<PageTransition><Terms /></PageTransition>} />
+        <Route path="/privacy" element={<PageTransition><Privacy /></PageTransition>} />
+        <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>
@@ -84,6 +91,7 @@ const App = () => (
               <AccountSetupDialog />
               <AnimatedRoutes />
               <FloatingActionButton />
+              <CookieConsent />
             </BrowserRouter>
           </TooltipProvider>
         </AuthProvider>
