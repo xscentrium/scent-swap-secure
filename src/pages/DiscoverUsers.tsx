@@ -61,7 +61,7 @@ const DiscoverUsers = () => {
         .from("collection_items")
         .select(`
           name, brand, profile_id,
-          profiles!collection_items_profile_id_fkey(id, username, display_name, avatar_url, bio, is_influencer)
+          profiles:public_profiles!collection_items_profile_id_fkey(id, username, display_name, avatar_url, bio, is_influencer)
         `)
         .neq("profile_id", profile.id);
 
@@ -143,7 +143,7 @@ const DiscoverUsers = () => {
       if (topIds.length === 0) return [];
 
       const { data: profiles } = await supabase
-        .from("profiles")
+        .from("public_profiles")
         .select("id, username, display_name, avatar_url, bio, is_influencer")
         .in("id", topIds)
         .neq("id", profile?.id || "");
@@ -165,7 +165,7 @@ const DiscoverUsers = () => {
     queryKey: ["discover-new", profile?.id],
     queryFn: async () => {
       const { data } = await supabase
-        .from("profiles")
+        .from("public_profiles")
         .select("id, username, display_name, avatar_url, bio, is_influencer, created_at")
         .neq("id", profile?.id || "")
         .order("created_at", { ascending: false })

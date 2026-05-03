@@ -71,7 +71,7 @@ const Profile = () => {
     queryKey: ['profile', username],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('public_profiles')
         .select('*')
         .eq('username', username)
         .maybeSingle();

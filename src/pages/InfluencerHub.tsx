@@ -50,7 +50,7 @@ const InfluencerHub = () => {
     queryKey: ['influencers'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('public_profiles')
         .select('*')
         .eq('is_influencer', true);
       
