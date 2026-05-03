@@ -62,7 +62,7 @@ const TradeMatches = () => {
             brand,
             priority,
             profile_id,
-            profiles!wishlist_items_profile_id_fkey (
+            profiles:public_profiles!wishlist_items_profile_id_fkey (
               id,
               username,
               display_name

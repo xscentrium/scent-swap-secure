@@ -18,7 +18,7 @@ const SharedWishlist = () => {
     queryKey: ['profile', username],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('public_profiles')
         .select('id, username, display_name, avatar_url')
         .eq('username', username)
         .maybeSingle();

@@ -228,7 +228,7 @@ export const NavigationSearch = () => {
       // Search users
       if (activeFilter === "all" || activeFilter === "users") {
         const { data: users } = await supabase
-          .from("profiles")
+          .from("public_profiles")
           .select("id, username, display_name")
           .or(`username.ilike.%${searchQuery}%,display_name.ilike.%${searchQuery}%`)
           .limit(activeFilter === "users" ? 10 : 5);

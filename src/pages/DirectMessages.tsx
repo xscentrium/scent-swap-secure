@@ -42,7 +42,7 @@ const DirectMessages = () => {
     queryKey: ["profile-by-id", recipientId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("profiles")
+        .from("public_profiles")
         .select("id, username, display_name, avatar_url")
         .eq("id", recipientId)
         .maybeSingle();
