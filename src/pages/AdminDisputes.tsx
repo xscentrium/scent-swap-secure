@@ -188,6 +188,7 @@ const AdminDisputes = () => {
                       </div>
                     </div>
 
+                    <DisputeEvidenceList paths={t.dispute_evidence_urls} />
                     <div className="flex gap-2 pt-2">
                       <Button
                         variant="outline"
