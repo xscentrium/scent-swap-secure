@@ -8,9 +8,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { ArrowLeft, Loader2, Shield, AlertTriangle, CheckCircle, XCircle, ArrowLeftRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { DisputeEvidenceList } from '@/components/DisputeEvidenceList';
 
 type DisputedTrade = {
   id: string;
