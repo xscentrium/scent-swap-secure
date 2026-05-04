@@ -31,40 +31,32 @@ type Trade = {
   escrow_status: string | null;
   dispute_reason: string | null;
   disputed_at: string | null;
+  disputed_by: string | null;
+  resolved_at: string | null;
+  resolved_by: string | null;
   released_at: string | null;
   refunded_at: string | null;
   initiator_confirmed: boolean;
   receiver_confirmed: boolean;
   created_at: string;
-  initiator_listing: {
-    id: string;
-    name: string;
-    brand: string;
-    size: string;
-    image_url: string | null;
-  } | null;
-  receiver_listing: {
-    id: string;
-    name: string;
-    brand: string;
-    size: string;
-    image_url: string | null;
-  } | null;
-  initiator: {
-    id: string;
-    username: string;
-  } | null;
-  receiver: {
-    id: string;
-    username: string;
-  } | null;
+  updated_at: string;
+  initiator_listing: { id: string; name: string; brand: string; size: string; image_url: string | null; } | null;
+  receiver_listing: { id: string; name: string; brand: string; size: string; image_url: string | null; } | null;
+  initiator: { id: string; username: string } | null;
+  receiver: { id: string; username: string } | null;
 };
+
+type ConfirmAction =
+  | { kind: 'cancel'; trade: Trade }
+  | { kind: 'refund'; trade: Trade };
 
 const MyTrades = () => {
   const { user, profile, loading } = useAuth();
   const queryClient = useQueryClient();
   const [disputeTrade, setDisputeTrade] = useState<Trade | null>(null);
   const [disputeReason, setDisputeReason] = useState('');
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
+  const [timelineTrade, setTimelineTrade] = useState<Trade | null>(null);
 
   const escrowBadge = (status: string | null) => {
     switch (status) {
