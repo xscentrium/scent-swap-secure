@@ -506,11 +506,11 @@ const MyTrades = () => {
                   {completedTrades.map((trade) => {
                     const receivedListing = getReceivedListing(trade);
                     return (
-                      <Card key={trade.id} className="border-border/50">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                              <div className="flex items-center gap-2">
+                      <Card key={trade.id} className="border-border/50 hover:border-primary/40 transition-colors">
+                        <CardContent className="p-4 space-y-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-4 min-w-0">
+                              <div className="flex items-center gap-2 shrink-0">
                                 <div className="w-10 h-10 bg-muted rounded-lg overflow-hidden">
                                   {trade.initiator_listing?.image_url ? (
                                     <img src={trade.initiator_listing.image_url} alt="" className="w-full h-full object-cover" />
@@ -523,8 +523,8 @@ const MyTrades = () => {
                                   ) : null}
                                 </div>
                               </div>
-                              <div>
-                                <p className="font-medium">
+                              <div className="min-w-0">
+                                <p className="font-medium truncate">
                                   {trade.initiator_listing?.name} ↔ {trade.receiver_listing?.name}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
@@ -532,25 +532,39 @@ const MyTrades = () => {
                                 </p>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                              {trade.status === 'completed' && receivedListing && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => importToCollection.mutate({
-                                    name: receivedListing.name,
-                                    brand: receivedListing.brand,
-                                    size: receivedListing.size,
-                                    image_url: receivedListing.image_url,
-                                  })}
-                                  disabled={importToCollection.isPending}
-                                >
-                                  <Package className="w-4 h-4 mr-1" />
-                                  Add to Collection
-                                </Button>
-                              )}
-                              {getStatusBadge(trade.status)}
-                            </div>
+                            {getStatusBadge(trade.status)}
+                          </div>
+
+                          {renderEscrowPanel(trade, true)}
+
+                          <div className="flex flex-wrap items-center justify-end gap-2">
+                            {trade.status === 'cancelled' && trade.escrow_status !== 'refunded' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => refundEscrow.mutate(trade.id)}
+                                disabled={refundEscrow.isPending}
+                              >
+                                <Shield className="w-4 h-4 mr-1" />
+                                Refund Escrow
+                              </Button>
+                            )}
+                            {trade.status === 'completed' && receivedListing && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => importToCollection.mutate({
+                                  name: receivedListing.name,
+                                  brand: receivedListing.brand,
+                                  size: receivedListing.size,
+                                  image_url: receivedListing.image_url,
+                                })}
+                                disabled={importToCollection.isPending}
+                              >
+                                <Package className="w-4 h-4 mr-1" />
+                                Add to Collection
+                              </Button>
+                            )}
                           </div>
                         </CardContent>
                       </Card>
