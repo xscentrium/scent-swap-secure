@@ -4,15 +4,19 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import { useAuth } from '@/hooks/useAuth';
 import { Navigation } from '@/components/Navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { 
-  ArrowLeftRight, Clock, CheckCircle, XCircle, Shield, Loader2, AlertCircle, Package, AlertTriangle
+import {
+  ArrowLeftRight, Clock, CheckCircle, XCircle, Shield, Loader2, AlertCircle, Package, AlertTriangle, History
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -27,40 +31,32 @@ type Trade = {
   escrow_status: string | null;
   dispute_reason: string | null;
   disputed_at: string | null;
+  disputed_by: string | null;
+  resolved_at: string | null;
+  resolved_by: string | null;
   released_at: string | null;
   refunded_at: string | null;
   initiator_confirmed: boolean;
   receiver_confirmed: boolean;
   created_at: string;
-  initiator_listing: {
-    id: string;
-    name: string;
-    brand: string;
-    size: string;
-    image_url: string | null;
-  } | null;
-  receiver_listing: {
-    id: string;
-    name: string;
-    brand: string;
-    size: string;
-    image_url: string | null;
-  } | null;
-  initiator: {
-    id: string;
-    username: string;
-  } | null;
-  receiver: {
-    id: string;
-    username: string;
-  } | null;
+  updated_at: string;
+  initiator_listing: { id: string; name: string; brand: string; size: string; image_url: string | null; } | null;
+  receiver_listing: { id: string; name: string; brand: string; size: string; image_url: string | null; } | null;
+  initiator: { id: string; username: string } | null;
+  receiver: { id: string; username: string } | null;
 };
+
+type ConfirmAction =
+  | { kind: 'cancel'; trade: Trade }
+  | { kind: 'refund'; trade: Trade };
 
 const MyTrades = () => {
   const { user, profile, loading } = useAuth();
   const queryClient = useQueryClient();
   const [disputeTrade, setDisputeTrade] = useState<Trade | null>(null);
   const [disputeReason, setDisputeReason] = useState('');
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
+  const [timelineTrade, setTimelineTrade] = useState<Trade | null>(null);
 
   const escrowBadge = (status: string | null) => {
     switch (status) {
@@ -77,43 +73,43 @@ const MyTrades = () => {
     }
   };
 
-  const renderEscrowPanel = (trade: Trade, compact = false) => {
+  const renderEscrowPanel = (trade: Trade) => {
     const isInit = trade.initiator?.id === profile?.id;
     const yourHold = isInit ? trade.escrow_amount_initiator : trade.escrow_amount_receiver;
     const theirHold = isInit ? trade.escrow_amount_receiver : trade.escrow_amount_initiator;
     const yourLocked = isInit ? trade.locked_initiator_value : trade.locked_receiver_value;
     const theirLocked = isInit ? trade.locked_receiver_value : trade.locked_initiator_value;
     return (
-      <div className={`rounded-lg border border-border/60 bg-gradient-to-br from-muted/40 to-muted/10 ${compact ? 'p-2.5' : 'p-3'}`}>
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <Shield className="w-4 h-4 text-primary" />
+      <div className="rounded-lg border border-border/60 bg-gradient-to-br from-muted/40 to-muted/10 p-3">
+        <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+          <div className="flex items-center gap-2 min-w-0">
+            <Shield className="w-4 h-4 text-primary shrink-0" />
             <span className="text-sm font-medium">Escrow</span>
             {escrowBadge(trade.escrow_status)}
           </div>
-          <span className="text-xs text-muted-foreground hidden sm:inline">50% locked at trade start</span>
+          <button
+            onClick={() => setTimelineTrade(trade)}
+            className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+          >
+            <History className="w-3 h-3" /> Timeline
+          </button>
         </div>
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-sm">
+          <div className="flex justify-between sm:block bg-background/40 sm:bg-transparent rounded-md sm:rounded-none px-2 py-1.5 sm:p-0">
             <p className="text-xs text-muted-foreground">Your hold</p>
-            <p className="font-semibold tabular-nums">${yourHold?.toFixed(2) ?? '0.00'}</p>
-            <p className="text-xs text-muted-foreground tabular-nums">Locked: ${yourLocked?.toFixed(2) ?? '0.00'}</p>
+            <div className="text-right sm:text-left">
+              <p className="font-semibold tabular-nums">${yourHold?.toFixed(2) ?? '0.00'}</p>
+              <p className="text-[11px] text-muted-foreground tabular-nums">of ${yourLocked?.toFixed(2) ?? '0.00'}</p>
+            </div>
           </div>
-          <div>
+          <div className="flex justify-between sm:block bg-background/40 sm:bg-transparent rounded-md sm:rounded-none px-2 py-1.5 sm:p-0">
             <p className="text-xs text-muted-foreground">Their hold</p>
-            <p className="font-semibold tabular-nums">${theirHold?.toFixed(2) ?? '0.00'}</p>
-            <p className="text-xs text-muted-foreground tabular-nums">Locked: ${theirLocked?.toFixed(2) ?? '0.00'}</p>
+            <div className="text-right sm:text-left">
+              <p className="font-semibold tabular-nums">${theirHold?.toFixed(2) ?? '0.00'}</p>
+              <p className="text-[11px] text-muted-foreground tabular-nums">of ${theirLocked?.toFixed(2) ?? '0.00'}</p>
+            </div>
           </div>
         </div>
-        {trade.disputed_at && (
-          <p className="text-xs text-destructive mt-2">Disputed {new Date(trade.disputed_at).toLocaleDateString()}</p>
-        )}
-        {trade.released_at && (
-          <p className="text-xs text-green-600 mt-2">Released {new Date(trade.released_at).toLocaleDateString()}</p>
-        )}
-        {trade.refunded_at && (
-          <p className="text-xs text-muted-foreground mt-2">Refunded {new Date(trade.refunded_at).toLocaleDateString()}</p>
-        )}
       </div>
     );
   };
@@ -142,7 +138,7 @@ const MyTrades = () => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as Trade[];
+      return data as unknown as Trade[];
     },
     enabled: !!profile?.id,
   });
@@ -416,26 +412,26 @@ const MyTrades = () => {
                   {pendingTrades.filter(t => t.status !== 'pending' || t.initiator?.id === profile.id).map((trade) => (
                     <Card key={trade.id} className="border-border/50">
                       <CardContent className="p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2">
-                              <div className="w-12 h-12 bg-muted rounded-lg overflow-hidden">
+                        <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-muted rounded-lg overflow-hidden">
                                 {trade.initiator_listing?.image_url ? (
                                   <img src={trade.initiator_listing.image_url} alt="" className="w-full h-full object-cover" />
                                 ) : null}
                               </div>
                               <ArrowLeftRight className="w-4 h-4 text-muted-foreground" />
-                              <div className="w-12 h-12 bg-muted rounded-lg overflow-hidden">
+                              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-muted rounded-lg overflow-hidden">
                                 {trade.receiver_listing?.image_url ? (
                                   <img src={trade.receiver_listing.image_url} alt="" className="w-full h-full object-cover" />
                                 ) : null}
                               </div>
                             </div>
-                            <div>
-                              <p className="font-medium">
+                            <div className="min-w-0">
+                              <p className="font-medium truncate">
                                 {trade.initiator_listing?.name} ↔ {trade.receiver_listing?.name}
                               </p>
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-sm text-muted-foreground truncate">
                                 With @{trade.initiator?.id === profile.id ? trade.receiver?.username : trade.initiator?.username}
                               </p>
                             </div>
@@ -448,7 +444,7 @@ const MyTrades = () => {
                         </div>
 
                         {trade.status === 'accepted' && (
-                          <div className="flex items-center justify-between pt-3 mt-3 border-t border-border">
+                          <div className="flex items-start justify-between gap-3 pt-3 mt-3 border-t border-border flex-wrap">
                             <p className="text-sm text-muted-foreground">
                               {trade.initiator_confirmed && trade.receiver_confirmed
                                 ? 'Both parties shipped — finalizing...'
@@ -482,7 +478,7 @@ const MyTrades = () => {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => updateTrade.mutate({ tradeId: trade.id, status: 'cancelled' })}
+                              onClick={() => setConfirmAction({ kind: 'cancel', trade })}
                             >
                               Cancel Proposal
                             </Button>
@@ -538,15 +534,14 @@ const MyTrades = () => {
                             {getStatusBadge(trade.status)}
                           </div>
 
-                          {renderEscrowPanel(trade, true)}
+                          {renderEscrowPanel(trade)}
 
                           <div className="flex flex-wrap items-center justify-end gap-2">
                             {trade.status === 'cancelled' && trade.escrow_status !== 'refunded' && (
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => refundEscrow.mutate(trade.id)}
-                                disabled={refundEscrow.isPending}
+                                onClick={() => setConfirmAction({ kind: 'refund', trade })}
                               >
                                 <Shield className="w-4 h-4 mr-1" />
                                 Refund Escrow
@@ -623,6 +618,79 @@ const MyTrades = () => {
               Submit Dispute
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!confirmAction} onOpenChange={(o) => !o && setConfirmAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmAction?.kind === 'cancel' ? 'Cancel this trade proposal?' : 'Refund escrow to both parties?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction?.kind === 'cancel'
+                ? 'This will cancel the proposal and immediately refund both escrow holds. This action cannot be undone.'
+                : 'This will release both escrow holds back to the original owners. This action cannot be undone.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep trade</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!confirmAction) return;
+                if (confirmAction.kind === 'cancel') {
+                  updateTrade.mutate(
+                    { tradeId: confirmAction.trade.id, status: 'cancelled' },
+                    { onSuccess: () => setConfirmAction(null) }
+                  );
+                } else {
+                  refundEscrow.mutate(confirmAction.trade.id, {
+                    onSuccess: () => setConfirmAction(null),
+                  });
+                }
+              }}
+            >
+              {confirmAction?.kind === 'cancel' ? 'Cancel trade' : 'Refund escrow'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={!!timelineTrade} onOpenChange={(o) => !o && setTimelineTrade(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="w-5 h-5 text-primary" /> Trade Timeline
+            </DialogTitle>
+            <DialogDescription>Audit log of status and escrow changes.</DialogDescription>
+          </DialogHeader>
+          {timelineTrade && (() => {
+            const t = timelineTrade;
+            const initName = t.initiator?.username ? `@${t.initiator.username}` : 'initiator';
+            const recvName = t.receiver?.username ? `@${t.receiver.username}` : 'receiver';
+            const disputerName = t.disputed_by === t.initiator?.id ? initName
+              : t.disputed_by === t.receiver?.id ? recvName : 'a party';
+            const events: Array<{ at: string; label: string; icon: typeof Clock; tone: string }> = [];
+            events.push({ at: t.created_at, label: `Trade proposed by ${initName} → ${recvName}`, icon: ArrowLeftRight, tone: 'text-muted-foreground' });
+            if (t.disputed_at) events.push({ at: t.disputed_at, label: `Dispute opened by ${disputerName}`, icon: AlertTriangle, tone: 'text-destructive' });
+            if (t.resolved_at) events.push({ at: t.resolved_at, label: `Resolved by admin → ${t.status}`, icon: Shield, tone: 'text-primary' });
+            if (t.released_at) events.push({ at: t.released_at, label: 'Escrow released', icon: CheckCircle, tone: 'text-green-600' });
+            if (t.refunded_at) events.push({ at: t.refunded_at, label: 'Escrow refunded', icon: XCircle, tone: 'text-muted-foreground' });
+            events.sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
+            return (
+              <ol className="space-y-3 max-h-80 overflow-auto pr-1">
+                {events.map((e, i) => (
+                  <li key={i} className="flex gap-3 items-start">
+                    <span className={`mt-0.5 ${e.tone}`}><e.icon className="w-4 h-4" /></span>
+                    <div className="flex-1">
+                      <p className="text-sm">{e.label}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(e.at).toLocaleString()}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>
