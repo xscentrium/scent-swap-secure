@@ -444,7 +444,7 @@ const MyTrades = () => {
                         </div>
 
                         {trade.status === 'accepted' && (
-                          <div className="flex items-center justify-between pt-3 mt-3 border-t border-border">
+                          <div className="flex items-start justify-between gap-3 pt-3 mt-3 border-t border-border flex-wrap">
                             <p className="text-sm text-muted-foreground">
                               {trade.initiator_confirmed && trade.receiver_confirmed
                                 ? 'Both parties shipped — finalizing...'
