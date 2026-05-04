@@ -1400,6 +1400,7 @@ export type Database = {
       trades: {
         Row: {
           created_at: string
+          dispute_evidence_urls: string[] | null
           dispute_reason: string | null
           disputed_at: string | null
           disputed_by: string | null
@@ -1424,6 +1425,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          dispute_evidence_urls?: string[] | null
           dispute_reason?: string | null
           disputed_at?: string | null
           disputed_by?: string | null
@@ -1448,6 +1450,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          dispute_evidence_urls?: string[] | null
           dispute_reason?: string | null
           disputed_at?: string | null
           disputed_by?: string | null
