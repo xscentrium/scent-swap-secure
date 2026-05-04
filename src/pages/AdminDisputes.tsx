@@ -55,7 +55,7 @@ const AdminDisputes = () => {
       const { data, error } = await supabase
         .from('trades')
         .select(`
-          id, status, escrow_status, dispute_reason, disputed_at,
+          id, status, escrow_status, dispute_reason, dispute_evidence_urls, disputed_at,
           locked_initiator_value, locked_receiver_value,
           escrow_amount_initiator, escrow_amount_receiver,
           initiator:profiles!trades_initiator_id_fkey ( id, username ),
