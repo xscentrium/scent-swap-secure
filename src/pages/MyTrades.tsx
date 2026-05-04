@@ -478,7 +478,7 @@ const MyTrades = () => {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => updateTrade.mutate({ tradeId: trade.id, status: 'cancelled' })}
+                              onClick={() => setConfirmAction({ kind: 'cancel', trade })}
                             >
                               Cancel Proposal
                             </Button>
