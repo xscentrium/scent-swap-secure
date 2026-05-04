@@ -620,6 +620,79 @@ const MyTrades = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!confirmAction} onOpenChange={(o) => !o && setConfirmAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmAction?.kind === 'cancel' ? 'Cancel this trade proposal?' : 'Refund escrow to both parties?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction?.kind === 'cancel'
+                ? 'This will cancel the proposal and immediately refund both escrow holds. This action cannot be undone.'
+                : 'This will release both escrow holds back to the original owners. This action cannot be undone.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep trade</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!confirmAction) return;
+                if (confirmAction.kind === 'cancel') {
+                  updateTrade.mutate(
+                    { tradeId: confirmAction.trade.id, status: 'cancelled' },
+                    { onSuccess: () => setConfirmAction(null) }
+                  );
+                } else {
+                  refundEscrow.mutate(confirmAction.trade.id, {
+                    onSuccess: () => setConfirmAction(null),
+                  });
+                }
+              }}
+            >
+              {confirmAction?.kind === 'cancel' ? 'Cancel trade' : 'Refund escrow'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={!!timelineTrade} onOpenChange={(o) => !o && setTimelineTrade(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="w-5 h-5 text-primary" /> Trade Timeline
+            </DialogTitle>
+            <DialogDescription>Audit log of status and escrow changes.</DialogDescription>
+          </DialogHeader>
+          {timelineTrade && (() => {
+            const t = timelineTrade;
+            const initName = t.initiator?.username ? `@${t.initiator.username}` : 'initiator';
+            const recvName = t.receiver?.username ? `@${t.receiver.username}` : 'receiver';
+            const disputerName = t.disputed_by === t.initiator?.id ? initName
+              : t.disputed_by === t.receiver?.id ? recvName : 'a party';
+            const events: Array<{ at: string; label: string; icon: typeof Clock; tone: string }> = [];
+            events.push({ at: t.created_at, label: `Trade proposed by ${initName} → ${recvName}`, icon: ArrowLeftRight, tone: 'text-muted-foreground' });
+            if (t.disputed_at) events.push({ at: t.disputed_at, label: `Dispute opened by ${disputerName}`, icon: AlertTriangle, tone: 'text-destructive' });
+            if (t.resolved_at) events.push({ at: t.resolved_at, label: `Resolved by admin → ${t.status}`, icon: Shield, tone: 'text-primary' });
+            if (t.released_at) events.push({ at: t.released_at, label: 'Escrow released', icon: CheckCircle, tone: 'text-green-600' });
+            if (t.refunded_at) events.push({ at: t.refunded_at, label: 'Escrow refunded', icon: XCircle, tone: 'text-muted-foreground' });
+            events.sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
+            return (
+              <ol className="space-y-3 max-h-80 overflow-auto pr-1">
+                {events.map((e, i) => (
+                  <li key={i} className="flex gap-3 items-start">
+                    <span className={`mt-0.5 ${e.tone}`}><e.icon className="w-4 h-4" /></span>
+                    <div className="flex-1">
+                      <p className="text-sm">{e.label}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(e.at).toLocaleString()}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
