@@ -56,6 +56,8 @@ const MyTrades = () => {
   const queryClient = useQueryClient();
   const [disputeTrade, setDisputeTrade] = useState<Trade | null>(null);
   const [disputeReason, setDisputeReason] = useState('');
+  const [disputeFiles, setDisputeFiles] = useState<File[]>([]);
+  const [uploadingEvidence, setUploadingEvidence] = useState(false);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
   const [timelineTrade, setTimelineTrade] = useState<Trade | null>(null);
 
