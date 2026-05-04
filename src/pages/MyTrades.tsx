@@ -541,8 +541,7 @@ const MyTrades = () => {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => refundEscrow.mutate(trade.id)}
-                                disabled={refundEscrow.isPending}
+                                onClick={() => setConfirmAction({ kind: 'refund', trade })}
                               >
                                 <Shield className="w-4 h-4 mr-1" />
                                 Refund Escrow
