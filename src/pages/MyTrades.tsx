@@ -109,16 +109,33 @@ const MyTrades = () => {
   const updateTrade = useMutation({
     mutationFn: async ({ tradeId, status, confirm, disputeReason }: { tradeId: string; status?: string; confirm?: boolean; disputeReason?: string }) => {
       const trade = trades?.find(t => t.id === tradeId);
+      if (!trade) throw new Error('Trade not found');
+
       const updates: Database['public']['Tables']['trades']['Update'] = {};
+
       if (status) {
+        // Client-side guardrails — server enforces these too
+        const valid: Record<string, string[]> = {
+          pending: ['accepted', 'cancelled'],
+          accepted: ['completed', 'disputed'],
+          disputed: [],
+          completed: [],
+          cancelled: [],
+        };
+        if (!valid[trade.status]?.includes(status)) {
+          throw new Error(`Cannot move trade from ${trade.status} to ${status}`);
+        }
+
         updates.status = status as Database['public']['Enums']['trade_status'];
-        // Escrow lifecycle transitions
         if (status === 'accepted') updates.escrow_status = 'held';
         if (status === 'completed') {
           updates.escrow_status = 'released';
           updates.released_at = new Date().toISOString();
         }
         if (status === 'cancelled') {
+          if (trade.status !== 'pending') {
+            throw new Error('Only pending proposals can be cancelled');
+          }
           updates.escrow_status = 'refunded';
           updates.refunded_at = new Date().toISOString();
         }
@@ -128,15 +145,18 @@ const MyTrades = () => {
           if (disputeReason) updates.dispute_reason = disputeReason;
         }
       }
+
       if (confirm !== undefined) {
-        const isInitiator = trade?.initiator?.id === profile?.id;
+        if (trade.status !== 'accepted') {
+          throw new Error('Can only confirm shipping on accepted trades');
+        }
+        const isInitiator = trade.initiator?.id === profile?.id;
         if (isInitiator) {
           updates.initiator_confirmed = confirm;
         } else {
           updates.receiver_confirmed = confirm;
         }
-        // Auto-complete + release escrow when both sides have confirmed
-        const otherConfirmed = isInitiator ? trade?.receiver_confirmed : trade?.initiator_confirmed;
+        const otherConfirmed = isInitiator ? trade.receiver_confirmed : trade.initiator_confirmed;
         if (confirm && otherConfirmed) {
           updates.status = 'completed' as Database['public']['Enums']['trade_status'];
           updates.escrow_status = 'released';
@@ -148,16 +168,40 @@ const MyTrades = () => {
         .from('trades')
         .update(updates)
         .eq('id', tradeId);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-trades'] });
       toast.success('Trade updated');
     },
-    onError: () => {
-      toast.error('Failed to update trade');
+    onError: (e: Error) => {
+      toast.error(e.message || 'Failed to update trade');
     },
+  });
+
+  // User-triggered escrow refund for refund-eligible trades (cancelled with stale escrow)
+  const refundEscrow = useMutation({
+    mutationFn: async (tradeId: string) => {
+      const trade = trades?.find(t => t.id === tradeId);
+      if (!trade) throw new Error('Trade not found');
+      if (trade.status !== 'cancelled') {
+        throw new Error('Only cancelled trades can be refunded');
+      }
+      if (trade.escrow_status === 'refunded') {
+        throw new Error('Escrow already refunded');
+      }
+      const { error } = await supabase
+        .from('trades')
+        .update({ escrow_status: 'refunded', refunded_at: new Date().toISOString() })
+        .eq('id', tradeId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-trades'] });
+      toast.success('Escrow refunded to both parties');
+    },
+    onError: (e: Error) => toast.error(e.message || 'Failed to refund escrow'),
   });
 
   const importToCollection = useMutation({
