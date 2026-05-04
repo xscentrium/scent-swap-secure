@@ -73,43 +73,43 @@ const MyTrades = () => {
     }
   };
 
-  const renderEscrowPanel = (trade: Trade, compact = false) => {
+  const renderEscrowPanel = (trade: Trade) => {
     const isInit = trade.initiator?.id === profile?.id;
     const yourHold = isInit ? trade.escrow_amount_initiator : trade.escrow_amount_receiver;
     const theirHold = isInit ? trade.escrow_amount_receiver : trade.escrow_amount_initiator;
     const yourLocked = isInit ? trade.locked_initiator_value : trade.locked_receiver_value;
     const theirLocked = isInit ? trade.locked_receiver_value : trade.locked_initiator_value;
     return (
-      <div className={`rounded-lg border border-border/60 bg-gradient-to-br from-muted/40 to-muted/10 ${compact ? 'p-2.5' : 'p-3'}`}>
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <Shield className="w-4 h-4 text-primary" />
+      <div className="rounded-lg border border-border/60 bg-gradient-to-br from-muted/40 to-muted/10 p-3">
+        <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+          <div className="flex items-center gap-2 min-w-0">
+            <Shield className="w-4 h-4 text-primary shrink-0" />
             <span className="text-sm font-medium">Escrow</span>
             {escrowBadge(trade.escrow_status)}
           </div>
-          <span className="text-xs text-muted-foreground hidden sm:inline">50% locked at trade start</span>
+          <button
+            onClick={() => setTimelineTrade(trade)}
+            className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+          >
+            <History className="w-3 h-3" /> Timeline
+          </button>
         </div>
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-sm">
+          <div className="flex justify-between sm:block bg-background/40 sm:bg-transparent rounded-md sm:rounded-none px-2 py-1.5 sm:p-0">
             <p className="text-xs text-muted-foreground">Your hold</p>
-            <p className="font-semibold tabular-nums">${yourHold?.toFixed(2) ?? '0.00'}</p>
-            <p className="text-xs text-muted-foreground tabular-nums">Locked: ${yourLocked?.toFixed(2) ?? '0.00'}</p>
+            <div className="text-right sm:text-left">
+              <p className="font-semibold tabular-nums">${yourHold?.toFixed(2) ?? '0.00'}</p>
+              <p className="text-[11px] text-muted-foreground tabular-nums">of ${yourLocked?.toFixed(2) ?? '0.00'}</p>
+            </div>
           </div>
-          <div>
+          <div className="flex justify-between sm:block bg-background/40 sm:bg-transparent rounded-md sm:rounded-none px-2 py-1.5 sm:p-0">
             <p className="text-xs text-muted-foreground">Their hold</p>
-            <p className="font-semibold tabular-nums">${theirHold?.toFixed(2) ?? '0.00'}</p>
-            <p className="text-xs text-muted-foreground tabular-nums">Locked: ${theirLocked?.toFixed(2) ?? '0.00'}</p>
+            <div className="text-right sm:text-left">
+              <p className="font-semibold tabular-nums">${theirHold?.toFixed(2) ?? '0.00'}</p>
+              <p className="text-[11px] text-muted-foreground tabular-nums">of ${theirLocked?.toFixed(2) ?? '0.00'}</p>
+            </div>
           </div>
         </div>
-        {trade.disputed_at && (
-          <p className="text-xs text-destructive mt-2">Disputed {new Date(trade.disputed_at).toLocaleDateString()}</p>
-        )}
-        {trade.released_at && (
-          <p className="text-xs text-green-600 mt-2">Released {new Date(trade.released_at).toLocaleDateString()}</p>
-        )}
-        {trade.refunded_at && (
-          <p className="text-xs text-muted-foreground mt-2">Refunded {new Date(trade.refunded_at).toLocaleDateString()}</p>
-        )}
       </div>
     );
   };
