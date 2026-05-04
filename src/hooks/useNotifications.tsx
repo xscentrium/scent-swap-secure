@@ -150,6 +150,15 @@ export const useNotifications = () => {
               newNotification.message,
               () => { window.location.href = '/my-trades'; }
             );
+          } else if (newNotification.type?.startsWith('escrow_')) {
+            const emoji = newNotification.type === 'escrow_disputed' ? '⚠️'
+              : newNotification.type === 'escrow_released' ? '✅'
+              : newNotification.type === 'escrow_refunded' ? '↩️' : '🔒';
+            showPushNotification(
+              `${emoji} ${newNotification.title}`,
+              newNotification.message,
+              () => { window.location.href = '/my-trades'; }
+            );
           } else {
             showPushNotification(newNotification.title, newNotification.message);
           }

@@ -8,15 +8,21 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { ArrowLeft, Loader2, Shield, AlertTriangle, CheckCircle, XCircle, ArrowLeftRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { DisputeEvidenceList } from '@/components/DisputeEvidenceList';
 
 type DisputedTrade = {
   id: string;
   status: string;
   escrow_status: string | null;
   dispute_reason: string | null;
+  dispute_evidence_urls: string[] | null;
   disputed_at: string | null;
   locked_initiator_value: number | null;
   locked_receiver_value: number | null;
@@ -49,7 +55,7 @@ const AdminDisputes = () => {
       const { data, error } = await supabase
         .from('trades')
         .select(`
-          id, status, escrow_status, dispute_reason, disputed_at,
+          id, status, escrow_status, dispute_reason, dispute_evidence_urls, disputed_at,
           locked_initiator_value, locked_receiver_value,
           escrow_amount_initiator, escrow_amount_receiver,
           initiator:profiles!trades_initiator_id_fkey ( id, username ),
@@ -182,6 +188,7 @@ const AdminDisputes = () => {
                       </div>
                     </div>
 
+                    <DisputeEvidenceList paths={t.dispute_evidence_urls} />
                     <div className="flex gap-2 pt-2">
                       <Button
                         variant="outline"
@@ -213,31 +220,40 @@ const AdminDisputes = () => {
         </div>
       </main>
 
-      <Dialog open={!!confirmAction} onOpenChange={(o) => !o && setConfirmAction(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {confirmAction?.action === 'release' ? 'Release escrow?' : 'Refund both parties?'}
-            </DialogTitle>
-            <DialogDescription>
+      <AlertDialog open={!!confirmAction} onOpenChange={(o) => !o && setConfirmAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
               {confirmAction?.action === 'release'
-                ? 'The trade will be marked completed and escrow holds will be released.'
-                : 'The trade will be marked cancelled and both escrow holds will be refunded.'}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmAction(null)}>Cancel</Button>
-            <Button
-              variant={confirmAction?.action === 'release' ? 'default' : 'destructive'}
+                ? 'Release escrow to seller?'
+                : 'Refund both parties?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction?.action === 'release'
+                ? 'This will mark the trade as completed and release the escrow holds. This action is permanent and cannot be undone.'
+                : 'This will mark the trade as cancelled and refund both escrow holds. This action is permanent and cannot be undone.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className={confirmAction?.action === 'refund'
+                ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                : ''}
               disabled={resolve.isPending}
-              onClick={() => confirmAction && resolve.mutate({ tradeId: confirmAction.trade.id, action: confirmAction.action })}
+              onClick={(e) => {
+                e.preventDefault();
+                if (confirmAction) {
+                  resolve.mutate({ tradeId: confirmAction.trade.id, action: confirmAction.action });
+                }
+              }}
             >
               {resolve.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              Confirm
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              {confirmAction?.action === 'release' ? 'Release escrow' : 'Refund both'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import { DisputeEvidenceList } from '@/components/DisputeEvidenceList';
 
 type Trade = {
   id: string;
@@ -30,6 +31,7 @@ type Trade = {
   locked_receiver_value: number | null;
   escrow_status: string | null;
   dispute_reason: string | null;
+  dispute_evidence_urls: string[] | null;
   disputed_at: string | null;
   disputed_by: string | null;
   resolved_at: string | null;
@@ -55,6 +57,8 @@ const MyTrades = () => {
   const queryClient = useQueryClient();
   const [disputeTrade, setDisputeTrade] = useState<Trade | null>(null);
   const [disputeReason, setDisputeReason] = useState('');
+  const [disputeFiles, setDisputeFiles] = useState<File[]>([]);
+  const [uploadingEvidence, setUploadingEvidence] = useState(false);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
   const [timelineTrade, setTimelineTrade] = useState<Trade | null>(null);
 
@@ -144,7 +148,7 @@ const MyTrades = () => {
   });
 
   const updateTrade = useMutation({
-    mutationFn: async ({ tradeId, status, confirm, disputeReason }: { tradeId: string; status?: string; confirm?: boolean; disputeReason?: string }) => {
+    mutationFn: async ({ tradeId, status, confirm, disputeReason, evidenceUrls }: { tradeId: string; status?: string; confirm?: boolean; disputeReason?: string; evidenceUrls?: string[] }) => {
       const trade = trades?.find(t => t.id === tradeId);
       if (!trade) throw new Error('Trade not found');
 
@@ -180,6 +184,7 @@ const MyTrades = () => {
           updates.escrow_status = 'disputed';
           updates.disputed_at = new Date().toISOString();
           if (disputeReason) updates.dispute_reason = disputeReason;
+          if (evidenceUrls && evidenceUrls.length) updates.dispute_evidence_urls = evidenceUrls;
         }
       }
 
@@ -602,20 +607,57 @@ const MyTrades = () => {
             />
             <p className="text-xs text-muted-foreground">{disputeReason.length}/1000</p>
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="dispute-evidence">Evidence (photos or documents, optional)</Label>
+            <input
+              id="dispute-evidence"
+              type="file"
+              multiple
+              accept="image/*,application/pdf"
+              onChange={(e) => setDisputeFiles(Array.from(e.target.files ?? []).slice(0, 5))}
+              className="block w-full text-sm text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-border file:bg-muted file:text-foreground hover:file:bg-muted/80"
+            />
+            {disputeFiles.length > 0 && (
+              <ul className="text-xs text-muted-foreground space-y-0.5">
+                {disputeFiles.map((f, i) => <li key={i}>• {f.name} ({Math.round(f.size / 1024)} KB)</li>)}
+              </ul>
+            )}
+            <p className="text-xs text-muted-foreground">Up to 5 files, max 10MB each.</p>
+          </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDisputeTrade(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => { setDisputeTrade(null); setDisputeFiles([]); setDisputeReason(''); }}>Cancel</Button>
             <Button
               variant="destructive"
-              disabled={disputeReason.trim().length < 10 || updateTrade.isPending}
-              onClick={() => {
-                if (!disputeTrade) return;
+              disabled={disputeReason.trim().length < 10 || updateTrade.isPending || uploadingEvidence}
+              onClick={async () => {
+                if (!disputeTrade || !user) return;
+                const oversized = disputeFiles.find(f => f.size > 10 * 1024 * 1024);
+                if (oversized) { toast.error(`${oversized.name} exceeds 10MB`); return; }
+                let urls: string[] = [];
+                if (disputeFiles.length > 0) {
+                  setUploadingEvidence(true);
+                  try {
+                    for (const file of disputeFiles) {
+                      const ext = file.name.split('.').pop() ?? 'bin';
+                      const path = `${user.id}/${disputeTrade.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+                      const { error: upErr } = await supabase.storage.from('dispute-evidence').upload(path, file);
+                      if (upErr) throw upErr;
+                      urls.push(path);
+                    }
+                  } catch (e: any) {
+                    toast.error(e.message || 'Failed to upload evidence');
+                    setUploadingEvidence(false);
+                    return;
+                  }
+                  setUploadingEvidence(false);
+                }
                 updateTrade.mutate(
-                  { tradeId: disputeTrade.id, status: 'disputed', disputeReason: disputeReason.trim() },
-                  { onSuccess: () => setDisputeTrade(null) }
+                  { tradeId: disputeTrade.id, status: 'disputed', disputeReason: disputeReason.trim(), evidenceUrls: urls },
+                  { onSuccess: () => { setDisputeTrade(null); setDisputeFiles([]); setDisputeReason(''); } }
                 );
               }}
             >
-              Submit Dispute
+              {uploadingEvidence ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Uploading…</> : 'Submit Dispute'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -678,17 +720,26 @@ const MyTrades = () => {
             if (t.refunded_at) events.push({ at: t.refunded_at, label: 'Escrow refunded', icon: XCircle, tone: 'text-muted-foreground' });
             events.sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
             return (
-              <ol className="space-y-3 max-h-80 overflow-auto pr-1">
-                {events.map((e, i) => (
-                  <li key={i} className="flex gap-3 items-start">
-                    <span className={`mt-0.5 ${e.tone}`}><e.icon className="w-4 h-4" /></span>
-                    <div className="flex-1">
-                      <p className="text-sm">{e.label}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(e.at).toLocaleString()}</p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
+              <div className="space-y-4">
+                <ol className="space-y-3 max-h-72 overflow-auto pr-1">
+                  {events.map((e, i) => (
+                    <li key={i} className="flex gap-3 items-start">
+                      <span className={`mt-0.5 ${e.tone}`}><e.icon className="w-4 h-4" /></span>
+                      <div className="flex-1">
+                        <p className="text-sm">{e.label}</p>
+                        <p className="text-xs text-muted-foreground">{new Date(e.at).toLocaleString()}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+                {t.dispute_reason && (
+                  <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Dispute reason</p>
+                    <p className="text-sm whitespace-pre-wrap">{t.dispute_reason}</p>
+                  </div>
+                )}
+                <DisputeEvidenceList paths={t.dispute_evidence_urls} />
+              </div>
             );
           })()}
         </DialogContent>
