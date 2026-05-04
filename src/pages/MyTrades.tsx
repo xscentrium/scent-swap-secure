@@ -509,6 +509,48 @@ const MyTrades = () => {
           </Tabs>
         </div>
       </main>
+
+      <Dialog open={!!disputeTrade} onOpenChange={(open) => !open && setDisputeTrade(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+              Open a Dispute
+            </DialogTitle>
+            <DialogDescription>
+              This will mark the trade as disputed and freeze both escrow holds until resolved by support. Please describe the issue clearly.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="dispute-reason">Reason</Label>
+            <Textarea
+              id="dispute-reason"
+              value={disputeReason}
+              onChange={(e) => setDisputeReason(e.target.value)}
+              placeholder="e.g. Item not received, wrong fragrance shipped, condition mismatch..."
+              rows={5}
+              maxLength={1000}
+            />
+            <p className="text-xs text-muted-foreground">{disputeReason.length}/1000</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDisputeTrade(null)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              disabled={disputeReason.trim().length < 10 || updateTrade.isPending}
+              onClick={() => {
+                if (!disputeTrade) return;
+                updateTrade.mutate(
+                  { tradeId: disputeTrade.id, status: 'disputed', disputeReason: disputeReason.trim() },
+                  { onSuccess: () => setDisputeTrade(null) }
+                );
+              }}
+            >
+              Submit Dispute
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
