@@ -333,8 +333,11 @@ const MyTrades = () => {
       <Navigation />
       <main className="pt-20 pb-12">
         <div className="container mx-auto px-4 max-w-4xl">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-serif font-bold">My Trades</h1>
+          <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+            <div>
+              <h1 className="text-3xl font-serif font-bold">My Trades</h1>
+              <p className="text-sm text-muted-foreground mt-1">Track active proposals, escrow holds, and trade history.</p>
+            </div>
             <Button variant="outline" asChild>
               <Link to="/trade-matches">
                 <ArrowLeftRight className="w-4 h-4 mr-2" />
