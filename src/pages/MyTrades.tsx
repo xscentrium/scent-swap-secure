@@ -534,7 +534,7 @@ const MyTrades = () => {
                             {getStatusBadge(trade.status)}
                           </div>
 
-                          {renderEscrowPanel(trade, true)}
+                          {renderEscrowPanel(trade)}
 
                           <div className="flex flex-wrap items-center justify-end gap-2">
                             {trade.status === 'cancelled' && trade.escrow_status !== 'refunded' && (
