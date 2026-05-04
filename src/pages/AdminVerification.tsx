@@ -339,9 +339,16 @@ const AdminVerification = () => {
             </Link>
           </Button>
 
-          <div className="flex items-center gap-3 mb-6">
-            <Shield className="w-8 h-8 text-primary" />
-            <h1 className="text-3xl font-serif font-bold">Admin Verification Panel</h1>
+          <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
+            <div className="flex items-center gap-3">
+              <Shield className="w-8 h-8 text-primary" />
+              <h1 className="text-3xl font-serif font-bold">Admin Verification Panel</h1>
+            </div>
+            <Button variant="outline" asChild>
+              <Link to="/admin/disputes">
+                <Shield className="w-4 h-4 mr-2" /> Disputes
+              </Link>
+            </Button>
           </div>
 
           <Tabs defaultValue="pending">
