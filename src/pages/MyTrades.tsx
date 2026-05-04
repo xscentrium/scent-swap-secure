@@ -181,6 +181,7 @@ const MyTrades = () => {
           updates.escrow_status = 'disputed';
           updates.disputed_at = new Date().toISOString();
           if (disputeReason) updates.dispute_reason = disputeReason;
+          if (evidenceUrls && evidenceUrls.length) updates.dispute_evidence_urls = evidenceUrls;
         }
       }
 
