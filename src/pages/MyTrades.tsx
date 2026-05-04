@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import { DisputeEvidenceList } from '@/components/DisputeEvidenceList';
 
 type Trade = {
   id: string;
