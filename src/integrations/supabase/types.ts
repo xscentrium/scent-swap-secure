@@ -1402,6 +1402,7 @@ export type Database = {
           created_at: string
           dispute_reason: string | null
           disputed_at: string | null
+          disputed_by: string | null
           escrow_amount_initiator: number | null
           escrow_amount_receiver: number | null
           escrow_status: string
@@ -1416,6 +1417,8 @@ export type Database = {
           receiver_listing_id: string | null
           refunded_at: string | null
           released_at: string | null
+          resolved_at: string | null
+          resolved_by: string | null
           status: Database["public"]["Enums"]["trade_status"]
           updated_at: string
         }
@@ -1423,6 +1426,7 @@ export type Database = {
           created_at?: string
           dispute_reason?: string | null
           disputed_at?: string | null
+          disputed_by?: string | null
           escrow_amount_initiator?: number | null
           escrow_amount_receiver?: number | null
           escrow_status?: string
@@ -1437,6 +1441,8 @@ export type Database = {
           receiver_listing_id?: string | null
           refunded_at?: string | null
           released_at?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
           status?: Database["public"]["Enums"]["trade_status"]
           updated_at?: string
         }
@@ -1444,6 +1450,7 @@ export type Database = {
           created_at?: string
           dispute_reason?: string | null
           disputed_at?: string | null
+          disputed_by?: string | null
           escrow_amount_initiator?: number | null
           escrow_amount_receiver?: number | null
           escrow_status?: string
@@ -1458,6 +1465,8 @@ export type Database = {
           receiver_listing_id?: string | null
           refunded_at?: string | null
           released_at?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
           status?: Database["public"]["Enums"]["trade_status"]
           updated_at?: string
         }
