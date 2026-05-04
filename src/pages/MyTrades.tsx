@@ -77,6 +77,47 @@ const MyTrades = () => {
     }
   };
 
+  const renderEscrowPanel = (trade: Trade, compact = false) => {
+    const isInit = trade.initiator?.id === profile?.id;
+    const yourHold = isInit ? trade.escrow_amount_initiator : trade.escrow_amount_receiver;
+    const theirHold = isInit ? trade.escrow_amount_receiver : trade.escrow_amount_initiator;
+    const yourLocked = isInit ? trade.locked_initiator_value : trade.locked_receiver_value;
+    const theirLocked = isInit ? trade.locked_receiver_value : trade.locked_initiator_value;
+    return (
+      <div className={`rounded-lg border border-border/60 bg-gradient-to-br from-muted/40 to-muted/10 ${compact ? 'p-2.5' : 'p-3'}`}>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Shield className="w-4 h-4 text-primary" />
+            <span className="text-sm font-medium">Escrow</span>
+            {escrowBadge(trade.escrow_status)}
+          </div>
+          <span className="text-xs text-muted-foreground hidden sm:inline">50% locked at trade start</span>
+        </div>
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <p className="text-xs text-muted-foreground">Your hold</p>
+            <p className="font-semibold tabular-nums">${yourHold?.toFixed(2) ?? '0.00'}</p>
+            <p className="text-xs text-muted-foreground tabular-nums">Locked: ${yourLocked?.toFixed(2) ?? '0.00'}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Their hold</p>
+            <p className="font-semibold tabular-nums">${theirHold?.toFixed(2) ?? '0.00'}</p>
+            <p className="text-xs text-muted-foreground tabular-nums">Locked: ${theirLocked?.toFixed(2) ?? '0.00'}</p>
+          </div>
+        </div>
+        {trade.disputed_at && (
+          <p className="text-xs text-destructive mt-2">Disputed {new Date(trade.disputed_at).toLocaleDateString()}</p>
+        )}
+        {trade.released_at && (
+          <p className="text-xs text-green-600 mt-2">Released {new Date(trade.released_at).toLocaleDateString()}</p>
+        )}
+        {trade.refunded_at && (
+          <p className="text-xs text-muted-foreground mt-2">Refunded {new Date(trade.refunded_at).toLocaleDateString()}</p>
+        )}
+      </div>
+    );
+  };
+
   const { data: trades, isLoading } = useQuery({
     queryKey: ['my-trades', profile?.id],
     queryFn: async () => {
