@@ -18,6 +18,13 @@ type Trade = {
   status: string;
   escrow_amount_initiator: number | null;
   escrow_amount_receiver: number | null;
+  locked_initiator_value: number | null;
+  locked_receiver_value: number | null;
+  escrow_status: string | null;
+  dispute_reason: string | null;
+  disputed_at: string | null;
+  released_at: string | null;
+  refunded_at: string | null;
   initiator_confirmed: boolean;
   receiver_confirmed: boolean;
   created_at: string;
