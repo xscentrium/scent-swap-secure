@@ -145,7 +145,7 @@ const MyTrades = () => {
   });
 
   const updateTrade = useMutation({
-    mutationFn: async ({ tradeId, status, confirm, disputeReason }: { tradeId: string; status?: string; confirm?: boolean; disputeReason?: string }) => {
+    mutationFn: async ({ tradeId, status, confirm, disputeReason, evidenceUrls }: { tradeId: string; status?: string; confirm?: boolean; disputeReason?: string; evidenceUrls?: string[] }) => {
       const trade = trades?.find(t => t.id === tradeId);
       if (!trade) throw new Error('Trade not found');
 
