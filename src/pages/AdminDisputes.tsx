@@ -220,31 +220,40 @@ const AdminDisputes = () => {
         </div>
       </main>
 
-      <Dialog open={!!confirmAction} onOpenChange={(o) => !o && setConfirmAction(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {confirmAction?.action === 'release' ? 'Release escrow?' : 'Refund both parties?'}
-            </DialogTitle>
-            <DialogDescription>
+      <AlertDialog open={!!confirmAction} onOpenChange={(o) => !o && setConfirmAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
               {confirmAction?.action === 'release'
-                ? 'The trade will be marked completed and escrow holds will be released.'
-                : 'The trade will be marked cancelled and both escrow holds will be refunded.'}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmAction(null)}>Cancel</Button>
-            <Button
-              variant={confirmAction?.action === 'release' ? 'default' : 'destructive'}
+                ? 'Release escrow to seller?'
+                : 'Refund both parties?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction?.action === 'release'
+                ? 'This will mark the trade as completed and release the escrow holds. This action is permanent and cannot be undone.'
+                : 'This will mark the trade as cancelled and refund both escrow holds. This action is permanent and cannot be undone.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className={confirmAction?.action === 'refund'
+                ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                : ''}
               disabled={resolve.isPending}
-              onClick={() => confirmAction && resolve.mutate({ tradeId: confirmAction.trade.id, action: confirmAction.action })}
+              onClick={(e) => {
+                e.preventDefault();
+                if (confirmAction) {
+                  resolve.mutate({ tradeId: confirmAction.trade.id, action: confirmAction.action });
+                }
+              }}
             >
               {resolve.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              Confirm
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              {confirmAction?.action === 'release' ? 'Release escrow' : 'Refund both'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
