@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 import { useAuth } from '@/hooks/useAuth';
 import { Navigation } from '@/components/Navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -78,11 +79,28 @@ const MyTrades = () => {
   });
 
   const updateTrade = useMutation({
-    mutationFn: async ({ tradeId, status, confirm }: { tradeId: string; status?: string; confirm?: boolean }) => {
-      const updates: Record<string, unknown> = {};
-      if (status) updates.status = status;
+    mutationFn: async ({ tradeId, status, confirm, disputeReason }: { tradeId: string; status?: string; confirm?: boolean; disputeReason?: string }) => {
+      const trade = trades?.find(t => t.id === tradeId);
+      const updates: Database['public']['Tables']['trades']['Update'] = {};
+      if (status) {
+        updates.status = status as Database['public']['Enums']['trade_status'];
+        // Escrow lifecycle transitions
+        if (status === 'accepted') updates.escrow_status = 'held';
+        if (status === 'completed') {
+          updates.escrow_status = 'released';
+          updates.released_at = new Date().toISOString();
+        }
+        if (status === 'cancelled') {
+          updates.escrow_status = 'refunded';
+          updates.refunded_at = new Date().toISOString();
+        }
+        if (status === 'disputed') {
+          updates.escrow_status = 'disputed';
+          updates.disputed_at = new Date().toISOString();
+          if (disputeReason) updates.dispute_reason = disputeReason;
+        }
+      }
       if (confirm !== undefined) {
-        const trade = trades?.find(t => t.id === tradeId);
         if (trade?.initiator?.id === profile?.id) {
           updates.initiator_confirmed = confirm;
         } else {
