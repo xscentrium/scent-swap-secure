@@ -1400,43 +1400,64 @@ export type Database = {
       trades: {
         Row: {
           created_at: string
+          dispute_reason: string | null
+          disputed_at: string | null
           escrow_amount_initiator: number | null
           escrow_amount_receiver: number | null
+          escrow_status: string
           id: string
           initiator_confirmed: boolean | null
           initiator_id: string
           initiator_listing_id: string
+          locked_initiator_value: number | null
+          locked_receiver_value: number | null
           receiver_confirmed: boolean | null
           receiver_id: string
           receiver_listing_id: string | null
+          refunded_at: string | null
+          released_at: string | null
           status: Database["public"]["Enums"]["trade_status"]
           updated_at: string
         }
         Insert: {
           created_at?: string
+          dispute_reason?: string | null
+          disputed_at?: string | null
           escrow_amount_initiator?: number | null
           escrow_amount_receiver?: number | null
+          escrow_status?: string
           id?: string
           initiator_confirmed?: boolean | null
           initiator_id: string
           initiator_listing_id: string
+          locked_initiator_value?: number | null
+          locked_receiver_value?: number | null
           receiver_confirmed?: boolean | null
           receiver_id: string
           receiver_listing_id?: string | null
+          refunded_at?: string | null
+          released_at?: string | null
           status?: Database["public"]["Enums"]["trade_status"]
           updated_at?: string
         }
         Update: {
           created_at?: string
+          dispute_reason?: string | null
+          disputed_at?: string | null
           escrow_amount_initiator?: number | null
           escrow_amount_receiver?: number | null
+          escrow_status?: string
           id?: string
           initiator_confirmed?: boolean | null
           initiator_id?: string
           initiator_listing_id?: string
+          locked_initiator_value?: number | null
+          locked_receiver_value?: number | null
           receiver_confirmed?: boolean | null
           receiver_id?: string
           receiver_listing_id?: string | null
+          refunded_at?: string | null
+          released_at?: string | null
           status?: Database["public"]["Enums"]["trade_status"]
           updated_at?: string
         }
