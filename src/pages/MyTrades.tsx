@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
@@ -7,8 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { 
-  ArrowLeftRight, Clock, CheckCircle, XCircle, Shield, Loader2, AlertCircle, Package
+  ArrowLeftRight, Clock, CheckCircle, XCircle, Shield, Loader2, AlertCircle, Package, AlertTriangle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -18,6 +22,13 @@ type Trade = {
   status: string;
   escrow_amount_initiator: number | null;
   escrow_amount_receiver: number | null;
+  locked_initiator_value: number | null;
+  locked_receiver_value: number | null;
+  escrow_status: string | null;
+  dispute_reason: string | null;
+  disputed_at: string | null;
+  released_at: string | null;
+  refunded_at: string | null;
   initiator_confirmed: boolean;
   receiver_confirmed: boolean;
   created_at: string;
@@ -48,6 +59,23 @@ type Trade = {
 const MyTrades = () => {
   const { user, profile, loading } = useAuth();
   const queryClient = useQueryClient();
+  const [disputeTrade, setDisputeTrade] = useState<Trade | null>(null);
+  const [disputeReason, setDisputeReason] = useState('');
+
+  const escrowBadge = (status: string | null) => {
+    switch (status) {
+      case 'held':
+        return <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20"><Shield className="w-3 h-3 mr-1" />Held</Badge>;
+      case 'released':
+        return <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20"><CheckCircle className="w-3 h-3 mr-1" />Released</Badge>;
+      case 'refunded':
+        return <Badge variant="outline" className="bg-muted text-muted-foreground"><XCircle className="w-3 h-3 mr-1" />Refunded</Badge>;
+      case 'disputed':
+        return <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20"><AlertTriangle className="w-3 h-3 mr-1" />Disputed</Badge>;
+      default:
+        return <Badge variant="outline"><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
+    }
+  };
 
   const { data: trades, isLoading } = useQuery({
     queryKey: ['my-trades', profile?.id],
@@ -101,10 +129,18 @@ const MyTrades = () => {
         }
       }
       if (confirm !== undefined) {
-        if (trade?.initiator?.id === profile?.id) {
+        const isInitiator = trade?.initiator?.id === profile?.id;
+        if (isInitiator) {
           updates.initiator_confirmed = confirm;
         } else {
           updates.receiver_confirmed = confirm;
+        }
+        // Auto-complete + release escrow when both sides have confirmed
+        const otherConfirmed = isInitiator ? trade?.receiver_confirmed : trade?.initiator_confirmed;
+        if (confirm && otherConfirmed) {
+          updates.status = 'completed' as Database['public']['Enums']['trade_status'];
+          updates.escrow_status = 'released';
+          updates.released_at = new Date().toISOString();
         }
       }
 
@@ -319,12 +355,55 @@ const MyTrades = () => {
                           {getStatusBadge(trade.status)}
                         </div>
 
+                        {/* Escrow status panel */}
+                        <div className="mt-3 p-3 rounded-lg border border-border/60 bg-muted/40">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <Shield className="w-4 h-4 text-primary" />
+                              <span className="text-sm font-medium">Escrow</span>
+                              {escrowBadge(trade.escrow_status)}
+                            </div>
+                            <span className="text-xs text-muted-foreground">50% locked at trade start</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                              <p className="text-xs text-muted-foreground">Your hold</p>
+                              <p className="font-semibold">
+                                ${(trade.initiator?.id === profile.id ? trade.escrow_amount_initiator : trade.escrow_amount_receiver)?.toFixed(2) ?? '0.00'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Locked value: ${(trade.initiator?.id === profile.id ? trade.locked_initiator_value : trade.locked_receiver_value)?.toFixed(2) ?? '0.00'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Their hold</p>
+                              <p className="font-semibold">
+                                ${(trade.initiator?.id === profile.id ? trade.escrow_amount_receiver : trade.escrow_amount_initiator)?.toFixed(2) ?? '0.00'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Locked value: ${(trade.initiator?.id === profile.id ? trade.locked_receiver_value : trade.locked_initiator_value)?.toFixed(2) ?? '0.00'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
                         {trade.status === 'accepted' && (
-                          <div className="flex items-center justify-between pt-3 border-t border-border">
+                          <div className="flex items-center justify-between pt-3 mt-3 border-t border-border">
                             <p className="text-sm text-muted-foreground">
-                              Waiting for both parties to confirm shipping...
+                              {trade.initiator_confirmed && trade.receiver_confirmed
+                                ? 'Both parties shipped — finalizing...'
+                                : 'Waiting for both parties to confirm shipping...'}
                             </p>
                             <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => { setDisputeTrade(trade); setDisputeReason(''); }}
+                              >
+                                <AlertTriangle className="w-4 h-4 mr-1" />
+                                Dispute
+                              </Button>
                               {((trade.initiator?.id === profile.id && !trade.initiator_confirmed) ||
                                 (trade.receiver?.id === profile.id && !trade.receiver_confirmed)) && (
                                 <Button 
@@ -335,6 +414,18 @@ const MyTrades = () => {
                                 </Button>
                               )}
                             </div>
+                          </div>
+                        )}
+
+                        {trade.status === 'pending' && trade.initiator?.id === profile.id && (
+                          <div className="flex justify-end pt-3 mt-3 border-t border-border">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateTrade.mutate({ tradeId: trade.id, status: 'cancelled' })}
+                            >
+                              Cancel Proposal
+                            </Button>
                           </div>
                         )}
                       </CardContent>
@@ -418,6 +509,48 @@ const MyTrades = () => {
           </Tabs>
         </div>
       </main>
+
+      <Dialog open={!!disputeTrade} onOpenChange={(open) => !open && setDisputeTrade(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+              Open a Dispute
+            </DialogTitle>
+            <DialogDescription>
+              This will mark the trade as disputed and freeze both escrow holds until resolved by support. Please describe the issue clearly.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="dispute-reason">Reason</Label>
+            <Textarea
+              id="dispute-reason"
+              value={disputeReason}
+              onChange={(e) => setDisputeReason(e.target.value)}
+              placeholder="e.g. Item not received, wrong fragrance shipped, condition mismatch..."
+              rows={5}
+              maxLength={1000}
+            />
+            <p className="text-xs text-muted-foreground">{disputeReason.length}/1000</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDisputeTrade(null)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              disabled={disputeReason.trim().length < 10 || updateTrade.isPending}
+              onClick={() => {
+                if (!disputeTrade) return;
+                updateTrade.mutate(
+                  { tradeId: disputeTrade.id, status: 'disputed', disputeReason: disputeReason.trim() },
+                  { onSuccess: () => setDisputeTrade(null) }
+                );
+              }}
+            >
+              Submit Dispute
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

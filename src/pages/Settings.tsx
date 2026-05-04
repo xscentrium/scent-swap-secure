@@ -1070,8 +1070,19 @@ const Settings = () => {
                     </div>
                   ) : (
                     <div className="space-y-4">
+                      {idVerification.status === 'rejected' && (
+                        <div className="p-4 rounded-lg border border-destructive/30 bg-destructive/10 flex gap-3">
+                          <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                          <div>
+                            <p className="font-medium text-destructive">Verification rejected</p>
+                            <p className="text-sm text-muted-foreground">
+                              Your previous submission was not accepted. Please upload a new, clear photo of your government-issued ID below to resubmit.
+                            </p>
+                          </div>
+                        </div>
+                      )}
                       <div className="space-y-2">
-                        <Label>Upload Government ID</Label>
+                        <Label>{idVerification.status === 'rejected' ? 'Resubmit Government ID' : 'Upload Government ID'}</Label>
                         <p className="text-sm text-muted-foreground mb-3">
                           Upload a clear photo of your government-issued ID (passport, driver's license, or national ID card).
                         </p>
