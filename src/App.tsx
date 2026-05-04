@@ -25,6 +25,7 @@ import DirectMessages from "./pages/DirectMessages";
 import MyTrades from "./pages/MyTrades";
 import Settings from "./pages/Settings";
 import AdminVerification from "./pages/AdminVerification";
+import AdminDisputes from "./pages/AdminDisputes";
 import TradeMatches from "./pages/TradeMatches";
 import SharedCollection from "./pages/SharedCollection";
 import SharedWishlist from "./pages/SharedWishlist";
