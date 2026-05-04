@@ -30,6 +30,7 @@ type Trade = {
   locked_receiver_value: number | null;
   escrow_status: string | null;
   dispute_reason: string | null;
+  dispute_evidence_urls: string[] | null;
   disputed_at: string | null;
   disputed_by: string | null;
   resolved_at: string | null;
