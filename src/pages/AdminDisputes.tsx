@@ -22,6 +22,7 @@ type DisputedTrade = {
   status: string;
   escrow_status: string | null;
   dispute_reason: string | null;
+  dispute_evidence_urls: string[] | null;
   disputed_at: string | null;
   locked_initiator_value: number | null;
   locked_receiver_value: number | null;
