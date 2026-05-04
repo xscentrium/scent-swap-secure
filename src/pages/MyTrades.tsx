@@ -412,26 +412,26 @@ const MyTrades = () => {
                   {pendingTrades.filter(t => t.status !== 'pending' || t.initiator?.id === profile.id).map((trade) => (
                     <Card key={trade.id} className="border-border/50">
                       <CardContent className="p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2">
-                              <div className="w-12 h-12 bg-muted rounded-lg overflow-hidden">
+                        <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-muted rounded-lg overflow-hidden">
                                 {trade.initiator_listing?.image_url ? (
                                   <img src={trade.initiator_listing.image_url} alt="" className="w-full h-full object-cover" />
                                 ) : null}
                               </div>
                               <ArrowLeftRight className="w-4 h-4 text-muted-foreground" />
-                              <div className="w-12 h-12 bg-muted rounded-lg overflow-hidden">
+                              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-muted rounded-lg overflow-hidden">
                                 {trade.receiver_listing?.image_url ? (
                                   <img src={trade.receiver_listing.image_url} alt="" className="w-full h-full object-cover" />
                                 ) : null}
                               </div>
                             </div>
-                            <div>
-                              <p className="font-medium">
+                            <div className="min-w-0">
+                              <p className="font-medium truncate">
                                 {trade.initiator_listing?.name} ↔ {trade.receiver_listing?.name}
                               </p>
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-sm text-muted-foreground truncate">
                                 With @{trade.initiator?.id === profile.id ? trade.receiver?.username : trade.initiator?.username}
                               </p>
                             </div>
