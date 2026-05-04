@@ -59,6 +59,23 @@ type Trade = {
 const MyTrades = () => {
   const { user, profile, loading } = useAuth();
   const queryClient = useQueryClient();
+  const [disputeTrade, setDisputeTrade] = useState<Trade | null>(null);
+  const [disputeReason, setDisputeReason] = useState('');
+
+  const escrowBadge = (status: string | null) => {
+    switch (status) {
+      case 'held':
+        return <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20"><Shield className="w-3 h-3 mr-1" />Held</Badge>;
+      case 'released':
+        return <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20"><CheckCircle className="w-3 h-3 mr-1" />Released</Badge>;
+      case 'refunded':
+        return <Badge variant="outline" className="bg-muted text-muted-foreground"><XCircle className="w-3 h-3 mr-1" />Refunded</Badge>;
+      case 'disputed':
+        return <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20"><AlertTriangle className="w-3 h-3 mr-1" />Disputed</Badge>;
+      default:
+        return <Badge variant="outline"><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
+    }
+  };
 
   const { data: trades, isLoading } = useQuery({
     queryKey: ['my-trades', profile?.id],
