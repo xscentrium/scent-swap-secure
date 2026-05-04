@@ -38,10 +38,10 @@ export const useCanTrade = (): TradeEligibility => {
         return;
       }
 
-      // Fetch profile with guardian info
+      // Fetch profile with guardian + verification info
       const { data: fullProfile } = await supabase
         .from('profiles')
-        .select('birthday, guardian_id, guardian_verified')
+        .select('birthday, guardian_id, guardian_verified, id_verified, id_verification_status')
         .eq('id', profile.id)
         .single();
 
@@ -49,6 +49,24 @@ export const useCanTrade = (): TradeEligibility => {
         setEligibility({
           canTrade: false,
           reason: 'Please set your birthday in settings',
+          age: null,
+          needsGuardian: false,
+          hasVerifiedGuardian: false,
+          loading: false,
+        });
+        return;
+      }
+
+      if (!fullProfile.id_verified) {
+        const status = fullProfile.id_verification_status;
+        const reason = status === 'pending'
+          ? 'Your ID is being reviewed. You can trade once approved.'
+          : status === 'rejected'
+          ? 'Your ID verification was rejected. Please resubmit in Settings.'
+          : 'ID verification is required to trade. Submit your ID in Settings.';
+        setEligibility({
+          canTrade: false,
+          reason,
           age: null,
           needsGuardian: false,
           hasVerifiedGuardian: false,
