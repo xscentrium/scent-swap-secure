@@ -108,10 +108,18 @@ const MyTrades = () => {
         }
       }
       if (confirm !== undefined) {
-        if (trade?.initiator?.id === profile?.id) {
+        const isInitiator = trade?.initiator?.id === profile?.id;
+        if (isInitiator) {
           updates.initiator_confirmed = confirm;
         } else {
           updates.receiver_confirmed = confirm;
+        }
+        // Auto-complete + release escrow when both sides have confirmed
+        const otherConfirmed = isInitiator ? trade?.receiver_confirmed : trade?.initiator_confirmed;
+        if (confirm && otherConfirmed) {
+          updates.status = 'completed' as Database['public']['Enums']['trade_status'];
+          updates.escrow_status = 'released';
+          updates.released_at = new Date().toISOString();
         }
       }
 
