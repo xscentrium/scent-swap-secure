@@ -355,12 +355,55 @@ const MyTrades = () => {
                           {getStatusBadge(trade.status)}
                         </div>
 
+                        {/* Escrow status panel */}
+                        <div className="mt-3 p-3 rounded-lg border border-border/60 bg-muted/40">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <Shield className="w-4 h-4 text-primary" />
+                              <span className="text-sm font-medium">Escrow</span>
+                              {escrowBadge(trade.escrow_status)}
+                            </div>
+                            <span className="text-xs text-muted-foreground">50% locked at trade start</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                              <p className="text-xs text-muted-foreground">Your hold</p>
+                              <p className="font-semibold">
+                                ${(trade.initiator?.id === profile.id ? trade.escrow_amount_initiator : trade.escrow_amount_receiver)?.toFixed(2) ?? '0.00'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Locked value: ${(trade.initiator?.id === profile.id ? trade.locked_initiator_value : trade.locked_receiver_value)?.toFixed(2) ?? '0.00'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Their hold</p>
+                              <p className="font-semibold">
+                                ${(trade.initiator?.id === profile.id ? trade.escrow_amount_receiver : trade.escrow_amount_initiator)?.toFixed(2) ?? '0.00'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Locked value: ${(trade.initiator?.id === profile.id ? trade.locked_receiver_value : trade.locked_initiator_value)?.toFixed(2) ?? '0.00'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
                         {trade.status === 'accepted' && (
-                          <div className="flex items-center justify-between pt-3 border-t border-border">
+                          <div className="flex items-center justify-between pt-3 mt-3 border-t border-border">
                             <p className="text-sm text-muted-foreground">
-                              Waiting for both parties to confirm shipping...
+                              {trade.initiator_confirmed && trade.receiver_confirmed
+                                ? 'Both parties shipped — finalizing...'
+                                : 'Waiting for both parties to confirm shipping...'}
                             </p>
                             <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => { setDisputeTrade(trade); setDisputeReason(''); }}
+                              >
+                                <AlertTriangle className="w-4 h-4 mr-1" />
+                                Dispute
+                              </Button>
                               {((trade.initiator?.id === profile.id && !trade.initiator_confirmed) ||
                                 (trade.receiver?.id === profile.id && !trade.receiver_confirmed)) && (
                                 <Button 
@@ -371,6 +414,18 @@ const MyTrades = () => {
                                 </Button>
                               )}
                             </div>
+                          </div>
+                        )}
+
+                        {trade.status === 'pending' && trade.initiator?.id === profile.id && (
+                          <div className="flex justify-end pt-3 mt-3 border-t border-border">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateTrade.mutate({ tradeId: trade.id, status: 'cancelled' })}
+                            >
+                              Cancel Proposal
+                            </Button>
                           </div>
                         )}
                       </CardContent>
