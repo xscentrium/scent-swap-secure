@@ -77,6 +77,47 @@ const MyTrades = () => {
     }
   };
 
+  const renderEscrowPanel = (trade: Trade, compact = false) => {
+    const isInit = trade.initiator?.id === profile?.id;
+    const yourHold = isInit ? trade.escrow_amount_initiator : trade.escrow_amount_receiver;
+    const theirHold = isInit ? trade.escrow_amount_receiver : trade.escrow_amount_initiator;
+    const yourLocked = isInit ? trade.locked_initiator_value : trade.locked_receiver_value;
+    const theirLocked = isInit ? trade.locked_receiver_value : trade.locked_initiator_value;
+    return (
+      <div className={`rounded-lg border border-border/60 bg-gradient-to-br from-muted/40 to-muted/10 ${compact ? 'p-2.5' : 'p-3'}`}>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Shield className="w-4 h-4 text-primary" />
+            <span className="text-sm font-medium">Escrow</span>
+            {escrowBadge(trade.escrow_status)}
+          </div>
+          <span className="text-xs text-muted-foreground hidden sm:inline">50% locked at trade start</span>
+        </div>
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <p className="text-xs text-muted-foreground">Your hold</p>
+            <p className="font-semibold tabular-nums">${yourHold?.toFixed(2) ?? '0.00'}</p>
+            <p className="text-xs text-muted-foreground tabular-nums">Locked: ${yourLocked?.toFixed(2) ?? '0.00'}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Their hold</p>
+            <p className="font-semibold tabular-nums">${theirHold?.toFixed(2) ?? '0.00'}</p>
+            <p className="text-xs text-muted-foreground tabular-nums">Locked: ${theirLocked?.toFixed(2) ?? '0.00'}</p>
+          </div>
+        </div>
+        {trade.disputed_at && (
+          <p className="text-xs text-destructive mt-2">Disputed {new Date(trade.disputed_at).toLocaleDateString()}</p>
+        )}
+        {trade.released_at && (
+          <p className="text-xs text-green-600 mt-2">Released {new Date(trade.released_at).toLocaleDateString()}</p>
+        )}
+        {trade.refunded_at && (
+          <p className="text-xs text-muted-foreground mt-2">Refunded {new Date(trade.refunded_at).toLocaleDateString()}</p>
+        )}
+      </div>
+    );
+  };
+
   const { data: trades, isLoading } = useQuery({
     queryKey: ['my-trades', profile?.id],
     queryFn: async () => {
@@ -109,16 +150,33 @@ const MyTrades = () => {
   const updateTrade = useMutation({
     mutationFn: async ({ tradeId, status, confirm, disputeReason }: { tradeId: string; status?: string; confirm?: boolean; disputeReason?: string }) => {
       const trade = trades?.find(t => t.id === tradeId);
+      if (!trade) throw new Error('Trade not found');
+
       const updates: Database['public']['Tables']['trades']['Update'] = {};
+
       if (status) {
+        // Client-side guardrails — server enforces these too
+        const valid: Record<string, string[]> = {
+          pending: ['accepted', 'cancelled'],
+          accepted: ['completed', 'disputed'],
+          disputed: [],
+          completed: [],
+          cancelled: [],
+        };
+        if (!valid[trade.status]?.includes(status)) {
+          throw new Error(`Cannot move trade from ${trade.status} to ${status}`);
+        }
+
         updates.status = status as Database['public']['Enums']['trade_status'];
-        // Escrow lifecycle transitions
         if (status === 'accepted') updates.escrow_status = 'held';
         if (status === 'completed') {
           updates.escrow_status = 'released';
           updates.released_at = new Date().toISOString();
         }
         if (status === 'cancelled') {
+          if (trade.status !== 'pending') {
+            throw new Error('Only pending proposals can be cancelled');
+          }
           updates.escrow_status = 'refunded';
           updates.refunded_at = new Date().toISOString();
         }
@@ -128,15 +186,18 @@ const MyTrades = () => {
           if (disputeReason) updates.dispute_reason = disputeReason;
         }
       }
+
       if (confirm !== undefined) {
-        const isInitiator = trade?.initiator?.id === profile?.id;
+        if (trade.status !== 'accepted') {
+          throw new Error('Can only confirm shipping on accepted trades');
+        }
+        const isInitiator = trade.initiator?.id === profile?.id;
         if (isInitiator) {
           updates.initiator_confirmed = confirm;
         } else {
           updates.receiver_confirmed = confirm;
         }
-        // Auto-complete + release escrow when both sides have confirmed
-        const otherConfirmed = isInitiator ? trade?.receiver_confirmed : trade?.initiator_confirmed;
+        const otherConfirmed = isInitiator ? trade.receiver_confirmed : trade.initiator_confirmed;
         if (confirm && otherConfirmed) {
           updates.status = 'completed' as Database['public']['Enums']['trade_status'];
           updates.escrow_status = 'released';
@@ -148,16 +209,40 @@ const MyTrades = () => {
         .from('trades')
         .update(updates)
         .eq('id', tradeId);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-trades'] });
       toast.success('Trade updated');
     },
-    onError: () => {
-      toast.error('Failed to update trade');
+    onError: (e: Error) => {
+      toast.error(e.message || 'Failed to update trade');
     },
+  });
+
+  // User-triggered escrow refund for refund-eligible trades (cancelled with stale escrow)
+  const refundEscrow = useMutation({
+    mutationFn: async (tradeId: string) => {
+      const trade = trades?.find(t => t.id === tradeId);
+      if (!trade) throw new Error('Trade not found');
+      if (trade.status !== 'cancelled') {
+        throw new Error('Only cancelled trades can be refunded');
+      }
+      if (trade.escrow_status === 'refunded') {
+        throw new Error('Escrow already refunded');
+      }
+      const { error } = await supabase
+        .from('trades')
+        .update({ escrow_status: 'refunded', refunded_at: new Date().toISOString() })
+        .eq('id', tradeId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-trades'] });
+      toast.success('Escrow refunded to both parties');
+    },
+    onError: (e: Error) => toast.error(e.message || 'Failed to refund escrow'),
   });
 
   const importToCollection = useMutation({
@@ -248,8 +333,11 @@ const MyTrades = () => {
       <Navigation />
       <main className="pt-20 pb-12">
         <div className="container mx-auto px-4 max-w-4xl">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-serif font-bold">My Trades</h1>
+          <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+            <div>
+              <h1 className="text-3xl font-serif font-bold">My Trades</h1>
+              <p className="text-sm text-muted-foreground mt-1">Track active proposals, escrow holds, and trade history.</p>
+            </div>
             <Button variant="outline" asChild>
               <Link to="/trade-matches">
                 <ArrowLeftRight className="w-4 h-4 mr-2" />
@@ -355,36 +443,8 @@ const MyTrades = () => {
                           {getStatusBadge(trade.status)}
                         </div>
 
-                        {/* Escrow status panel */}
-                        <div className="mt-3 p-3 rounded-lg border border-border/60 bg-muted/40">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <Shield className="w-4 h-4 text-primary" />
-                              <span className="text-sm font-medium">Escrow</span>
-                              {escrowBadge(trade.escrow_status)}
-                            </div>
-                            <span className="text-xs text-muted-foreground">50% locked at trade start</span>
-                          </div>
-                          <div className="grid grid-cols-2 gap-3 text-sm">
-                            <div>
-                              <p className="text-xs text-muted-foreground">Your hold</p>
-                              <p className="font-semibold">
-                                ${(trade.initiator?.id === profile.id ? trade.escrow_amount_initiator : trade.escrow_amount_receiver)?.toFixed(2) ?? '0.00'}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                Locked value: ${(trade.initiator?.id === profile.id ? trade.locked_initiator_value : trade.locked_receiver_value)?.toFixed(2) ?? '0.00'}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-muted-foreground">Their hold</p>
-                              <p className="font-semibold">
-                                ${(trade.initiator?.id === profile.id ? trade.escrow_amount_receiver : trade.escrow_amount_initiator)?.toFixed(2) ?? '0.00'}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                Locked value: ${(trade.initiator?.id === profile.id ? trade.locked_receiver_value : trade.locked_initiator_value)?.toFixed(2) ?? '0.00'}
-                              </p>
-                            </div>
-                          </div>
+                        <div className="mt-3">
+                          {renderEscrowPanel(trade)}
                         </div>
 
                         {trade.status === 'accepted' && (
@@ -449,11 +509,11 @@ const MyTrades = () => {
                   {completedTrades.map((trade) => {
                     const receivedListing = getReceivedListing(trade);
                     return (
-                      <Card key={trade.id} className="border-border/50">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                              <div className="flex items-center gap-2">
+                      <Card key={trade.id} className="border-border/50 hover:border-primary/40 transition-colors">
+                        <CardContent className="p-4 space-y-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-4 min-w-0">
+                              <div className="flex items-center gap-2 shrink-0">
                                 <div className="w-10 h-10 bg-muted rounded-lg overflow-hidden">
                                   {trade.initiator_listing?.image_url ? (
                                     <img src={trade.initiator_listing.image_url} alt="" className="w-full h-full object-cover" />
@@ -466,8 +526,8 @@ const MyTrades = () => {
                                   ) : null}
                                 </div>
                               </div>
-                              <div>
-                                <p className="font-medium">
+                              <div className="min-w-0">
+                                <p className="font-medium truncate">
                                   {trade.initiator_listing?.name} ↔ {trade.receiver_listing?.name}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
@@ -475,25 +535,39 @@ const MyTrades = () => {
                                 </p>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                              {trade.status === 'completed' && receivedListing && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => importToCollection.mutate({
-                                    name: receivedListing.name,
-                                    brand: receivedListing.brand,
-                                    size: receivedListing.size,
-                                    image_url: receivedListing.image_url,
-                                  })}
-                                  disabled={importToCollection.isPending}
-                                >
-                                  <Package className="w-4 h-4 mr-1" />
-                                  Add to Collection
-                                </Button>
-                              )}
-                              {getStatusBadge(trade.status)}
-                            </div>
+                            {getStatusBadge(trade.status)}
+                          </div>
+
+                          {renderEscrowPanel(trade, true)}
+
+                          <div className="flex flex-wrap items-center justify-end gap-2">
+                            {trade.status === 'cancelled' && trade.escrow_status !== 'refunded' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => refundEscrow.mutate(trade.id)}
+                                disabled={refundEscrow.isPending}
+                              >
+                                <Shield className="w-4 h-4 mr-1" />
+                                Refund Escrow
+                              </Button>
+                            )}
+                            {trade.status === 'completed' && receivedListing && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => importToCollection.mutate({
+                                  name: receivedListing.name,
+                                  brand: receivedListing.brand,
+                                  size: receivedListing.size,
+                                  image_url: receivedListing.image_url,
+                                })}
+                                disabled={importToCollection.isPending}
+                              >
+                                <Package className="w-4 h-4 mr-1" />
+                                Add to Collection
+                              </Button>
+                            )}
                           </div>
                         </CardContent>
                       </Card>

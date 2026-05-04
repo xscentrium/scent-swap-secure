@@ -77,7 +77,7 @@ export const NotificationPreferences = () => {
     
     const { error } = await supabase
       .from('notification_preferences')
-      .update({ [key]: value })
+      .update({ [key]: value } as never)
       .eq('profile_id', profile?.id);
 
     if (error) {

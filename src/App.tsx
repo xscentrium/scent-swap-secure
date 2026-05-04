@@ -25,6 +25,7 @@ import DirectMessages from "./pages/DirectMessages";
 import MyTrades from "./pages/MyTrades";
 import Settings from "./pages/Settings";
 import AdminVerification from "./pages/AdminVerification";
+import AdminDisputes from "./pages/AdminDisputes";
 import TradeMatches from "./pages/TradeMatches";
 import SharedCollection from "./pages/SharedCollection";
 import SharedWishlist from "./pages/SharedWishlist";
@@ -69,6 +70,7 @@ const AnimatedRoutes = () => {
         <Route path="/messages/new/:recipientId" element={<PageTransition><DirectMessages /></PageTransition>} />
         <Route path="/settings" element={<PageTransition><Settings /></PageTransition>} />
         <Route path="/admin/verification" element={<PageTransition><AdminVerification /></PageTransition>} />
+        <Route path="/admin/disputes" element={<PageTransition><AdminDisputes /></PageTransition>} />
         <Route path="/admin/search-analytics" element={<PageTransition><SearchAnalytics /></PageTransition>} />
         <Route path="/terms" element={<PageTransition><Terms /></PageTransition>} />
         <Route path="/privacy" element={<PageTransition><Privacy /></PageTransition>} />
