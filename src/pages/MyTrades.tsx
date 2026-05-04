@@ -138,7 +138,7 @@ const MyTrades = () => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as Trade[];
+      return data as unknown as Trade[];
     },
     enabled: !!profile?.id,
   });
