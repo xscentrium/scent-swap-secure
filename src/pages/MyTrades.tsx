@@ -720,17 +720,26 @@ const MyTrades = () => {
             if (t.refunded_at) events.push({ at: t.refunded_at, label: 'Escrow refunded', icon: XCircle, tone: 'text-muted-foreground' });
             events.sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
             return (
-              <ol className="space-y-3 max-h-80 overflow-auto pr-1">
-                {events.map((e, i) => (
-                  <li key={i} className="flex gap-3 items-start">
-                    <span className={`mt-0.5 ${e.tone}`}><e.icon className="w-4 h-4" /></span>
-                    <div className="flex-1">
-                      <p className="text-sm">{e.label}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(e.at).toLocaleString()}</p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
+              <div className="space-y-4">
+                <ol className="space-y-3 max-h-72 overflow-auto pr-1">
+                  {events.map((e, i) => (
+                    <li key={i} className="flex gap-3 items-start">
+                      <span className={`mt-0.5 ${e.tone}`}><e.icon className="w-4 h-4" /></span>
+                      <div className="flex-1">
+                        <p className="text-sm">{e.label}</p>
+                        <p className="text-xs text-muted-foreground">{new Date(e.at).toLocaleString()}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+                {t.dispute_reason && (
+                  <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Dispute reason</p>
+                    <p className="text-sm whitespace-pre-wrap">{t.dispute_reason}</p>
+                  </div>
+                )}
+                <DisputeEvidenceList paths={t.dispute_evidence_urls} />
+              </div>
             );
           })()}
         </DialogContent>
