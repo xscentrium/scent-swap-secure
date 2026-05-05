@@ -58,26 +58,30 @@ export const DisputeEvidenceList = ({ paths, className }: Props) => {
         </div>
       ) : (
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-          {items.map((it) => (
-            <a
-              key={it.path}
-              href={it.url}
-              target="_blank"
-              rel="noreferrer"
-              className="block rounded-md border border-border/60 bg-muted/40 overflow-hidden hover:border-primary/60 transition"
-            >
-              {it.isImage ? (
-                <img src={it.url} alt="evidence" className="w-full h-20 object-cover" />
-              ) : (
-                <div className="w-full h-20 flex flex-col items-center justify-center text-muted-foreground p-2">
-                  <FileText className="w-5 h-5 mb-1" />
-                  <span className="text-[10px] truncate w-full text-center">
-                    {it.path.split('/').pop()}
-                  </span>
+          {items.map((it) => {
+            const filename = it.path.split('/').pop() ?? it.path;
+            return (
+              <a
+                key={it.path}
+                href={it.url}
+                target="_blank"
+                rel="noreferrer"
+                title={filename}
+                className="group block rounded-md border border-border/60 bg-muted/40 overflow-hidden hover:border-primary/60 transition"
+              >
+                {it.isImage ? (
+                  <img src={it.url} alt={filename} className="w-full h-20 object-cover group-hover:opacity-90" />
+                ) : (
+                  <div className="w-full h-20 flex flex-col items-center justify-center text-muted-foreground p-2">
+                    <FileText className="w-5 h-5 mb-1" />
+                  </div>
+                )}
+                <div className="px-1.5 py-1 border-t border-border/40 bg-background/40">
+                  <p className="text-[10px] truncate text-muted-foreground">{filename}</p>
                 </div>
-              )}
-            </a>
-          ))}
+              </a>
+            );
+          })}
         </div>
       )}
     </div>
