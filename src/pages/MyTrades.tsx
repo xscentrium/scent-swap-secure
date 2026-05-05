@@ -16,7 +16,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
-  ArrowLeftRight, Clock, CheckCircle, XCircle, Shield, Loader2, AlertCircle, Package, AlertTriangle, History
+  ArrowLeftRight, Clock, CheckCircle, XCircle, Shield, Loader2, AlertCircle, Package, AlertTriangle, History, X, FileText, ImageIcon
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
