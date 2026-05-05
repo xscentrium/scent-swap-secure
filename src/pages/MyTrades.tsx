@@ -16,7 +16,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
-  ArrowLeftRight, Clock, CheckCircle, XCircle, Shield, Loader2, AlertCircle, Package, AlertTriangle, History
+  ArrowLeftRight, Clock, CheckCircle, XCircle, Shield, Loader2, AlertCircle, Package, AlertTriangle, History, X, FileText, ImageIcon
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -608,21 +608,76 @@ const MyTrades = () => {
             <p className="text-xs text-muted-foreground">{disputeReason.length}/1000</p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="dispute-evidence">Evidence (photos or documents, optional)</Label>
+            <Label htmlFor="dispute-evidence">Evidence (photos or PDF, optional)</Label>
             <input
               id="dispute-evidence"
               type="file"
               multiple
-              accept="image/*,application/pdf"
-              onChange={(e) => setDisputeFiles(Array.from(e.target.files ?? []).slice(0, 5))}
+              accept="image/png,image/jpeg,image/webp,image/heic,application/pdf"
+              onChange={(e) => {
+                const incoming = Array.from(e.target.files ?? []);
+                e.target.value = '';
+                const allowed = ['image/png','image/jpeg','image/webp','image/heic','application/pdf'];
+                const MAX_SIZE = 10 * 1024 * 1024;
+                const MAX_COUNT = 5;
+                const accepted: File[] = [];
+                for (const f of incoming) {
+                  if (!allowed.includes(f.type) && !/\.(png|jpe?g|webp|heic|pdf)$/i.test(f.name)) {
+                    toast.error(`${f.name}: unsupported type (use JPG, PNG, WEBP, HEIC, or PDF)`);
+                    continue;
+                  }
+                  if (f.size > MAX_SIZE) {
+                    toast.error(`${f.name}: exceeds 10MB`);
+                    continue;
+                  }
+                  accepted.push(f);
+                }
+                setDisputeFiles((prev) => {
+                  const merged = [...prev];
+                  for (const f of accepted) {
+                    if (merged.length >= MAX_COUNT) {
+                      toast.error(`Max ${MAX_COUNT} files`);
+                      break;
+                    }
+                    if (!merged.some(p => p.name === f.name && p.size === f.size)) merged.push(f);
+                  }
+                  return merged;
+                });
+              }}
               className="block w-full text-sm text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-border file:bg-muted file:text-foreground hover:file:bg-muted/80"
             />
             {disputeFiles.length > 0 && (
-              <ul className="text-xs text-muted-foreground space-y-0.5">
-                {disputeFiles.map((f, i) => <li key={i}>• {f.name} ({Math.round(f.size / 1024)} KB)</li>)}
-              </ul>
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 pt-1">
+                {disputeFiles.map((f, i) => {
+                  const isImage = f.type.startsWith('image/');
+                  const url = isImage ? URL.createObjectURL(f) : null;
+                  return (
+                    <div key={`${f.name}-${i}`} className="relative group rounded-md border border-border/60 bg-muted/40 overflow-hidden">
+                      {isImage && url ? (
+                        <img src={url} alt={f.name} className="w-full h-20 object-cover" onLoad={() => URL.revokeObjectURL(url)} />
+                      ) : (
+                        <div className="w-full h-20 flex items-center justify-center text-muted-foreground">
+                          <FileText className="w-5 h-5" />
+                        </div>
+                      )}
+                      <div className="px-1.5 py-1 border-t border-border/40">
+                        <p className="text-[10px] truncate" title={f.name}>{f.name}</p>
+                        <p className="text-[10px] text-muted-foreground">{(f.size / 1024).toFixed(0)} KB</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setDisputeFiles(prev => prev.filter((_, idx) => idx !== i))}
+                        className="absolute top-1 right-1 p-1 rounded-full bg-background/80 border border-border opacity-0 group-hover:opacity-100 transition hover:bg-destructive hover:text-destructive-foreground"
+                        aria-label={`Remove ${f.name}`}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             )}
-            <p className="text-xs text-muted-foreground">Up to 5 files, max 10MB each.</p>
+            <p className="text-xs text-muted-foreground">JPG, PNG, WEBP, HEIC, or PDF — up to 5 files, max 10MB each.</p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setDisputeTrade(null); setDisputeFiles([]); setDisputeReason(''); }}>Cancel</Button>
