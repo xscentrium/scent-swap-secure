@@ -72,15 +72,32 @@ export const DisputeEvidenceLog = ({ tradeId, className, refreshKey = 0, pageSiz
 
   if (rows.length === 0) return null;
 
-  // Show newest first when paginating, but keep chronological within visible slice
-  const sliced = rows.slice(Math.max(0, rows.length - visible));
-  const hidden = rows.length - sliced.length;
+  const filtered = failuresOnly ? rows.filter((r) => r.action === 'failed_remove') : rows;
+  const failureCount = rows.filter((r) => r.action === 'failed_remove').length;
+  const sliced = filtered.slice(Math.max(0, filtered.length - visible));
+  const hidden = filtered.length - sliced.length;
 
   return (
     <div className={className}>
-      <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
-        Evidence activity ({rows.length})
-      </p>
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+          Evidence activity ({filtered.length}{failuresOnly ? ` of ${rows.length}` : ''})
+        </p>
+        {showFailureFilter && failureCount > 0 && (
+          <button
+            type="button"
+            onClick={() => { setFailuresOnly((v) => !v); setVisible(pageSize); }}
+            className={`text-[11px] inline-flex items-center gap-1 px-2 py-0.5 rounded-full border transition ${
+              failuresOnly
+                ? 'bg-destructive/10 border-destructive/40 text-destructive'
+                : 'bg-muted/40 border-border/60 text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <AlertTriangle className="w-3 h-3" />
+            {failuresOnly ? `Showing ${failureCount} failure${failureCount === 1 ? '' : 's'}` : `Filter failures (${failureCount})`}
+          </button>
+        )}
+      </div>
       {hidden > 0 && (
         <button
           type="button"
