@@ -157,14 +157,13 @@ const MyTrades = () => {
   });
 
   const updateTrade = useMutation({
-    mutationFn: async ({ tradeId, status, confirm, disputeReason, evidenceUrls }: { tradeId: string; status?: string; confirm?: boolean; disputeReason?: string; evidenceUrls?: string[] }) => {
+    mutationFn: async ({ tradeId, status, confirm, received, disputeReason, evidenceUrls }: { tradeId: string; status?: string; confirm?: boolean; received?: boolean; disputeReason?: string; evidenceUrls?: string[] }) => {
       const trade = trades?.find(t => t.id === tradeId);
       if (!trade) throw new Error('Trade not found');
 
       const updates: Database['public']['Tables']['trades']['Update'] = {};
 
       if (status) {
-        // Client-side guardrails — server enforces these too
         const valid: Record<string, string[]> = {
           pending: ['accepted', 'cancelled'],
           accepted: ['completed', 'disputed'],
@@ -198,17 +197,19 @@ const MyTrades = () => {
       }
 
       if (confirm !== undefined) {
-        if (trade.status !== 'accepted') {
-          throw new Error('Can only confirm shipping on accepted trades');
-        }
+        if (trade.status !== 'accepted') throw new Error('Can only confirm shipping on accepted trades');
         const isInitiator = trade.initiator?.id === profile?.id;
-        if (isInitiator) {
-          updates.initiator_confirmed = confirm;
-        } else {
-          updates.receiver_confirmed = confirm;
-        }
-        const otherConfirmed = isInitiator ? trade.receiver_confirmed : trade.initiator_confirmed;
-        if (confirm && otherConfirmed) {
+        if (isInitiator) updates.initiator_confirmed = confirm;
+        else updates.receiver_confirmed = confirm;
+      }
+
+      if (received !== undefined) {
+        if (trade.status !== 'accepted') throw new Error('Can only confirm receipt on accepted trades');
+        const isInitiator = trade.initiator?.id === profile?.id;
+        if (isInitiator) updates.initiator_received = received;
+        else updates.receiver_received = received;
+        const otherReceived = isInitiator ? trade.receiver_received : trade.initiator_received;
+        if (received && otherReceived) {
           updates.status = 'completed' as Database['public']['Enums']['trade_status'];
           updates.escrow_status = 'released';
           updates.released_at = new Date().toISOString();
