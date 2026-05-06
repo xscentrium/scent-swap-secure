@@ -16,6 +16,7 @@ import { ArrowLeft, Loader2, Shield, AlertTriangle, CheckCircle, XCircle, ArrowL
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { DisputeEvidenceList } from '@/components/DisputeEvidenceList';
+import { DisputeEvidenceLog } from '@/components/DisputeEvidenceLog';
 
 type DisputedTrade = {
   id: string;
