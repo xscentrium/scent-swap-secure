@@ -509,6 +509,55 @@ const CreateListing = () => {
                   )}
                 </div>
 
+                {/* Batch Code (required for trade-eligible listings) */}
+                {(formData.listing_type === 'trade' || formData.listing_type === 'both') && (
+                  <div className="space-y-2 rounded-lg border border-border/60 bg-muted/30 p-3">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-primary" />
+                      <Label htmlFor="batch_code" className="m-0">Batch Code *</Label>
+                      <Badge variant="secondary" className="text-xs">AI verify</Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Required to start escrow on trades. We'll plausibility-check the code with AI.
+                    </p>
+                    <div className="flex gap-2">
+                      <Input
+                        id="batch_code"
+                        value={batchCode}
+                        onChange={(e) => { setBatchCode(e.target.value); setBatchResult(null); }}
+                        placeholder="e.g. 2L01"
+                        maxLength={32}
+                      />
+                      <Button type="button" variant="outline" onClick={verifyBatchCode} disabled={batchVerifying || !batchCode.trim() || !formData.brand}>
+                        {batchVerifying ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Verify'}
+                      </Button>
+                    </div>
+                    {batchResult && (
+                      <div className={`rounded-md border p-2 text-xs ${
+                        batchResult.verdict === 'plausible'
+                          ? 'border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400'
+                          : batchResult.verdict === 'questionable'
+                            ? 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400'
+                            : 'border-border bg-background text-muted-foreground'
+                      }`}>
+                        <div className="flex items-center gap-1.5 font-medium capitalize">
+                          {batchResult.verdict === 'plausible'
+                            ? <CheckCircle2 className="w-3.5 h-3.5" />
+                            : <AlertTriangle className="w-3.5 h-3.5" />}
+                          {batchResult.verdict} · {batchResult.plausibility_score}/100
+                        </div>
+                        {batchResult.explanation && <p className="mt-1">{batchResult.explanation}</p>}
+                        {(batchResult.year || batchResult.factory) && (
+                          <p className="mt-1">
+                            {batchResult.year && <>Year: {batchResult.year} </>}
+                            {batchResult.factory && <>· Factory: {batchResult.factory}</>}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Description */}
                 <div className="space-y-2">
                   <Label htmlFor="description">Description *</Label>
