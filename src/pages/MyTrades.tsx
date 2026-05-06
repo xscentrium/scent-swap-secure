@@ -835,6 +835,7 @@ const MyTrades = () => {
                   </div>
                 )}
                 <DisputeEvidenceList paths={t.dispute_evidence_urls} />
+                <DisputeEvidenceLog tradeId={t.id} />
               </div>
             );
           })()}
