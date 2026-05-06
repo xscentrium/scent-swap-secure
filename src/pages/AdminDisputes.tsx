@@ -12,7 +12,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Loader2, Shield, AlertTriangle, CheckCircle, XCircle, ArrowLeftRight } from 'lucide-react';
+import { ArrowLeft, Loader2, Shield, AlertTriangle, CheckCircle, XCircle, ArrowLeftRight, FileSearch } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { DisputeEvidenceList } from '@/components/DisputeEvidenceList';
