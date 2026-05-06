@@ -39,6 +39,8 @@ import SearchAnalytics from "./pages/SearchAnalytics";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Contact from "./pages/Contact";
+import Onboarding from "./pages/Onboarding";
+import SellerPayouts from "./pages/SellerPayouts";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +77,8 @@ const AnimatedRoutes = () => {
         <Route path="/terms" element={<PageTransition><Terms /></PageTransition>} />
         <Route path="/privacy" element={<PageTransition><Privacy /></PageTransition>} />
         <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
+        <Route path="/onboarding" element={<PageTransition><Onboarding /></PageTransition>} />
+        <Route path="/payouts" element={<PageTransition><SellerPayouts /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>

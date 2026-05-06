@@ -597,6 +597,78 @@ export type Database = {
           },
         ]
       }
+      listing_authenticity_flags: {
+        Row: {
+          created_at: string
+          id: string
+          listing_id: string
+          reason: string | null
+          vote: string
+          voter_profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          listing_id: string
+          reason?: string | null
+          vote: string
+          voter_profile_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          listing_id?: string
+          reason?: string | null
+          vote?: string
+          voter_profile_id?: string
+        }
+        Relationships: []
+      }
+      listing_batch_codes: {
+        Row: {
+          ai_explanation: string | null
+          ai_plausibility_score: number | null
+          ai_verdict: string | null
+          batch_code: string
+          created_at: string
+          decoded_factory: string | null
+          decoded_year: number | null
+          id: string
+          listing_id: string
+          owner_profile_id: string
+          updated_at: string
+          verified_at: string | null
+        }
+        Insert: {
+          ai_explanation?: string | null
+          ai_plausibility_score?: number | null
+          ai_verdict?: string | null
+          batch_code: string
+          created_at?: string
+          decoded_factory?: string | null
+          decoded_year?: number | null
+          id?: string
+          listing_id: string
+          owner_profile_id: string
+          updated_at?: string
+          verified_at?: string | null
+        }
+        Update: {
+          ai_explanation?: string | null
+          ai_plausibility_score?: number | null
+          ai_verdict?: string | null
+          batch_code?: string
+          created_at?: string
+          decoded_factory?: string | null
+          decoded_year?: number | null
+          id?: string
+          listing_id?: string
+          owner_profile_id?: string
+          updated_at?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       listings: {
         Row: {
           brand: string
@@ -1429,6 +1501,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      trade_shipments: {
+        Row: {
+          carrier: string
+          created_at: string
+          delivered_at: string | null
+          id: string
+          label_url: string | null
+          notes: string | null
+          recipient_profile_id: string
+          sender_profile_id: string
+          shipped_at: string | null
+          status: string
+          tracking_number: string
+          tracking_url: string | null
+          trade_id: string
+          updated_at: string
+        }
+        Insert: {
+          carrier: string
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          label_url?: string | null
+          notes?: string | null
+          recipient_profile_id: string
+          sender_profile_id: string
+          shipped_at?: string | null
+          status?: string
+          tracking_number: string
+          tracking_url?: string | null
+          trade_id: string
+          updated_at?: string
+        }
+        Update: {
+          carrier?: string
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          label_url?: string | null
+          notes?: string | null
+          recipient_profile_id?: string
+          sender_profile_id?: string
+          shipped_at?: string | null
+          status?: string
+          tracking_number?: string
+          tracking_url?: string | null
+          trade_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       trades: {
         Row: {
