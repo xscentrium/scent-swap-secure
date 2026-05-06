@@ -1,45 +1,56 @@
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus, Minus, Loader2 } from 'lucide-react';
-
-type Entry = {
-  id: string;
-  action: 'added' | 'removed';
-  path: string;
-  created_at: string;
-  actor_profile_id: string | null;
-  actor: { username: string | null; display_name: string | null } | null;
-};
 
 interface Props {
   tradeId: string;
   className?: string;
 }
 
+type LogRow = {
+  id: string;
+  action: 'added' | 'removed';
+  path: string;
+  created_at: string;
+  actor_profile_id: string | null;
+};
+
 export const DisputeEvidenceLog = ({ tradeId, className }: Props) => {
-  const { data, isLoading } = useQuery({
-    queryKey: ['dispute-evidence-log', tradeId],
-    queryFn: async () => {
-      const { data, error } = await supabase
+  const [rows, setRows] = useState<LogRow[]>([]);
+  const [actors, setActors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const { data } = await supabase
         .from('dispute_evidence_log')
-        .select('id, action, path, created_at, actor_profile_id, actor:profiles!dispute_evidence_log_actor_profile_id_fkey ( username, display_name )')
+        .select('id, action, path, created_at, actor_profile_id')
         .eq('trade_id', tradeId)
         .order('created_at', { ascending: true });
-      if (error) {
-        // Foreign key join might not exist; fallback without actor join
-        const { data: d2 } = await supabase
-          .from('dispute_evidence_log')
-          .select('id, action, path, created_at, actor_profile_id')
-          .eq('trade_id', tradeId)
-          .order('created_at', { ascending: true });
-        return (d2 ?? []).map((r) => ({ ...r, actor: null })) as unknown as Entry[];
+      const log = (data ?? []) as LogRow[];
+      const ids = Array.from(new Set(log.map((r) => r.actor_profile_id).filter(Boolean) as string[]));
+      let names: Record<string, string> = {};
+      if (ids.length) {
+        const { data: profs } = await supabase
+          .from('profiles')
+          .select('id, username, display_name')
+          .in('id', ids);
+        for (const p of profs ?? []) {
+          names[p.id] = (p as any).display_name || (p as any).username || 'Unknown';
+        }
       }
-      return data as unknown as Entry[];
-    },
-    enabled: !!tradeId,
-  });
+      if (!cancelled) {
+        setRows(log);
+        setActors(names);
+        setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [tradeId]);
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className={className}>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -49,14 +60,14 @@ export const DisputeEvidenceLog = ({ tradeId, className }: Props) => {
     );
   }
 
-  if (!data || data.length === 0) return null;
+  if (rows.length === 0) return null;
 
   return (
     <div className={className}>
       <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Evidence activity</p>
       <ul className="space-y-1.5">
-        {data.map((e) => {
-          const actorName = e.actor?.display_name || e.actor?.username || 'A user';
+        {rows.map((e) => {
+          const actorName = (e.actor_profile_id && actors[e.actor_profile_id]) || 'A user';
           const filename = e.path.split('/').pop();
           const Icon = e.action === 'added' ? Plus : Minus;
           const tone = e.action === 'added' ? 'text-green-600' : 'text-muted-foreground';
@@ -67,7 +78,7 @@ export const DisputeEvidenceLog = ({ tradeId, className }: Props) => {
                 <p className="truncate">
                   <span className="font-medium">{actorName}</span>{' '}
                   <span className="text-muted-foreground">{e.action}</span>{' '}
-                  <span className="truncate" title={filename}>{filename}</span>
+                  <span title={filename ?? ''}>{filename}</span>
                 </p>
                 <p className="text-[10px] text-muted-foreground">{new Date(e.created_at).toLocaleString()}</p>
               </div>
