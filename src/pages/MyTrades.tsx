@@ -21,6 +21,7 @@ import {
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { DisputeEvidenceList } from '@/components/DisputeEvidenceList';
+import { DisputeEvidenceLog } from '@/components/DisputeEvidenceLog';
 
 type Trade = {
   id: string;
@@ -61,6 +62,7 @@ const MyTrades = () => {
   const [uploadingEvidence, setUploadingEvidence] = useState(false);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
   const [timelineTrade, setTimelineTrade] = useState<Trade | null>(null);
+  const [evidenceErrors, setEvidenceErrors] = useState<string[]>([]);
 
   const escrowBadge = (status: string | null) => {
     switch (status) {
@@ -614,20 +616,25 @@ const MyTrades = () => {
               type="file"
               multiple
               accept="image/png,image/jpeg,image/webp,image/heic,application/pdf"
+              aria-invalid={evidenceErrors.length > 0}
+              aria-describedby="dispute-evidence-help dispute-evidence-errors"
               onChange={(e) => {
                 const incoming = Array.from(e.target.files ?? []);
                 e.target.value = '';
-                const allowed = ['image/png','image/jpeg','image/webp','image/heic','application/pdf'];
+                const allowedMimes = ['image/png','image/jpeg','image/jpg','image/webp','image/heic','image/heif','application/pdf'];
+                const allowedExt = /\.(png|jpe?g|webp|heic|heif|pdf)$/i;
                 const MAX_SIZE = 10 * 1024 * 1024;
                 const MAX_COUNT = 5;
+                const errs: string[] = [];
                 const accepted: File[] = [];
                 for (const f of incoming) {
-                  if (!allowed.includes(f.type) && !/\.(png|jpe?g|webp|heic|pdf)$/i.test(f.name)) {
-                    toast.error(`${f.name}: unsupported type (use JPG, PNG, WEBP, HEIC, or PDF)`);
+                  const okType = (f.type && allowedMimes.includes(f.type.toLowerCase())) || allowedExt.test(f.name);
+                  if (!okType) {
+                    errs.push(`${f.name}: unsupported type. Use JPG, PNG, WEBP, HEIC, or PDF.`);
                     continue;
                   }
                   if (f.size > MAX_SIZE) {
-                    toast.error(`${f.name}: exceeds 10MB`);
+                    errs.push(`${f.name}: ${(f.size / 1024 / 1024).toFixed(1)} MB exceeds the 10 MB limit.`);
                     continue;
                   }
                   accepted.push(f);
@@ -636,15 +643,22 @@ const MyTrades = () => {
                   const merged = [...prev];
                   for (const f of accepted) {
                     if (merged.length >= MAX_COUNT) {
-                      toast.error(`Max ${MAX_COUNT} files`);
-                      break;
+                      errs.push(`You can attach at most ${MAX_COUNT} files. "${f.name}" was skipped.`);
+                      continue;
                     }
-                    if (!merged.some(p => p.name === f.name && p.size === f.size)) merged.push(f);
+                    if (merged.some(p => p.name === f.name && p.size === f.size)) {
+                      errs.push(`${f.name}: already added.`);
+                      continue;
+                    }
+                    merged.push(f);
                   }
                   return merged;
                 });
+                setEvidenceErrors(errs);
               }}
-              className="block w-full text-sm text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-border file:bg-muted file:text-foreground hover:file:bg-muted/80"
+              className={`block w-full text-sm text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:bg-muted file:text-foreground hover:file:bg-muted/80 ${
+                evidenceErrors.length > 0 ? 'file:border-destructive' : 'file:border-border'
+              }`}
             />
             {disputeFiles.length > 0 && (
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 pt-1">
@@ -677,38 +691,65 @@ const MyTrades = () => {
                 })}
               </div>
             )}
-            <p className="text-xs text-muted-foreground">JPG, PNG, WEBP, HEIC, or PDF — up to 5 files, max 10MB each.</p>
+            <p id="dispute-evidence-help" className="text-xs text-muted-foreground">
+              JPG, PNG, WEBP, HEIC, or PDF — up to 5 files, max 10 MB each. {disputeFiles.length}/5 attached.
+            </p>
+            {evidenceErrors.length > 0 && (
+              <div
+                id="dispute-evidence-errors"
+                role="alert"
+                className="rounded-md border border-destructive/40 bg-destructive/5 p-2"
+              >
+                <ul className="space-y-0.5 text-xs text-destructive">
+                  {evidenceErrors.map((m, i) => (
+                    <li key={i}>• {m}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setDisputeTrade(null); setDisputeFiles([]); setDisputeReason(''); }}>Cancel</Button>
+            <Button variant="outline" onClick={() => { setDisputeTrade(null); setDisputeFiles([]); setDisputeReason(''); setEvidenceErrors([]); }}>Cancel</Button>
             <Button
               variant="destructive"
               disabled={disputeReason.trim().length < 10 || updateTrade.isPending || uploadingEvidence}
               onClick={async () => {
                 if (!disputeTrade || !user) return;
-                const oversized = disputeFiles.find(f => f.size > 10 * 1024 * 1024);
-                if (oversized) { toast.error(`${oversized.name} exceeds 10MB`); return; }
+                setEvidenceErrors([]);
                 let urls: string[] = [];
                 if (disputeFiles.length > 0) {
                   setUploadingEvidence(true);
+                  const errs: string[] = [];
                   try {
                     for (const file of disputeFiles) {
                       const ext = file.name.split('.').pop() ?? 'bin';
                       const path = `${user.id}/${disputeTrade.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-                      const { error: upErr } = await supabase.storage.from('dispute-evidence').upload(path, file);
-                      if (upErr) throw upErr;
-                      urls.push(path);
+                      const { error: upErr } = await supabase.storage
+                        .from('dispute-evidence')
+                        .upload(path, file, { contentType: file.type || undefined });
+                      if (upErr) {
+                        const raw = upErr.message || '';
+                        let friendly = `${file.name}: ${raw}`;
+                        if (/Unsupported file type|allowed/i.test(raw)) friendly = `${file.name}: file type rejected by server. Use JPG, PNG, WEBP, HEIC, or PDF.`;
+                        else if (/exceeds 10 MB|too large/i.test(raw)) friendly = `${file.name}: server rejected file — over 10 MB.`;
+                        else if (/Maximum of 5/i.test(raw)) friendly = `Server limit reached: max 5 evidence files per trade.`;
+                        else if (/own folder|participant/i.test(raw)) friendly = `${file.name}: not allowed for this trade.`;
+                        errs.push(friendly);
+                      } else {
+                        urls.push(path);
+                      }
                     }
-                  } catch (e: any) {
-                    toast.error(e.message || 'Failed to upload evidence');
+                  } finally {
                     setUploadingEvidence(false);
-                    return;
                   }
-                  setUploadingEvidence(false);
+                  if (errs.length) {
+                    setEvidenceErrors(errs);
+                    if (urls.length === 0) return;
+                  }
                 }
                 updateTrade.mutate(
                   { tradeId: disputeTrade.id, status: 'disputed', disputeReason: disputeReason.trim(), evidenceUrls: urls },
-                  { onSuccess: () => { setDisputeTrade(null); setDisputeFiles([]); setDisputeReason(''); } }
+                  { onSuccess: () => { setDisputeTrade(null); setDisputeFiles([]); setDisputeReason(''); setEvidenceErrors([]); } }
                 );
               }}
             >
@@ -794,6 +835,7 @@ const MyTrades = () => {
                   </div>
                 )}
                 <DisputeEvidenceList paths={t.dispute_evidence_urls} />
+                <DisputeEvidenceLog tradeId={t.id} />
               </div>
             );
           })()}

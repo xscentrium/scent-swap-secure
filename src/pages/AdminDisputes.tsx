@@ -16,6 +16,7 @@ import { ArrowLeft, Loader2, Shield, AlertTriangle, CheckCircle, XCircle, ArrowL
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { DisputeEvidenceList } from '@/components/DisputeEvidenceList';
+import { DisputeEvidenceLog } from '@/components/DisputeEvidenceLog';
 
 type DisputedTrade = {
   id: string;
@@ -189,6 +190,7 @@ const AdminDisputes = () => {
                     </div>
 
                     <DisputeEvidenceList paths={t.dispute_evidence_urls} />
+                    <DisputeEvidenceLog tradeId={t.id} />
                     <div className="flex gap-2 pt-2">
                       <Button
                         variant="outline"
