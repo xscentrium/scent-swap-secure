@@ -1,17 +1,41 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Paperclip, FileText, ImageIcon, Loader2 } from 'lucide-react';
+import { Paperclip, FileText, Loader2, X } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Props {
   paths: string[] | null | undefined;
   className?: string;
+  /** Optional trade id — required to persist removal back to the trade row. */
+  tradeId?: string;
+  /** When true, show a remove button on items the current user owns. */
+  allowRemove?: boolean;
+  /** Called after a successful removal so the parent can refresh data. */
+  onRemoved?: (path: string) => void;
 }
 
-type Resolved = { path: string; url: string; isImage: boolean };
+type Resolved = { path: string; url: string; isImage: boolean; ownedByMe: boolean };
 
-export const DisputeEvidenceList = ({ paths, className }: Props) => {
+const humanizeRemoveError = (raw: string): string => {
+  const m = raw || '';
+  if (/row-level security|permission|not authorized|policy/i.test(m)) {
+    return "You don't have permission to remove this file.";
+  }
+  if (/not found|no such/i.test(m)) {
+    return 'File no longer exists on the server.';
+  }
+  if (/network|fetch|failed to fetch/i.test(m)) {
+    return 'Network error — check your connection and try again.';
+  }
+  return m || 'Server rejected the deletion.';
+};
+
+export const DisputeEvidenceList = ({ paths, className, tradeId, allowRemove, onRemoved }: Props) => {
+  const { user } = useAuth();
   const [items, setItems] = useState<Resolved[]>([]);
   const [loading, setLoading] = useState(false);
+  const [removing, setRemoving] = useState<string | null>(null);
+  const [removeErrors, setRemoveErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!paths || paths.length === 0) {
@@ -31,6 +55,7 @@ export const DisputeEvidenceList = ({ paths, className }: Props) => {
             path: p,
             url: data.signedUrl,
             isImage: /\.(png|jpe?g|webp|gif|heic)$/i.test(p),
+            ownedByMe: !!user?.id && p.split('/')[0] === user.id,
           });
         }
       }
@@ -40,7 +65,40 @@ export const DisputeEvidenceList = ({ paths, className }: Props) => {
       }
     })();
     return () => { cancelled = true; };
-  }, [paths?.join('|')]);
+  }, [paths?.join('|'), user?.id]);
+
+  const handleRemove = async (path: string) => {
+    setRemoveErrors((prev) => {
+      const next = { ...prev };
+      delete next[path];
+      return next;
+    });
+    setRemoving(path);
+    try {
+      const { error: storageError } = await supabase.storage
+        .from('dispute-evidence')
+        .remove([path]);
+      if (storageError) throw storageError;
+
+      // Persist the change back to the trade row so it disappears from views.
+      if (tradeId) {
+        const remaining = (paths ?? []).filter((p) => p !== path);
+        const { error: updateError } = await supabase
+          .from('trades')
+          .update({ dispute_evidence_urls: remaining })
+          .eq('id', tradeId);
+        if (updateError) throw updateError;
+      }
+
+      setItems((prev) => prev.filter((i) => i.path !== path));
+      onRemoved?.(path);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setRemoveErrors((prev) => ({ ...prev, [path]: humanizeRemoveError(msg) }));
+    } finally {
+      setRemoving(null);
+    }
+  };
 
   if (!paths || paths.length === 0) return null;
 
@@ -60,26 +118,48 @@ export const DisputeEvidenceList = ({ paths, className }: Props) => {
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
           {items.map((it) => {
             const filename = it.path.split('/').pop() ?? it.path;
+            const err = removeErrors[it.path];
+            const canRemove = allowRemove && it.ownedByMe;
             return (
-              <a
-                key={it.path}
-                href={it.url}
-                target="_blank"
-                rel="noreferrer"
-                title={filename}
-                className="group block rounded-md border border-border/60 bg-muted/40 overflow-hidden hover:border-primary/60 transition"
-              >
-                {it.isImage ? (
-                  <img src={it.url} alt={filename} className="w-full h-20 object-cover group-hover:opacity-90" />
-                ) : (
-                  <div className="w-full h-20 flex flex-col items-center justify-center text-muted-foreground p-2">
-                    <FileText className="w-5 h-5 mb-1" />
-                  </div>
-                )}
-                <div className="px-1.5 py-1 border-t border-border/40 bg-background/40">
-                  <p className="text-[10px] truncate text-muted-foreground">{filename}</p>
+              <div key={it.path} className="space-y-1">
+                <div className="relative group rounded-md border border-border/60 bg-muted/40 overflow-hidden">
+                  <a href={it.url} target="_blank" rel="noreferrer" title={filename} className="block hover:opacity-90">
+                    {it.isImage ? (
+                      <img src={it.url} alt={filename} className="w-full h-20 object-cover" />
+                    ) : (
+                      <div className="w-full h-20 flex items-center justify-center text-muted-foreground">
+                        <FileText className="w-5 h-5" />
+                      </div>
+                    )}
+                    <div className="px-1.5 py-1 border-t border-border/40 bg-background/40">
+                      <p className="text-[10px] truncate text-muted-foreground">{filename}</p>
+                    </div>
+                  </a>
+                  {canRemove && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemove(it.path)}
+                      disabled={removing === it.path}
+                      aria-label={`Remove ${filename}`}
+                      className="absolute top-1 right-1 p-1 rounded-full bg-background/80 border border-border opacity-0 group-hover:opacity-100 focus:opacity-100 transition hover:bg-destructive hover:text-destructive-foreground disabled:opacity-100"
+                    >
+                      {removing === it.path ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <X className="w-3 h-3" />
+                      )}
+                    </button>
+                  )}
                 </div>
-              </a>
+                {err && (
+                  <p
+                    role="alert"
+                    className="text-[10px] leading-tight text-destructive bg-destructive/5 border border-destructive/30 rounded px-1.5 py-1"
+                  >
+                    {err}
+                  </p>
+                )}
+              </div>
             );
           })}
         </div>

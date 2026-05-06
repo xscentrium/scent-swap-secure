@@ -834,7 +834,12 @@ const MyTrades = () => {
                     <p className="text-sm whitespace-pre-wrap">{t.dispute_reason}</p>
                   </div>
                 )}
-                <DisputeEvidenceList paths={t.dispute_evidence_urls} />
+                <DisputeEvidenceList
+                  paths={t.dispute_evidence_urls}
+                  tradeId={t.id}
+                  allowRemove
+                  onRemoved={() => queryClient.invalidateQueries({ queryKey: ['my-trades'] })}
+                />
                 <DisputeEvidenceLog tradeId={t.id} />
               </div>
             );
