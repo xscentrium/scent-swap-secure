@@ -737,53 +737,77 @@ const MyTrades = () => {
               </div>
             )}
           </div>
+          </>
+          )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setDisputeTrade(null); setDisputeFiles([]); setDisputeReason(''); setEvidenceErrors([]); }}>Cancel</Button>
-            <Button
-              variant="destructive"
-              disabled={disputeReason.trim().length < 10 || updateTrade.isPending || uploadingEvidence}
-              onClick={async () => {
-                if (!disputeTrade || !user) return;
-                setEvidenceErrors([]);
-                let urls: string[] = [];
-                if (disputeFiles.length > 0) {
-                  setUploadingEvidence(true);
-                  const errs: string[] = [];
-                  try {
-                    for (const file of disputeFiles) {
-                      const ext = file.name.split('.').pop() ?? 'bin';
-                      const path = `${user.id}/${disputeTrade.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-                      const { error: upErr } = await supabase.storage
-                        .from('dispute-evidence')
-                        .upload(path, file, { contentType: file.type || undefined });
-                      if (upErr) {
-                        const raw = upErr.message || '';
-                        let friendly = `${file.name}: ${raw}`;
-                        if (/Unsupported file type|allowed/i.test(raw)) friendly = `${file.name}: file type rejected by server. Use JPG, PNG, WEBP, HEIC, or PDF.`;
-                        else if (/exceeds 10 MB|too large/i.test(raw)) friendly = `${file.name}: server rejected file — over 10 MB.`;
-                        else if (/Maximum of 5/i.test(raw)) friendly = `Server limit reached: max 5 evidence files per trade.`;
-                        else if (/own folder|participant/i.test(raw)) friendly = `${file.name}: not allowed for this trade.`;
-                        errs.push(friendly);
-                      } else {
-                        urls.push(path);
+            {disputeReviewing ? (
+              <>
+                <Button
+                  variant="outline"
+                  disabled={updateTrade.isPending || uploadingEvidence}
+                  onClick={() => setDisputeReviewing(false)}
+                >
+                  Back to edit
+                </Button>
+                <Button
+                  variant="destructive"
+                  disabled={updateTrade.isPending || uploadingEvidence}
+                  onClick={async () => {
+                    if (!disputeTrade || !user) return;
+                    setEvidenceErrors([]);
+                    let urls: string[] = [];
+                    if (disputeFiles.length > 0) {
+                      setUploadingEvidence(true);
+                      const errs: string[] = [];
+                      try {
+                        for (const file of disputeFiles) {
+                          const ext = file.name.split('.').pop() ?? 'bin';
+                          const path = `${user.id}/${disputeTrade.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+                          const { error: upErr } = await supabase.storage
+                            .from('dispute-evidence')
+                            .upload(path, file, { contentType: file.type || undefined });
+                          if (upErr) {
+                            const raw = upErr.message || '';
+                            let friendly = `${file.name}: ${raw}`;
+                            if (/Unsupported file type|allowed/i.test(raw)) friendly = `${file.name}: file type rejected by server. Use JPG, PNG, WEBP, HEIC, or PDF.`;
+                            else if (/exceeds 10 MB|too large/i.test(raw)) friendly = `${file.name}: server rejected file — over 10 MB.`;
+                            else if (/Maximum of 5/i.test(raw)) friendly = `Server limit reached: max 5 evidence files per trade.`;
+                            else if (/own folder|participant/i.test(raw)) friendly = `${file.name}: not allowed for this trade.`;
+                            errs.push(friendly);
+                          } else {
+                            urls.push(path);
+                          }
+                        }
+                      } finally {
+                        setUploadingEvidence(false);
+                      }
+                      if (errs.length) {
+                        setEvidenceErrors(errs);
+                        setDisputeReviewing(false);
+                        if (urls.length === 0) return;
                       }
                     }
-                  } finally {
-                    setUploadingEvidence(false);
-                  }
-                  if (errs.length) {
-                    setEvidenceErrors(errs);
-                    if (urls.length === 0) return;
-                  }
-                }
-                updateTrade.mutate(
-                  { tradeId: disputeTrade.id, status: 'disputed', disputeReason: disputeReason.trim(), evidenceUrls: urls },
-                  { onSuccess: () => { setDisputeTrade(null); setDisputeFiles([]); setDisputeReason(''); setEvidenceErrors([]); } }
-                );
-              }}
-            >
-              {uploadingEvidence ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Uploading…</> : 'Submit Dispute'}
-            </Button>
+                    updateTrade.mutate(
+                      { tradeId: disputeTrade.id, status: 'disputed', disputeReason: disputeReason.trim(), evidenceUrls: urls },
+                      { onSuccess: () => { setDisputeTrade(null); setDisputeFiles([]); setDisputeReason(''); setEvidenceErrors([]); setDisputeReviewing(false); } }
+                    );
+                  }}
+                >
+                  {uploadingEvidence ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Uploading…</> : 'Confirm & Submit'}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => { setDisputeTrade(null); setDisputeFiles([]); setDisputeReason(''); setEvidenceErrors([]); setDisputeReviewing(false); }}>Cancel</Button>
+                <Button
+                  variant="destructive"
+                  disabled={disputeReason.trim().length < 10 || evidenceErrors.length > 0}
+                  onClick={() => setDisputeReviewing(true)}
+                >
+                  Review &amp; Continue
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
