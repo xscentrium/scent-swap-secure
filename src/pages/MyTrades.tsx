@@ -465,44 +465,53 @@ const MyTrades = () => {
                               initiatorProfileId={trade.initiator.id}
                               receiverProfileId={trade.receiver.id}
                               compact
-                              onBothDelivered={() => {
-                                if (trade.escrow_status !== 'released') {
-                                  updateTrade.mutate({ tradeId: trade.id, status: 'completed' });
-                                }
-                              }}
                             />
                           </div>
                         )}
 
-                        {trade.status === 'accepted' && (
+                        {trade.status === 'accepted' && (() => {
+                          const isInit = trade.initiator?.id === profile.id;
+                          const myShipped = isInit ? trade.initiator_confirmed : trade.receiver_confirmed;
+                          const myReceived = isInit ? trade.initiator_received : trade.receiver_received;
+                          const otherReceived = isInit ? trade.receiver_received : trade.initiator_received;
+                          return (
                           <div className="flex items-start justify-between gap-3 pt-3 mt-3 border-t border-border flex-wrap">
                             <p className="text-sm text-muted-foreground">
-                              {trade.initiator_confirmed && trade.receiver_confirmed
-                                ? 'Both parties shipped — finalizing...'
-                                : 'Waiting for both parties to confirm shipping...'}
+                              {trade.initiator_received && trade.receiver_received
+                                ? 'Both parties confirmed receipt — escrow released.'
+                                : myReceived
+                                  ? 'You confirmed receipt. Waiting on the other party…'
+                                  : otherReceived
+                                    ? 'Other party confirmed receipt. Confirm when your item arrives to release escrow.'
+                                    : 'Mark "I shipped" then "I received it" once the package arrives.'}
                             </p>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 flex-wrap">
                               <Button
                                 size="sm"
                                 variant="outline"
                                 className="text-destructive hover:text-destructive"
                                 onClick={() => { setDisputeTrade(trade); setDisputeReason(''); }}
                               >
-                                <AlertTriangle className="w-4 h-4 mr-1" />
-                                Dispute
+                                <AlertTriangle className="w-4 h-4 mr-1" /> Dispute
                               </Button>
-                              {((trade.initiator?.id === profile.id && !trade.initiator_confirmed) ||
-                                (trade.receiver?.id === profile.id && !trade.receiver_confirmed)) && (
-                                <Button 
-                                  size="sm"
+                              {!myShipped && (
+                                <Button size="sm" variant="outline"
                                   onClick={() => updateTrade.mutate({ tradeId: trade.id, confirm: true })}
                                 >
                                   I Shipped My Item
                                 </Button>
                               )}
+                              {!myReceived && (
+                                <Button size="sm"
+                                  onClick={() => updateTrade.mutate({ tradeId: trade.id, received: true })}
+                                >
+                                  <CheckCircle className="w-4 h-4 mr-1" /> I Received It
+                                </Button>
+                              )}
                             </div>
                           </div>
-                        )}
+                          );
+                        })()}
 
                         {trade.status === 'pending' && trade.initiator?.id === profile.id && (
                           <div className="flex justify-end pt-3 mt-3 border-t border-border">
