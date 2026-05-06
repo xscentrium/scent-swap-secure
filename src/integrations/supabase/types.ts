@@ -330,6 +330,42 @@ export type Database = {
         }
         Relationships: []
       }
+      escrow_events: {
+        Row: {
+          actor_profile_id: string | null
+          actor_user_id: string | null
+          created_at: string
+          event_type: string
+          from_status: string | null
+          id: string
+          metadata: Json | null
+          to_status: string | null
+          trade_id: string
+        }
+        Insert: {
+          actor_profile_id?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          event_type: string
+          from_status?: string | null
+          id?: string
+          metadata?: Json | null
+          to_status?: string | null
+          trade_id: string
+        }
+        Update: {
+          actor_profile_id?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          event_type?: string
+          from_status?: string | null
+          id?: string
+          metadata?: Json | null
+          to_status?: string | null
+          trade_id?: string
+        }
+        Relationships: []
+      }
       favorite_fragrances: {
         Row: {
           created_at: string
@@ -1567,11 +1603,13 @@ export type Database = {
           initiator_confirmed: boolean | null
           initiator_id: string
           initiator_listing_id: string
+          initiator_received: boolean
           locked_initiator_value: number | null
           locked_receiver_value: number | null
           receiver_confirmed: boolean | null
           receiver_id: string
           receiver_listing_id: string | null
+          receiver_received: boolean
           refunded_at: string | null
           released_at: string | null
           resolved_at: string | null
@@ -1592,11 +1630,13 @@ export type Database = {
           initiator_confirmed?: boolean | null
           initiator_id: string
           initiator_listing_id: string
+          initiator_received?: boolean
           locked_initiator_value?: number | null
           locked_receiver_value?: number | null
           receiver_confirmed?: boolean | null
           receiver_id: string
           receiver_listing_id?: string | null
+          receiver_received?: boolean
           refunded_at?: string | null
           released_at?: string | null
           resolved_at?: string | null
@@ -1617,11 +1657,13 @@ export type Database = {
           initiator_confirmed?: boolean | null
           initiator_id?: string
           initiator_listing_id?: string
+          initiator_received?: boolean
           locked_initiator_value?: number | null
           locked_receiver_value?: number | null
           receiver_confirmed?: boolean | null
           receiver_id?: string
           receiver_listing_id?: string | null
+          receiver_received?: boolean
           refunded_at?: string | null
           released_at?: string | null
           resolved_at?: string | null
