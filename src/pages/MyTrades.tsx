@@ -21,6 +21,7 @@ import {
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { DisputeEvidenceList } from '@/components/DisputeEvidenceList';
+import { DisputeEvidenceLog } from '@/components/DisputeEvidenceLog';
 
 type Trade = {
   id: string;
