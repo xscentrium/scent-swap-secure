@@ -166,6 +166,18 @@ export const Navigation = () => {
                         Settings
                       </Link>
                     </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/onboarding" className="cursor-pointer">
+                        <Rocket className="w-4 h-4 mr-2" />
+                        Onboarding
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/payouts" className="cursor-pointer">
+                        <Wallet className="w-4 h-4 mr-2" />
+                        Payouts
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => signOut()} className="cursor-pointer text-destructive focus:text-destructive">
                       <LogOut className="w-4 h-4 mr-2" />
@@ -228,18 +240,39 @@ export const Navigation = () => {
                       </Link>
                     ))}
                     {user && (
-                      <Link
-                        to="/my-trades"
-                        onClick={closeMenu}
-                        className={cn(
-                          "flex items-center px-3 py-2.5 rounded-lg text-base font-medium transition-colors",
-                          isActive("/my-trades")
-                            ? "bg-primary/10 text-primary"
-                            : "text-foreground hover:bg-muted"
-                        )}
-                      >
-                        My Trades
-                      </Link>
+                      <>
+                        <Link
+                          to="/my-trades"
+                          onClick={closeMenu}
+                          className={cn(
+                            "flex items-center px-3 py-2.5 rounded-lg text-base font-medium transition-colors",
+                            isActive("/my-trades")
+                              ? "bg-primary/10 text-primary"
+                              : "text-foreground hover:bg-muted"
+                          )}
+                        >
+                          My Trades
+                        </Link>
+                        {authedExtraLinks.map((link) => {
+                          const Icon = link.icon;
+                          return (
+                            <Link
+                              key={link.to}
+                              to={link.to}
+                              onClick={closeMenu}
+                              className={cn(
+                                "flex items-center gap-2 px-3 py-2.5 rounded-lg text-base font-medium transition-colors",
+                                isActive(link.to)
+                                  ? "bg-primary/10 text-primary"
+                                  : "text-foreground hover:bg-muted"
+                              )}
+                            >
+                              <Icon className="w-4 h-4" />
+                              {link.label}
+                            </Link>
+                          );
+                        })}
+                      </>
                     )}
                   </div>
 
