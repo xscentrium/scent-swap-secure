@@ -616,20 +616,25 @@ const MyTrades = () => {
               type="file"
               multiple
               accept="image/png,image/jpeg,image/webp,image/heic,application/pdf"
+              aria-invalid={evidenceErrors.length > 0}
+              aria-describedby="dispute-evidence-help dispute-evidence-errors"
               onChange={(e) => {
                 const incoming = Array.from(e.target.files ?? []);
                 e.target.value = '';
-                const allowed = ['image/png','image/jpeg','image/webp','image/heic','application/pdf'];
+                const allowedMimes = ['image/png','image/jpeg','image/jpg','image/webp','image/heic','image/heif','application/pdf'];
+                const allowedExt = /\.(png|jpe?g|webp|heic|heif|pdf)$/i;
                 const MAX_SIZE = 10 * 1024 * 1024;
                 const MAX_COUNT = 5;
+                const errs: string[] = [];
                 const accepted: File[] = [];
                 for (const f of incoming) {
-                  if (!allowed.includes(f.type) && !/\.(png|jpe?g|webp|heic|pdf)$/i.test(f.name)) {
-                    toast.error(`${f.name}: unsupported type (use JPG, PNG, WEBP, HEIC, or PDF)`);
+                  const okType = (f.type && allowedMimes.includes(f.type.toLowerCase())) || allowedExt.test(f.name);
+                  if (!okType) {
+                    errs.push(`${f.name}: unsupported type. Use JPG, PNG, WEBP, HEIC, or PDF.`);
                     continue;
                   }
                   if (f.size > MAX_SIZE) {
-                    toast.error(`${f.name}: exceeds 10MB`);
+                    errs.push(`${f.name}: ${(f.size / 1024 / 1024).toFixed(1)} MB exceeds the 10 MB limit.`);
                     continue;
                   }
                   accepted.push(f);
@@ -638,15 +643,22 @@ const MyTrades = () => {
                   const merged = [...prev];
                   for (const f of accepted) {
                     if (merged.length >= MAX_COUNT) {
-                      toast.error(`Max ${MAX_COUNT} files`);
-                      break;
+                      errs.push(`You can attach at most ${MAX_COUNT} files. "${f.name}" was skipped.`);
+                      continue;
                     }
-                    if (!merged.some(p => p.name === f.name && p.size === f.size)) merged.push(f);
+                    if (merged.some(p => p.name === f.name && p.size === f.size)) {
+                      errs.push(`${f.name}: already added.`);
+                      continue;
+                    }
+                    merged.push(f);
                   }
                   return merged;
                 });
+                setEvidenceErrors(errs);
               }}
-              className="block w-full text-sm text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-border file:bg-muted file:text-foreground hover:file:bg-muted/80"
+              className={`block w-full text-sm text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:bg-muted file:text-foreground hover:file:bg-muted/80 ${
+                evidenceErrors.length > 0 ? 'file:border-destructive' : 'file:border-border'
+              }`}
             />
             {disputeFiles.length > 0 && (
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 pt-1">
@@ -679,7 +691,22 @@ const MyTrades = () => {
                 })}
               </div>
             )}
-            <p className="text-xs text-muted-foreground">JPG, PNG, WEBP, HEIC, or PDF — up to 5 files, max 10MB each.</p>
+            <p id="dispute-evidence-help" className="text-xs text-muted-foreground">
+              JPG, PNG, WEBP, HEIC, or PDF — up to 5 files, max 10 MB each. {disputeFiles.length}/5 attached.
+            </p>
+            {evidenceErrors.length > 0 && (
+              <div
+                id="dispute-evidence-errors"
+                role="alert"
+                className="rounded-md border border-destructive/40 bg-destructive/5 p-2"
+              >
+                <ul className="space-y-0.5 text-xs text-destructive">
+                  {evidenceErrors.map((m, i) => (
+                    <li key={i}>• {m}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setDisputeTrade(null); setDisputeFiles([]); setDisputeReason(''); }}>Cancel</Button>
