@@ -27,6 +27,7 @@ import {
   User
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { BatchCodeStatus } from '@/components/BatchCodeStatus';
 
 type FragranceDetails = {
   name: string;
@@ -183,6 +184,8 @@ export const ListingQuickView = ({
                 </div>
               </div>
             )}
+
+            <BatchCodeStatus listingId={listing.id} />
 
             <Separator />
 

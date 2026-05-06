@@ -41,6 +41,7 @@ import Privacy from "./pages/Privacy";
 import Contact from "./pages/Contact";
 import Onboarding from "./pages/Onboarding";
 import SellerPayouts from "./pages/SellerPayouts";
+import AdminAudit from "./pages/AdminAudit";
 
 const queryClient = new QueryClient();
 
@@ -73,6 +74,8 @@ const AnimatedRoutes = () => {
         <Route path="/settings" element={<PageTransition><Settings /></PageTransition>} />
         <Route path="/admin/verification" element={<PageTransition><AdminVerification /></PageTransition>} />
         <Route path="/admin/disputes" element={<PageTransition><AdminDisputes /></PageTransition>} />
+        <Route path="/admin/audit" element={<PageTransition><AdminAudit /></PageTransition>} />
+        <Route path="/admin/audit/:tradeId" element={<PageTransition><AdminAudit /></PageTransition>} />
         <Route path="/admin/search-analytics" element={<PageTransition><SearchAnalytics /></PageTransition>} />
         <Route path="/terms" element={<PageTransition><Terms /></PageTransition>} />
         <Route path="/privacy" element={<PageTransition><Privacy /></PageTransition>} />

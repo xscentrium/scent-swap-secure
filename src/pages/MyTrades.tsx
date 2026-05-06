@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 import { DisputeEvidenceList } from '@/components/DisputeEvidenceList';
 import { DisputeEvidenceLog } from '@/components/DisputeEvidenceLog';
 import { ShippingTracker } from '@/components/ShippingTracker';
+import { EscrowEventsList } from '@/components/EscrowEventsList';
 
 
 type Trade = {
@@ -43,6 +44,8 @@ type Trade = {
   refunded_at: string | null;
   initiator_confirmed: boolean;
   receiver_confirmed: boolean;
+  initiator_received: boolean;
+  receiver_received: boolean;
   created_at: string;
   updated_at: string;
   initiator_listing: { id: string; name: string; brand: string; size: string; image_url: string | null; } | null;
@@ -154,14 +157,13 @@ const MyTrades = () => {
   });
 
   const updateTrade = useMutation({
-    mutationFn: async ({ tradeId, status, confirm, disputeReason, evidenceUrls }: { tradeId: string; status?: string; confirm?: boolean; disputeReason?: string; evidenceUrls?: string[] }) => {
+    mutationFn: async ({ tradeId, status, confirm, received, disputeReason, evidenceUrls }: { tradeId: string; status?: string; confirm?: boolean; received?: boolean; disputeReason?: string; evidenceUrls?: string[] }) => {
       const trade = trades?.find(t => t.id === tradeId);
       if (!trade) throw new Error('Trade not found');
 
       const updates: Database['public']['Tables']['trades']['Update'] = {};
 
       if (status) {
-        // Client-side guardrails — server enforces these too
         const valid: Record<string, string[]> = {
           pending: ['accepted', 'cancelled'],
           accepted: ['completed', 'disputed'],
@@ -195,17 +197,19 @@ const MyTrades = () => {
       }
 
       if (confirm !== undefined) {
-        if (trade.status !== 'accepted') {
-          throw new Error('Can only confirm shipping on accepted trades');
-        }
+        if (trade.status !== 'accepted') throw new Error('Can only confirm shipping on accepted trades');
         const isInitiator = trade.initiator?.id === profile?.id;
-        if (isInitiator) {
-          updates.initiator_confirmed = confirm;
-        } else {
-          updates.receiver_confirmed = confirm;
-        }
-        const otherConfirmed = isInitiator ? trade.receiver_confirmed : trade.initiator_confirmed;
-        if (confirm && otherConfirmed) {
+        if (isInitiator) updates.initiator_confirmed = confirm;
+        else updates.receiver_confirmed = confirm;
+      }
+
+      if (received !== undefined) {
+        if (trade.status !== 'accepted') throw new Error('Can only confirm receipt on accepted trades');
+        const isInitiator = trade.initiator?.id === profile?.id;
+        if (isInitiator) updates.initiator_received = received;
+        else updates.receiver_received = received;
+        const otherReceived = isInitiator ? trade.receiver_received : trade.initiator_received;
+        if (received && otherReceived) {
           updates.status = 'completed' as Database['public']['Enums']['trade_status'];
           updates.escrow_status = 'released';
           updates.released_at = new Date().toISOString();
@@ -461,44 +465,53 @@ const MyTrades = () => {
                               initiatorProfileId={trade.initiator.id}
                               receiverProfileId={trade.receiver.id}
                               compact
-                              onBothDelivered={() => {
-                                if (trade.escrow_status !== 'released') {
-                                  updateTrade.mutate({ tradeId: trade.id, status: 'completed' });
-                                }
-                              }}
                             />
                           </div>
                         )}
 
-                        {trade.status === 'accepted' && (
+                        {trade.status === 'accepted' && (() => {
+                          const isInit = trade.initiator?.id === profile.id;
+                          const myShipped = isInit ? trade.initiator_confirmed : trade.receiver_confirmed;
+                          const myReceived = isInit ? trade.initiator_received : trade.receiver_received;
+                          const otherReceived = isInit ? trade.receiver_received : trade.initiator_received;
+                          return (
                           <div className="flex items-start justify-between gap-3 pt-3 mt-3 border-t border-border flex-wrap">
                             <p className="text-sm text-muted-foreground">
-                              {trade.initiator_confirmed && trade.receiver_confirmed
-                                ? 'Both parties shipped — finalizing...'
-                                : 'Waiting for both parties to confirm shipping...'}
+                              {trade.initiator_received && trade.receiver_received
+                                ? 'Both parties confirmed receipt — escrow released.'
+                                : myReceived
+                                  ? 'You confirmed receipt. Waiting on the other party…'
+                                  : otherReceived
+                                    ? 'Other party confirmed receipt. Confirm when your item arrives to release escrow.'
+                                    : 'Mark "I shipped" then "I received it" once the package arrives.'}
                             </p>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 flex-wrap">
                               <Button
                                 size="sm"
                                 variant="outline"
                                 className="text-destructive hover:text-destructive"
                                 onClick={() => { setDisputeTrade(trade); setDisputeReason(''); }}
                               >
-                                <AlertTriangle className="w-4 h-4 mr-1" />
-                                Dispute
+                                <AlertTriangle className="w-4 h-4 mr-1" /> Dispute
                               </Button>
-                              {((trade.initiator?.id === profile.id && !trade.initiator_confirmed) ||
-                                (trade.receiver?.id === profile.id && !trade.receiver_confirmed)) && (
-                                <Button 
-                                  size="sm"
+                              {!myShipped && (
+                                <Button size="sm" variant="outline"
                                   onClick={() => updateTrade.mutate({ tradeId: trade.id, confirm: true })}
                                 >
                                   I Shipped My Item
                                 </Button>
                               )}
+                              {!myReceived && (
+                                <Button size="sm"
+                                  onClick={() => updateTrade.mutate({ tradeId: trade.id, received: true })}
+                                >
+                                  <CheckCircle className="w-4 h-4 mr-1" /> I Received It
+                                </Button>
+                              )}
                             </div>
                           </div>
-                        )}
+                          );
+                        })()}
 
                         {trade.status === 'pending' && trade.initiator?.id === profile.id && (
                           <div className="flex justify-end pt-3 mt-3 border-t border-border">
@@ -906,6 +919,7 @@ const MyTrades = () => {
                     <p className="text-sm whitespace-pre-wrap">{t.dispute_reason}</p>
                   </div>
                 )}
+                <EscrowEventsList tradeId={t.id} />
                 <DisputeEvidenceList
                   paths={t.dispute_evidence_urls}
                   tradeId={t.id}
