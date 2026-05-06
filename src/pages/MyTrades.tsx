@@ -63,6 +63,8 @@ const MyTrades = () => {
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
   const [timelineTrade, setTimelineTrade] = useState<Trade | null>(null);
   const [evidenceErrors, setEvidenceErrors] = useState<string[]>([]);
+  const [disputeReviewing, setDisputeReviewing] = useState(false);
+  const [evidenceLogKey, setEvidenceLogKey] = useState(0);
 
   const escrowBadge = (status: string | null) => {
     switch (status) {
@@ -586,17 +588,45 @@ const MyTrades = () => {
         </div>
       </main>
 
-      <Dialog open={!!disputeTrade} onOpenChange={(open) => !open && setDisputeTrade(null)}>
+      <Dialog open={!!disputeTrade} onOpenChange={(open) => { if (!open) { setDisputeTrade(null); setDisputeReviewing(false); } }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-destructive" />
-              Open a Dispute
+              {disputeReviewing ? 'Review & Confirm Dispute' : 'Open a Dispute'}
             </DialogTitle>
             <DialogDescription>
-              This will mark the trade as disputed and freeze both escrow holds until resolved by support. Please describe the issue clearly.
+              {disputeReviewing
+                ? 'Double-check your reason and attached evidence below. Once submitted, the trade will be frozen until support resolves it.'
+                : 'This will mark the trade as disputed and freeze both escrow holds until resolved by support. Please describe the issue clearly.'}
             </DialogDescription>
           </DialogHeader>
+          {disputeReviewing ? (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Reason</p>
+                <p className="text-sm whitespace-pre-wrap">{disputeReason.trim()}</p>
+              </div>
+              <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                  Evidence ({disputeFiles.length})
+                </p>
+                {disputeFiles.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No files attached.</p>
+                ) : (
+                  <ul className="space-y-1 text-xs">
+                    {disputeFiles.map((f, i) => (
+                      <li key={`${f.name}-${i}`} className="flex items-center justify-between gap-2">
+                        <span className="truncate">{f.name}</span>
+                        <span className="text-muted-foreground shrink-0">{(f.size / 1024).toFixed(0)} KB</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          ) : (
+          <>
           <div className="space-y-2">
             <Label htmlFor="dispute-reason">Reason</Label>
             <Textarea
@@ -708,53 +738,77 @@ const MyTrades = () => {
               </div>
             )}
           </div>
+          </>
+          )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setDisputeTrade(null); setDisputeFiles([]); setDisputeReason(''); setEvidenceErrors([]); }}>Cancel</Button>
-            <Button
-              variant="destructive"
-              disabled={disputeReason.trim().length < 10 || updateTrade.isPending || uploadingEvidence}
-              onClick={async () => {
-                if (!disputeTrade || !user) return;
-                setEvidenceErrors([]);
-                let urls: string[] = [];
-                if (disputeFiles.length > 0) {
-                  setUploadingEvidence(true);
-                  const errs: string[] = [];
-                  try {
-                    for (const file of disputeFiles) {
-                      const ext = file.name.split('.').pop() ?? 'bin';
-                      const path = `${user.id}/${disputeTrade.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-                      const { error: upErr } = await supabase.storage
-                        .from('dispute-evidence')
-                        .upload(path, file, { contentType: file.type || undefined });
-                      if (upErr) {
-                        const raw = upErr.message || '';
-                        let friendly = `${file.name}: ${raw}`;
-                        if (/Unsupported file type|allowed/i.test(raw)) friendly = `${file.name}: file type rejected by server. Use JPG, PNG, WEBP, HEIC, or PDF.`;
-                        else if (/exceeds 10 MB|too large/i.test(raw)) friendly = `${file.name}: server rejected file — over 10 MB.`;
-                        else if (/Maximum of 5/i.test(raw)) friendly = `Server limit reached: max 5 evidence files per trade.`;
-                        else if (/own folder|participant/i.test(raw)) friendly = `${file.name}: not allowed for this trade.`;
-                        errs.push(friendly);
-                      } else {
-                        urls.push(path);
+            {disputeReviewing ? (
+              <>
+                <Button
+                  variant="outline"
+                  disabled={updateTrade.isPending || uploadingEvidence}
+                  onClick={() => setDisputeReviewing(false)}
+                >
+                  Back to edit
+                </Button>
+                <Button
+                  variant="destructive"
+                  disabled={updateTrade.isPending || uploadingEvidence}
+                  onClick={async () => {
+                    if (!disputeTrade || !user) return;
+                    setEvidenceErrors([]);
+                    let urls: string[] = [];
+                    if (disputeFiles.length > 0) {
+                      setUploadingEvidence(true);
+                      const errs: string[] = [];
+                      try {
+                        for (const file of disputeFiles) {
+                          const ext = file.name.split('.').pop() ?? 'bin';
+                          const path = `${user.id}/${disputeTrade.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+                          const { error: upErr } = await supabase.storage
+                            .from('dispute-evidence')
+                            .upload(path, file, { contentType: file.type || undefined });
+                          if (upErr) {
+                            const raw = upErr.message || '';
+                            let friendly = `${file.name}: ${raw}`;
+                            if (/Unsupported file type|allowed/i.test(raw)) friendly = `${file.name}: file type rejected by server. Use JPG, PNG, WEBP, HEIC, or PDF.`;
+                            else if (/exceeds 10 MB|too large/i.test(raw)) friendly = `${file.name}: server rejected file — over 10 MB.`;
+                            else if (/Maximum of 5/i.test(raw)) friendly = `Server limit reached: max 5 evidence files per trade.`;
+                            else if (/own folder|participant/i.test(raw)) friendly = `${file.name}: not allowed for this trade.`;
+                            errs.push(friendly);
+                          } else {
+                            urls.push(path);
+                          }
+                        }
+                      } finally {
+                        setUploadingEvidence(false);
+                      }
+                      if (errs.length) {
+                        setEvidenceErrors(errs);
+                        setDisputeReviewing(false);
+                        if (urls.length === 0) return;
                       }
                     }
-                  } finally {
-                    setUploadingEvidence(false);
-                  }
-                  if (errs.length) {
-                    setEvidenceErrors(errs);
-                    if (urls.length === 0) return;
-                  }
-                }
-                updateTrade.mutate(
-                  { tradeId: disputeTrade.id, status: 'disputed', disputeReason: disputeReason.trim(), evidenceUrls: urls },
-                  { onSuccess: () => { setDisputeTrade(null); setDisputeFiles([]); setDisputeReason(''); setEvidenceErrors([]); } }
-                );
-              }}
-            >
-              {uploadingEvidence ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Uploading…</> : 'Submit Dispute'}
-            </Button>
+                    updateTrade.mutate(
+                      { tradeId: disputeTrade.id, status: 'disputed', disputeReason: disputeReason.trim(), evidenceUrls: urls },
+                      { onSuccess: () => { setDisputeTrade(null); setDisputeFiles([]); setDisputeReason(''); setEvidenceErrors([]); setDisputeReviewing(false); } }
+                    );
+                  }}
+                >
+                  {uploadingEvidence ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Uploading…</> : 'Confirm & Submit'}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => { setDisputeTrade(null); setDisputeFiles([]); setDisputeReason(''); setEvidenceErrors([]); setDisputeReviewing(false); }}>Cancel</Button>
+                <Button
+                  variant="destructive"
+                  disabled={disputeReason.trim().length < 10 || evidenceErrors.length > 0}
+                  onClick={() => setDisputeReviewing(true)}
+                >
+                  Review &amp; Continue
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -838,9 +892,12 @@ const MyTrades = () => {
                   paths={t.dispute_evidence_urls}
                   tradeId={t.id}
                   allowRemove
-                  onRemoved={() => queryClient.invalidateQueries({ queryKey: ['my-trades'] })}
+                  onRemoved={() => {
+                    queryClient.invalidateQueries({ queryKey: ['my-trades'] });
+                    setEvidenceLogKey((k) => k + 1);
+                  }}
                 />
-                <DisputeEvidenceLog tradeId={t.id} />
+                <DisputeEvidenceLog tradeId={t.id} refreshKey={evidenceLogKey} />
               </div>
             );
           })()}

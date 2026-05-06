@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Paperclip, FileText, Loader2, X } from 'lucide-react';
+import { Paperclip, FileText, Loader2, X, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 interface Props {
@@ -94,7 +94,19 @@ export const DisputeEvidenceList = ({ paths, className, tradeId, allowRemove, on
       onRemoved?.(path);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      setRemoveErrors((prev) => ({ ...prev, [path]: humanizeRemoveError(msg) }));
+      const friendly = humanizeRemoveError(msg);
+      setRemoveErrors((prev) => ({ ...prev, [path]: friendly }));
+      // Best-effort: log the failure to the audit timeline.
+      if (tradeId) {
+        try {
+          await supabase.rpc('log_dispute_evidence_failure', {
+            p_trade_id: tradeId,
+            p_path: path,
+            p_error: friendly,
+          });
+          onRemoved?.(path); // signal parent to refresh log
+        } catch { /* ignore audit failures */ }
+      }
     } finally {
       setRemoving(null);
     }
@@ -152,12 +164,25 @@ export const DisputeEvidenceList = ({ paths, className, tradeId, allowRemove, on
                   )}
                 </div>
                 {err && (
-                  <p
+                  <div
                     role="alert"
-                    className="text-[10px] leading-tight text-destructive bg-destructive/5 border border-destructive/30 rounded px-1.5 py-1"
+                    className="text-[10px] leading-tight text-destructive bg-destructive/5 border border-destructive/30 rounded px-1.5 py-1 space-y-1"
                   >
-                    {err}
-                  </p>
+                    <p>{err}</p>
+                    {canRemove && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemove(it.path)}
+                        disabled={removing === it.path}
+                        className="inline-flex items-center gap-1 text-[10px] font-medium text-destructive hover:underline disabled:opacity-60"
+                      >
+                        {removing === it.path
+                          ? <Loader2 className="w-3 h-3 animate-spin" />
+                          : <RefreshCw className="w-3 h-3" />}
+                        Retry
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             );
