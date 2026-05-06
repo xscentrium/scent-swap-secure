@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sparkles, Settings, MessageCircle, Menu, Moon, Sun, ChevronDown, User, LogOut } from "lucide-react";
+import { Sparkles, Settings, MessageCircle, Menu, Moon, Sun, ChevronDown, User, LogOut, Wallet, Rocket } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -28,6 +28,11 @@ const moreLinks = [
   { to: "/leaderboard", label: "Leaderboard" },
   { to: "/year-in-review", label: "Year in Review" },
   { to: "/influencers", label: "Influencers" },
+];
+
+const authedExtraLinks = [
+  { to: "/onboarding", label: "Onboarding", icon: Rocket },
+  { to: "/payouts", label: "Payouts", icon: Wallet },
 ];
 
 export const Navigation = () => {
