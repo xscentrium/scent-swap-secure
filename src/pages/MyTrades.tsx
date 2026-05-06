@@ -22,6 +22,8 @@ import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { DisputeEvidenceList } from '@/components/DisputeEvidenceList';
 import { DisputeEvidenceLog } from '@/components/DisputeEvidenceLog';
+import { ShippingTracker } from '@/components/ShippingTracker';
+
 
 type Trade = {
   id: string;
@@ -451,6 +453,22 @@ const MyTrades = () => {
                         <div className="mt-3">
                           {renderEscrowPanel(trade)}
                         </div>
+
+                        {trade.status === 'accepted' && trade.initiator?.id && trade.receiver?.id && (
+                          <div className="mt-3 pt-3 border-t border-border">
+                            <ShippingTracker
+                              tradeId={trade.id}
+                              initiatorProfileId={trade.initiator.id}
+                              receiverProfileId={trade.receiver.id}
+                              compact
+                              onBothDelivered={() => {
+                                if (trade.escrow_status !== 'released') {
+                                  updateTrade.mutate({ tradeId: trade.id, status: 'completed' });
+                                }
+                              }}
+                            />
+                          </div>
+                        )}
 
                         {trade.status === 'accepted' && (
                           <div className="flex items-start justify-between gap-3 pt-3 mt-3 border-t border-border flex-wrap">

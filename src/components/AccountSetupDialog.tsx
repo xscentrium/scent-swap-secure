@@ -103,6 +103,10 @@ export const AccountSetupDialog = () => {
       // Close dialog if both are complete
       if (emailVerified) {
         setOpen(false);
+        // Auto-redirect new signups to onboarding wizard
+        if (!(profile as any)?.id_verified) {
+          navigate('/onboarding');
+        }
       }
     }
   };
@@ -208,8 +212,11 @@ export const AccountSetupDialog = () => {
           </div>
 
           {isComplete && (
-            <Button className="w-full" onClick={() => setOpen(false)}>
-              Continue to Platform
+            <Button className="w-full" onClick={() => {
+              setOpen(false);
+              if (!(profile as any)?.id_verified) navigate('/onboarding');
+            }}>
+              {(profile as any)?.id_verified ? 'Continue to Platform' : 'Continue to Onboarding'}
             </Button>
           )}
         </div>

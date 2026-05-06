@@ -15,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Loader2, Users, Sparkles, Info } from 'lucide-react';
+import { ArrowLeft, Loader2, Users, Sparkles, Info, ShieldCheck, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -67,6 +67,38 @@ const CreateListing = () => {
     description: '',
     image_url: '',
   });
+
+  const [batchCode, setBatchCode] = useState('');
+  const [batchVerifying, setBatchVerifying] = useState(false);
+  const [batchResult, setBatchResult] = useState<{
+    plausibility_score: number;
+    verdict: string;
+    year?: number | null;
+    factory?: string | null;
+    explanation?: string;
+  } | null>(null);
+
+  const verifyBatchCode = async () => {
+    if (!batchCode.trim() || !formData.brand) {
+      toast.error('Enter a brand and batch code first');
+      return;
+    }
+    setBatchVerifying(true);
+    setBatchResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-batch-code', {
+        body: { brand: formData.brand, fragrance_name: formData.name, batch_code: batchCode.trim() },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setBatchResult(data);
+      toast.success('Batch code verified');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Batch verification failed');
+    } finally {
+      setBatchVerifying(false);
+    }
+  };
 
   // Fetch fragrance details when name and brand are selected
   const fetchFragranceDetails = async (name: string, brand: string) => {
@@ -233,14 +265,43 @@ const CreateListing = () => {
       return;
     }
 
+    // Authenticity: trade-eligible listings must include a verified batch code before escrow can start
+    const tradeEligible = data.listing_type === 'trade' || data.listing_type === 'both';
+    if (tradeEligible) {
+      if (!batchCode.trim()) {
+        toast.error('Batch code required for trade-eligible listings (used for escrow start).');
+        return;
+      }
+      if (!batchResult) {
+        toast.error('Run AI batch-code verification before submitting.');
+        return;
+      }
+    }
+
     setIsSubmitting(true);
 
-    const { error } = await supabase
+    const { data: inserted, error } = await supabase
       .from('listings')
       .insert({
         ...data,
         owner_id: profile.id,
+      })
+      .select('id')
+      .single();
+
+    if (!error && inserted && batchCode.trim() && batchResult) {
+      await supabase.from('listing_batch_codes').insert({
+        listing_id: inserted.id,
+        owner_profile_id: profile.id,
+        batch_code: batchCode.trim().toUpperCase(),
+        decoded_year: batchResult.year ?? null,
+        decoded_factory: batchResult.factory ?? null,
+        ai_plausibility_score: batchResult.plausibility_score ?? null,
+        ai_verdict: batchResult.verdict ?? null,
+        ai_explanation: batchResult.explanation ?? null,
+        verified_at: new Date().toISOString(),
       });
+    }
 
     setIsSubmitting(false);
 
@@ -447,6 +508,55 @@ const CreateListing = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Batch Code (required for trade-eligible listings) */}
+                {(formData.listing_type === 'trade' || formData.listing_type === 'both') && (
+                  <div className="space-y-2 rounded-lg border border-border/60 bg-muted/30 p-3">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-primary" />
+                      <Label htmlFor="batch_code" className="m-0">Batch Code *</Label>
+                      <Badge variant="secondary" className="text-xs">AI verify</Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Required to start escrow on trades. We'll plausibility-check the code with AI.
+                    </p>
+                    <div className="flex gap-2">
+                      <Input
+                        id="batch_code"
+                        value={batchCode}
+                        onChange={(e) => { setBatchCode(e.target.value); setBatchResult(null); }}
+                        placeholder="e.g. 2L01"
+                        maxLength={32}
+                      />
+                      <Button type="button" variant="outline" onClick={verifyBatchCode} disabled={batchVerifying || !batchCode.trim() || !formData.brand}>
+                        {batchVerifying ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Verify'}
+                      </Button>
+                    </div>
+                    {batchResult && (
+                      <div className={`rounded-md border p-2 text-xs ${
+                        batchResult.verdict === 'plausible'
+                          ? 'border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400'
+                          : batchResult.verdict === 'questionable'
+                            ? 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400'
+                            : 'border-border bg-background text-muted-foreground'
+                      }`}>
+                        <div className="flex items-center gap-1.5 font-medium capitalize">
+                          {batchResult.verdict === 'plausible'
+                            ? <CheckCircle2 className="w-3.5 h-3.5" />
+                            : <AlertTriangle className="w-3.5 h-3.5" />}
+                          {batchResult.verdict} · {batchResult.plausibility_score}/100
+                        </div>
+                        {batchResult.explanation && <p className="mt-1">{batchResult.explanation}</p>}
+                        {(batchResult.year || batchResult.factory) && (
+                          <p className="mt-1">
+                            {batchResult.year && <>Year: {batchResult.year} </>}
+                            {batchResult.factory && <>· Factory: {batchResult.factory}</>}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Description */}
                 <div className="space-y-2">
