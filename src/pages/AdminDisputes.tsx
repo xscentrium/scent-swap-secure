@@ -192,16 +192,19 @@ const AdminDisputes = () => {
 
                     <DisputeEvidenceList paths={t.dispute_evidence_urls} />
                     <DisputeEvidenceLog tradeId={t.id} showFailureFilter />
-                    <div className="flex gap-2 pt-2">
+                    <EscrowEventsList tradeId={t.id} />
+                    <div className="flex gap-2 pt-2 flex-wrap">
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to={`/admin/audit/${t.id}`}><FileSearch className="w-4 h-4 mr-1" /> Open audit</Link>
+                      </Button>
+                      <div className="flex-1" />
                       <Button
                         variant="outline"
-                        className="flex-1"
                         onClick={() => setConfirmAction({ trade: t, action: 'refund' })}
                       >
                         <XCircle className="w-4 h-4 mr-2" /> Refund Both
                       </Button>
                       <Button
-                        className="flex-1"
                         onClick={() => setConfirmAction({ trade: t, action: 'release' })}
                       >
                         <CheckCircle className="w-4 h-4 mr-2" /> Release Escrow
