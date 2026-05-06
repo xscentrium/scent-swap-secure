@@ -39,6 +39,8 @@ import SearchAnalytics from "./pages/SearchAnalytics";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Contact from "./pages/Contact";
+import Onboarding from "./pages/Onboarding";
+import SellerPayouts from "./pages/SellerPayouts";
 
 const queryClient = new QueryClient();
 
