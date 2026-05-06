@@ -15,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Loader2, Users, Sparkles, Info } from 'lucide-react';
+import { ArrowLeft, Loader2, Users, Sparkles, Info, ShieldCheck, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -67,6 +67,38 @@ const CreateListing = () => {
     description: '',
     image_url: '',
   });
+
+  const [batchCode, setBatchCode] = useState('');
+  const [batchVerifying, setBatchVerifying] = useState(false);
+  const [batchResult, setBatchResult] = useState<{
+    plausibility_score: number;
+    verdict: string;
+    year?: number | null;
+    factory?: string | null;
+    explanation?: string;
+  } | null>(null);
+
+  const verifyBatchCode = async () => {
+    if (!batchCode.trim() || !formData.brand) {
+      toast.error('Enter a brand and batch code first');
+      return;
+    }
+    setBatchVerifying(true);
+    setBatchResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-batch-code', {
+        body: { brand: formData.brand, fragrance_name: formData.name, batch_code: batchCode.trim() },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setBatchResult(data);
+      toast.success('Batch code verified');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Batch verification failed');
+    } finally {
+      setBatchVerifying(false);
+    }
+  };
 
   // Fetch fragrance details when name and brand are selected
   const fetchFragranceDetails = async (name: string, brand: string) => {
