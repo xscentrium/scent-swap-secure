@@ -184,6 +184,11 @@ export const ShippingTracker = ({ tradeId, initiatorProfileId, receiverProfileId
 
   useEffect(() => { fetchShipments(); }, [tradeId]);
 
+  useEffect(() => {
+    if (onBothDelivered && bothDelivered(shipments)) onBothDelivered();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shipments]);
+
   const myProfileId = profile?.id;
   const isInitiator = myProfileId === initiatorProfileId;
   const myShipment = shipments.find((s) => s.sender_profile_id === myProfileId) ?? null;
