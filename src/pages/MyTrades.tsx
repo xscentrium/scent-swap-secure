@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 import { DisputeEvidenceList } from '@/components/DisputeEvidenceList';
 import { DisputeEvidenceLog } from '@/components/DisputeEvidenceLog';
 import { ShippingTracker } from '@/components/ShippingTracker';
+import { EscrowEventsList } from '@/components/EscrowEventsList';
 
 
 type Trade = {
@@ -43,6 +44,8 @@ type Trade = {
   refunded_at: string | null;
   initiator_confirmed: boolean;
   receiver_confirmed: boolean;
+  initiator_received: boolean;
+  receiver_received: boolean;
   created_at: string;
   updated_at: string;
   initiator_listing: { id: string; name: string; brand: string; size: string; image_url: string | null; } | null;
