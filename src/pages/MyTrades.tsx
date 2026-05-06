@@ -63,6 +63,7 @@ const MyTrades = () => {
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
   const [timelineTrade, setTimelineTrade] = useState<Trade | null>(null);
   const [evidenceErrors, setEvidenceErrors] = useState<string[]>([]);
+  const [disputeReviewing, setDisputeReviewing] = useState(false);
 
   const escrowBadge = (status: string | null) => {
     switch (status) {
