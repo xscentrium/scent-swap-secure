@@ -212,8 +212,11 @@ export const AccountSetupDialog = () => {
           </div>
 
           {isComplete && (
-            <Button className="w-full" onClick={() => setOpen(false)}>
-              Continue to Platform
+            <Button className="w-full" onClick={() => {
+              setOpen(false);
+              if (!(profile as any)?.id_verified) navigate('/onboarding');
+            }}>
+              {(profile as any)?.id_verified ? 'Continue to Platform' : 'Continue to Onboarding'}
             </Button>
           )}
         </div>
