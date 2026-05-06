@@ -587,17 +587,45 @@ const MyTrades = () => {
         </div>
       </main>
 
-      <Dialog open={!!disputeTrade} onOpenChange={(open) => !open && setDisputeTrade(null)}>
+      <Dialog open={!!disputeTrade} onOpenChange={(open) => { if (!open) { setDisputeTrade(null); setDisputeReviewing(false); } }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-destructive" />
-              Open a Dispute
+              {disputeReviewing ? 'Review & Confirm Dispute' : 'Open a Dispute'}
             </DialogTitle>
             <DialogDescription>
-              This will mark the trade as disputed and freeze both escrow holds until resolved by support. Please describe the issue clearly.
+              {disputeReviewing
+                ? 'Double-check your reason and attached evidence below. Once submitted, the trade will be frozen until support resolves it.'
+                : 'This will mark the trade as disputed and freeze both escrow holds until resolved by support. Please describe the issue clearly.'}
             </DialogDescription>
           </DialogHeader>
+          {disputeReviewing ? (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Reason</p>
+                <p className="text-sm whitespace-pre-wrap">{disputeReason.trim()}</p>
+              </div>
+              <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                  Evidence ({disputeFiles.length})
+                </p>
+                {disputeFiles.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No files attached.</p>
+                ) : (
+                  <ul className="space-y-1 text-xs">
+                    {disputeFiles.map((f, i) => (
+                      <li key={`${f.name}-${i}`} className="flex items-center justify-between gap-2">
+                        <span className="truncate">{f.name}</span>
+                        <span className="text-muted-foreground shrink-0">{(f.size / 1024).toFixed(0)} KB</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          ) : (
+          <>
           <div className="space-y-2">
             <Label htmlFor="dispute-reason">Reason</Label>
             <Textarea
