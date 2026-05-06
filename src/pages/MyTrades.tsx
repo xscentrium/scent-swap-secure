@@ -23,7 +23,7 @@ import { toast } from 'sonner';
 import { DisputeEvidenceList } from '@/components/DisputeEvidenceList';
 import { DisputeEvidenceLog } from '@/components/DisputeEvidenceLog';
 import { ShippingTracker } from '@/components/ShippingTracker';
-import { useEffect } from 'react';
+
 
 type Trade = {
   id: string;
