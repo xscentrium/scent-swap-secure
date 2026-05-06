@@ -265,14 +265,43 @@ const CreateListing = () => {
       return;
     }
 
+    // Authenticity: trade-eligible listings must include a verified batch code before escrow can start
+    const tradeEligible = data.listing_type === 'trade' || data.listing_type === 'both';
+    if (tradeEligible) {
+      if (!batchCode.trim()) {
+        toast.error('Batch code required for trade-eligible listings (used for escrow start).');
+        return;
+      }
+      if (!batchResult) {
+        toast.error('Run AI batch-code verification before submitting.');
+        return;
+      }
+    }
+
     setIsSubmitting(true);
 
-    const { error } = await supabase
+    const { data: inserted, error } = await supabase
       .from('listings')
       .insert({
         ...data,
         owner_id: profile.id,
+      })
+      .select('id')
+      .single();
+
+    if (!error && inserted && batchCode.trim() && batchResult) {
+      await supabase.from('listing_batch_codes').insert({
+        listing_id: inserted.id,
+        owner_profile_id: profile.id,
+        batch_code: batchCode.trim().toUpperCase(),
+        decoded_year: batchResult.year ?? null,
+        decoded_factory: batchResult.factory ?? null,
+        ai_plausibility_score: batchResult.plausibility_score ?? null,
+        ai_verdict: batchResult.verdict ?? null,
+        ai_explanation: batchResult.explanation ?? null,
+        verified_at: new Date().toISOString(),
       });
+    }
 
     setIsSubmitting(false);
 
