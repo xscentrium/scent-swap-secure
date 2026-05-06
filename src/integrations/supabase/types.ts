@@ -297,6 +297,36 @@ export type Database = {
           },
         ]
       }
+      dispute_evidence_log: {
+        Row: {
+          action: string
+          actor_profile_id: string | null
+          actor_user_id: string | null
+          created_at: string
+          id: string
+          path: string
+          trade_id: string
+        }
+        Insert: {
+          action: string
+          actor_profile_id?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          path: string
+          trade_id: string
+        }
+        Update: {
+          action?: string
+          actor_profile_id?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          path?: string
+          trade_id?: string
+        }
+        Relationships: []
+      }
       favorite_fragrances: {
         Row: {
           created_at: string
