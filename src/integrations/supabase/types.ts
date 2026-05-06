@@ -303,6 +303,7 @@ export type Database = {
           actor_profile_id: string | null
           actor_user_id: string | null
           created_at: string
+          error_message: string | null
           id: string
           path: string
           trade_id: string
@@ -312,6 +313,7 @@ export type Database = {
           actor_profile_id?: string | null
           actor_user_id?: string | null
           created_at?: string
+          error_message?: string | null
           id?: string
           path: string
           trade_id: string
@@ -321,6 +323,7 @@ export type Database = {
           actor_profile_id?: string | null
           actor_user_id?: string | null
           created_at?: string
+          error_message?: string | null
           id?: string
           path?: string
           trade_id?: string
@@ -1912,6 +1915,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      log_dispute_evidence_failure: {
+        Args: { p_error: string; p_path: string; p_trade_id: string }
+        Returns: undefined
       }
       recalculate_trust_score: {
         Args: { p_profile_id: string }
