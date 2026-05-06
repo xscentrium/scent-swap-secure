@@ -891,9 +891,12 @@ const MyTrades = () => {
                   paths={t.dispute_evidence_urls}
                   tradeId={t.id}
                   allowRemove
-                  onRemoved={() => queryClient.invalidateQueries({ queryKey: ['my-trades'] })}
+                  onRemoved={() => {
+                    queryClient.invalidateQueries({ queryKey: ['my-trades'] });
+                    setEvidenceLogKey((k) => k + 1);
+                  }}
                 />
-                <DisputeEvidenceLog tradeId={t.id} />
+                <DisputeEvidenceLog tradeId={t.id} refreshKey={evidenceLogKey} />
               </div>
             );
           })()}
