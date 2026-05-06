@@ -190,7 +190,7 @@ const AdminDisputes = () => {
                     </div>
 
                     <DisputeEvidenceList paths={t.dispute_evidence_urls} />
-                    <DisputeEvidenceLog tradeId={t.id} />
+                    <DisputeEvidenceLog tradeId={t.id} showFailureFilter />
                     <div className="flex gap-2 pt-2">
                       <Button
                         variant="outline"

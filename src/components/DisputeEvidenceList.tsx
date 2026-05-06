@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Paperclip, FileText, Loader2, X, RefreshCw } from 'lucide-react';
+import { Paperclip, FileText, Loader2, X, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface Props {
   paths: string[] | null | undefined;
   className?: string;
-  /** Optional trade id — required to persist removal back to the trade row. */
   tradeId?: string;
-  /** When true, show a remove button on items the current user owns. */
   allowRemove?: boolean;
-  /** Called after a successful removal so the parent can refresh data. */
   onRemoved?: (path: string) => void;
 }
 
@@ -18,15 +19,10 @@ type Resolved = { path: string; url: string; isImage: boolean; ownedByMe: boolea
 
 const humanizeRemoveError = (raw: string): string => {
   const m = raw || '';
-  if (/row-level security|permission|not authorized|policy/i.test(m)) {
+  if (/row-level security|permission|not authorized|policy|participants/i.test(m))
     return "You don't have permission to remove this file.";
-  }
-  if (/not found|no such/i.test(m)) {
-    return 'File no longer exists on the server.';
-  }
-  if (/network|fetch|failed to fetch/i.test(m)) {
-    return 'Network error — check your connection and try again.';
-  }
+  if (/not found|no such/i.test(m)) return 'File no longer exists on the server.';
+  if (/network|fetch|failed to fetch/i.test(m)) return 'Network error — check your connection and try again.';
   return m || 'Server rejected the deletion.';
 };
 
@@ -36,6 +32,8 @@ export const DisputeEvidenceList = ({ paths, className, tradeId, allowRemove, on
   const [loading, setLoading] = useState(false);
   const [removing, setRemoving] = useState<string | null>(null);
   const [removeErrors, setRemoveErrors] = useState<Record<string, string>>({});
+  const [confirmPath, setConfirmPath] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (!paths || paths.length === 0) {
@@ -65,9 +63,9 @@ export const DisputeEvidenceList = ({ paths, className, tradeId, allowRemove, on
       }
     })();
     return () => { cancelled = true; };
-  }, [paths?.join('|'), user?.id]);
+  }, [paths?.join('|'), user?.id, reloadKey]);
 
-  const handleRemove = async (path: string) => {
+  const performRemove = async (path: string) => {
     setRemoveErrors((prev) => {
       const next = { ...prev };
       delete next[path];
@@ -80,7 +78,6 @@ export const DisputeEvidenceList = ({ paths, className, tradeId, allowRemove, on
         .remove([path]);
       if (storageError) throw storageError;
 
-      // Persist the change back to the trade row so it disappears from views.
       if (tradeId) {
         const remaining = (paths ?? []).filter((p) => p !== path);
         const { error: updateError } = await supabase
@@ -90,13 +87,19 @@ export const DisputeEvidenceList = ({ paths, className, tradeId, allowRemove, on
         if (updateError) throw updateError;
       }
 
+      // Optimistically drop the item, clear its error, and trigger a refetch.
       setItems((prev) => prev.filter((i) => i.path !== path));
+      setRemoveErrors((prev) => {
+        const next = { ...prev };
+        delete next[path];
+        return next;
+      });
+      setReloadKey((k) => k + 1);
       onRemoved?.(path);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       const friendly = humanizeRemoveError(msg);
       setRemoveErrors((prev) => ({ ...prev, [path]: friendly }));
-      // Best-effort: log the failure to the audit timeline.
       if (tradeId) {
         try {
           await supabase.rpc('log_dispute_evidence_failure', {
@@ -105,7 +108,7 @@ export const DisputeEvidenceList = ({ paths, className, tradeId, allowRemove, on
             p_error: friendly,
           });
           onRemoved?.(path); // signal parent to refresh log
-        } catch { /* ignore audit failures */ }
+        } catch { /* ignore audit failure */ }
       }
     } finally {
       setRemoving(null);
@@ -113,6 +116,8 @@ export const DisputeEvidenceList = ({ paths, className, tradeId, allowRemove, on
   };
 
   if (!paths || paths.length === 0) return null;
+
+  const confirmFilename = confirmPath?.split('/').pop() ?? '';
 
   return (
     <div className={className}>
@@ -133,8 +138,8 @@ export const DisputeEvidenceList = ({ paths, className, tradeId, allowRemove, on
             const err = removeErrors[it.path];
             const canRemove = allowRemove && it.ownedByMe;
             return (
-              <div key={it.path} className="space-y-1">
-                <div className="relative group rounded-md border border-border/60 bg-muted/40 overflow-hidden">
+              <div key={it.path} className="space-y-1 animate-fade-in">
+                <div className="relative group rounded-md border border-border/60 bg-muted/40 overflow-hidden transition hover:border-primary/50">
                   <a href={it.url} target="_blank" rel="noreferrer" title={filename} className="block hover:opacity-90">
                     {it.isImage ? (
                       <img src={it.url} alt={filename} className="w-full h-20 object-cover" />
@@ -150,29 +155,25 @@ export const DisputeEvidenceList = ({ paths, className, tradeId, allowRemove, on
                   {canRemove && (
                     <button
                       type="button"
-                      onClick={() => handleRemove(it.path)}
+                      onClick={() => setConfirmPath(it.path)}
                       disabled={removing === it.path}
                       aria-label={`Remove ${filename}`}
                       className="absolute top-1 right-1 p-1 rounded-full bg-background/80 border border-border opacity-0 group-hover:opacity-100 focus:opacity-100 transition hover:bg-destructive hover:text-destructive-foreground disabled:opacity-100"
                     >
-                      {removing === it.path ? (
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                      ) : (
-                        <X className="w-3 h-3" />
-                      )}
+                      {removing === it.path ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
                     </button>
                   )}
                 </div>
                 {err && (
-                  <div
-                    role="alert"
-                    className="text-[10px] leading-tight text-destructive bg-destructive/5 border border-destructive/30 rounded px-1.5 py-1 space-y-1"
-                  >
-                    <p>{err}</p>
+                  <div role="alert" className="text-[10px] leading-tight text-destructive bg-destructive/5 border border-destructive/30 rounded px-1.5 py-1 space-y-1 animate-fade-in">
+                    <p className="flex items-start gap-1">
+                      <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0" />
+                      <span className="break-words">{err}</span>
+                    </p>
                     {canRemove && (
                       <button
                         type="button"
-                        onClick={() => handleRemove(it.path)}
+                        onClick={() => performRemove(it.path)}
                         disabled={removing === it.path}
                         className="inline-flex items-center gap-1 text-[10px] font-medium text-destructive hover:underline disabled:opacity-60"
                       >
@@ -189,6 +190,34 @@ export const DisputeEvidenceList = ({ paths, className, tradeId, allowRemove, on
           })}
         </div>
       )}
+
+      <AlertDialog open={!!confirmPath} onOpenChange={(o) => !o && setConfirmPath(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove this evidence file?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <span className="font-medium text-foreground">{confirmFilename}</span> will be permanently deleted from this dispute.
+              The other party and admins will see a removal entry in the activity log.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(e) => {
+                e.preventDefault();
+                if (confirmPath) {
+                  const p = confirmPath;
+                  setConfirmPath(null);
+                  performRemove(p);
+                }
+              }}
+            >
+              Remove file
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
