@@ -103,6 +103,10 @@ export const AccountSetupDialog = () => {
       // Close dialog if both are complete
       if (emailVerified) {
         setOpen(false);
+        // Auto-redirect new signups to onboarding wizard
+        if (!(profile as any)?.id_verified) {
+          navigate('/onboarding');
+        }
       }
     }
   };
