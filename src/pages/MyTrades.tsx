@@ -919,6 +919,7 @@ const MyTrades = () => {
                     <p className="text-sm whitespace-pre-wrap">{t.dispute_reason}</p>
                   </div>
                 )}
+                <EscrowEventsList tradeId={t.id} />
                 <DisputeEvidenceList
                   paths={t.dispute_evidence_urls}
                   tradeId={t.id}
