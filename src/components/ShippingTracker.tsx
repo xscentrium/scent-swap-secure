@@ -31,6 +31,8 @@ interface Props {
   receiverProfileId: string;
   /** When true, render compact (e.g. inside a timeline). */
   compact?: boolean;
+  /** Fired once when both shipments reach 'delivered'. */
+  onBothDelivered?: () => void;
 }
 
 const CARRIERS: Record<string, (n: string) => string> = {
@@ -168,7 +170,7 @@ const ShipmentRow = ({ s, mine, onUpdate }: { s: Shipment | null; mine: boolean;
   );
 };
 
-export const ShippingTracker = ({ tradeId, initiatorProfileId, receiverProfileId, compact }: Props) => {
+export const ShippingTracker = ({ tradeId, initiatorProfileId, receiverProfileId, compact, onBothDelivered }: Props) => {
   const { profile } = useAuth();
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [loading, setLoading] = useState(true);
