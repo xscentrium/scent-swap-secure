@@ -64,6 +64,7 @@ const MyTrades = () => {
   const [timelineTrade, setTimelineTrade] = useState<Trade | null>(null);
   const [evidenceErrors, setEvidenceErrors] = useState<string[]>([]);
   const [disputeReviewing, setDisputeReviewing] = useState(false);
+  const [evidenceLogKey, setEvidenceLogKey] = useState(0);
 
   const escrowBadge = (status: string | null) => {
     switch (status) {
