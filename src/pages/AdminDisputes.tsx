@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { DisputeEvidenceList } from '@/components/DisputeEvidenceList';
 import { DisputeEvidenceLog } from '@/components/DisputeEvidenceLog';
+import { EscrowEventsList } from '@/components/EscrowEventsList';
 
 type DisputedTrade = {
   id: string;
