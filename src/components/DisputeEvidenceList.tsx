@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Paperclip, FileText, Loader2, X } from 'lucide-react';
+import { Paperclip, FileText, Loader2, X, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 interface Props {
