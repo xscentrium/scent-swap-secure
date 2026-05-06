@@ -22,11 +22,12 @@ type LogRow = {
   error_message: string | null;
 };
 
-export const DisputeEvidenceLog = ({ tradeId, className, refreshKey = 0, pageSize = 5 }: Props) => {
+export const DisputeEvidenceLog = ({ tradeId, className, refreshKey = 0, pageSize = 5, showFailureFilter = false }: Props) => {
   const [rows, setRows] = useState<LogRow[]>([]);
   const [actors, setActors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [visible, setVisible] = useState(pageSize);
+  const [failuresOnly, setFailuresOnly] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
