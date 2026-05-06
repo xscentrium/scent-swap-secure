@@ -9,6 +9,8 @@ interface Props {
   refreshKey?: number;
   /** Initial number of entries to show before "Show more". */
   pageSize?: number;
+  /** Show a toggle to filter to failed-removal entries only. */
+  showFailureFilter?: boolean;
 }
 
 type LogRow = {
