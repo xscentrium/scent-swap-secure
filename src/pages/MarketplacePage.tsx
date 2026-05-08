@@ -61,9 +61,12 @@ const MarketplacePage = () => {
         query = query.eq('listing_type', listingTypeFilter as 'sale' | 'trade' | 'both');
       }
 
-      if (conditionFilter !== 'all') {
-        query = query.eq('condition', conditionFilter as 'new' | 'excellent' | 'good' | 'fair');
+      if (conditionFilter.length > 0) {
+        query = query.in('condition', conditionFilter as ('new' | 'excellent' | 'good' | 'fair')[]);
       }
+
+      if (priceRange[0] > 0) query = query.gte('price', priceRange[0]);
+      if (priceRange[1] < 1000) query = query.lte('price', priceRange[1]);
 
       if (sortBy === 'newest') {
         query = query.order('created_at', { ascending: false });
@@ -79,6 +82,32 @@ const MarketplacePage = () => {
       return data as Listing[];
     },
   });
+
+  const toggleCondition = (c: string) => {
+    setConditionFilter((prev) => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]);
+  };
+
+  const activeFilterCount = (listingTypeFilter !== 'all' ? 1 : 0) + conditionFilter.length +
+    (priceRange[0] > 0 || priceRange[1] < 1000 ? 1 : 0);
+
+  const clearAll = () => {
+    setListingTypeFilter('all');
+    setConditionFilter([]);
+    setPriceRange([0, 1000]);
+  };
+
+  const typeChips = [
+    { value: 'all', label: 'All' },
+    { value: 'sale', label: 'For Sale' },
+    { value: 'trade', label: 'For Trade' },
+    { value: 'both', label: 'Sale & Trade' },
+  ];
+  const conditionChips = [
+    { value: 'new', label: 'New' },
+    { value: 'excellent', label: 'Excellent' },
+    { value: 'good', label: 'Good' },
+    { value: 'fair', label: 'Fair' },
+  ];
 
   const getConditionColor = (condition: string) => {
     switch (condition) {
