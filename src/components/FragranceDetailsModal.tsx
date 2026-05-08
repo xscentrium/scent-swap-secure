@@ -199,6 +199,14 @@ export const FragranceDetailsModal = ({
                 </div>
               )}
 
+              {catalogId && (
+                <div className="space-y-4">
+                  <Separator />
+                  <AccordsBar fragranceId={catalogId} />
+                  <RatingBars fragranceId={catalogId} />
+                </div>
+              )}
+
               {/* Notes Pyramid */}
               <div className="grid grid-cols-3 gap-4">
                 {details.topNotes && details.topNotes.length > 0 && (
