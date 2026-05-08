@@ -108,6 +108,7 @@ export const FeaturedListings = () => {
                     <ListingImage
                       url={listing.image_url}
                       alt={`${listing.brand} ${listing.name}`}
+                      verification={Array.isArray(listing.image_verification) ? listing.image_verification[0] : listing.image_verification}
                       className="group-hover:scale-110 transition-transform duration-500"
                     />
                     <div className="absolute top-3 left-3" onClick={(e) => e.stopPropagation()}>
