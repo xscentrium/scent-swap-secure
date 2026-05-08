@@ -65,7 +65,7 @@ export default {
         "soft-white": "hsl(228 33% 97%)", // Soft White #F5F6FA
       },
       fontFamily: {
-        serif: ['Playfair Display', 'serif'],
+        serif: ['Cormorant Garamond', 'serif'],
         sans: ['Inter', 'sans-serif'],
       },
       borderRadius: {
