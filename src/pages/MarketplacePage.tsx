@@ -234,57 +234,81 @@ const MarketplacePage = () => {
 
           <div className="grid lg:grid-cols-[260px_1fr] gap-8">
             {/* Sidebar Filters */}
-            <aside className={cn(
-              "space-y-6 rounded-xl border border-border/50 bg-card/40 backdrop-blur-sm p-5 h-fit lg:sticky lg:top-24",
-              !mobileFiltersOpen && "hidden lg:block"
-            )}>
+            <aside
+              aria-label="Marketplace filters"
+              className={cn(
+                "space-y-6 rounded-xl border border-border/50 bg-card/40 backdrop-blur-sm p-5 h-fit lg:sticky lg:top-24",
+                !mobileFiltersOpen && "hidden lg:block"
+              )}
+            >
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-medium tracking-wide uppercase text-muted-foreground">Filters</h2>
                 {activeFilterCount > 0 && (
                   <button
+                    type="button"
                     onClick={clearAll}
-                    className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+                    className="text-xs text-primary hover:underline inline-flex items-center gap-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   >
-                    <X className="w-3 h-3" /> Clear
+                    <X className="w-3 h-3" aria-hidden="true" /> Clear all filters
                   </button>
                 )}
               </div>
 
-              {/* Listing Type chips */}
+              {/* Listing Type chips (radiogroup) */}
               <div className="space-y-2.5">
-                <p className="text-xs font-medium text-foreground/80">Listing type</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {typeChips.map((c) => (
-                    <button
-                      key={c.value}
-                      onClick={() => setListingTypeFilter(c.value)}
-                      className={cn(
-                        "px-2.5 py-1 rounded-full text-xs border transition-all",
-                        listingTypeFilter === c.value
-                          ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                          : "bg-transparent border-border/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
-                      )}
-                    >
-                      {c.label}
-                    </button>
-                  ))}
+                <p id="lbl-type" className="text-xs font-medium text-foreground/80">Listing type</p>
+                <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-labelledby="lbl-type">
+                  {typeChips.map((c) => {
+                    const checked = listingTypeFilter === c.value;
+                    return (
+                      <button
+                        type="button"
+                        key={c.value}
+                        role="radio"
+                        aria-checked={checked}
+                        tabIndex={checked ? 0 : -1}
+                        onClick={() => setListingTypeFilter(c.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                            e.preventDefault();
+                            const i = typeChips.findIndex((x) => x.value === listingTypeFilter);
+                            const next = e.key === 'ArrowRight'
+                              ? typeChips[(i + 1) % typeChips.length]
+                              : typeChips[(i - 1 + typeChips.length) % typeChips.length];
+                            setListingTypeFilter(next.value);
+                          }
+                        }}
+                        className={cn(
+                          "px-2.5 py-1 rounded-full text-xs border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                          checked
+                            ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                            : "bg-transparent border-border/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                        )}
+                      >
+                        {c.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               <Separator className="bg-border/40" />
 
-              {/* Condition chips (multi) */}
+              {/* Condition chips (multi-select group) */}
               <div className="space-y-2.5">
-                <p className="text-xs font-medium text-foreground/80">Condition</p>
-                <div className="flex flex-wrap gap-1.5">
+                <p id="lbl-cond" className="text-xs font-medium text-foreground/80">Condition</p>
+                <div className="flex flex-wrap gap-1.5" role="group" aria-labelledby="lbl-cond">
                   {conditionChips.map((c) => {
                     const active = conditionFilter.includes(c.value);
                     return (
                       <button
+                        type="button"
                         key={c.value}
+                        aria-pressed={active}
+                        aria-label={`Condition: ${c.label}${active ? ' (selected)' : ''}`}
                         onClick={() => toggleCondition(c.value)}
                         className={cn(
-                          "px-2.5 py-1 rounded-full text-xs border transition-all",
+                          "px-2.5 py-1 rounded-full text-xs border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                           active
                             ? "bg-primary/10 text-primary border-primary/40"
                             : "bg-transparent border-border/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
@@ -302,31 +326,44 @@ const MarketplacePage = () => {
               {/* Price slider */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium text-foreground/80">Price range</p>
-                  <span className="text-xs tabular-nums text-muted-foreground">
-                    ${priceRange[0]} – ${priceRange[1]}{priceRange[1] === 1000 ? '+' : ''}
+                  <p id="lbl-price" className="text-xs font-medium text-foreground/80">Price range</p>
+                  <span className="text-xs tabular-nums text-muted-foreground" aria-live="polite">
+                    ${priceRange[0]} – ${priceRange[1]}{priceRange[1] === PRICE_MAX ? '+' : ''}
                   </span>
                 </div>
                 <Slider
                   value={priceRange}
-                  onValueChange={(v) => setPriceRange([v[0], v[1]] as [number, number])}
-                  min={0}
-                  max={1000}
+                  onValueChange={(v) => setPriceRange([clampPrice(v[0]), clampPrice(v[1])] as [number, number])}
+                  min={PRICE_MIN}
+                  max={PRICE_MAX}
                   step={10}
                   className="py-1"
+                  aria-label="Price range, in dollars"
                 />
                 <div className="flex items-center gap-2">
                   <Input
                     type="number"
-                    value={priceRange[0]}
-                    onChange={(e) => setPriceRange([Math.max(0, Number(e.target.value) || 0), priceRange[1]])}
+                    inputMode="numeric"
+                    min={PRICE_MIN}
+                    max={PRICE_MAX}
+                    value={priceInput[0]}
+                    onChange={(e) => setPriceInput([e.target.value, priceInput[1]])}
+                    onBlur={() => commitPriceInput(0)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commitPriceInput(0); } }}
+                    aria-label="Minimum price"
                     className="h-8 text-xs"
                   />
-                  <span className="text-muted-foreground text-xs">to</span>
+                  <span className="text-muted-foreground text-xs" aria-hidden="true">to</span>
                   <Input
                     type="number"
-                    value={priceRange[1]}
-                    onChange={(e) => setPriceRange([priceRange[0], Math.min(1000, Number(e.target.value) || 0)])}
+                    inputMode="numeric"
+                    min={PRICE_MIN}
+                    max={PRICE_MAX}
+                    value={priceInput[1]}
+                    onChange={(e) => setPriceInput([priceInput[0], e.target.value])}
+                    onBlur={() => commitPriceInput(1)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commitPriceInput(1); } }}
+                    aria-label="Maximum price"
                     className="h-8 text-xs"
                   />
                 </div>
