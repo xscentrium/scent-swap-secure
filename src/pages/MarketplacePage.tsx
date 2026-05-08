@@ -341,6 +341,92 @@ const MarketplacePage = () => {
             </div>
           </motion.section>
 
+          {/* FEATURED STRIP — verified picks */}
+          {featuredListings.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="mb-12"
+            >
+              <div className="flex items-end justify-between mb-5">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground mb-1">
+                    Editor's edit
+                  </p>
+                  <h2 className="font-serif text-2xl md:text-3xl flex items-center gap-3">
+                    <Flame className="w-5 h-5 text-[hsl(var(--gold))]" />
+                    Verified-seller picks
+                  </h2>
+                </div>
+              </div>
+              <div className="flex gap-4 overflow-x-auto pb-3 -mx-4 px-4 snap-x">
+                {featuredListings.map((l) => (
+                  <Link
+                    key={l.id}
+                    to={`/marketplace?listing=${l.id}`}
+                    className="group relative shrink-0 w-[240px] snap-start border border-border bg-card/70 backdrop-blur-sm hover:border-foreground/40 transition-all"
+                  >
+                    <div className="aspect-[4/5] bg-gradient-to-b from-muted/40 to-muted/10 overflow-hidden">
+                      <ListingImage
+                        url={l.image_url}
+                        alt={`${l.brand} ${l.name}`}
+                        verification={Array.isArray(l.image_verification) ? l.image_verification[0] : l.image_verification}
+                        className="object-contain p-5 transition-transform duration-700 group-hover:scale-105"
+                      />
+                    </div>
+                    <div className="p-4">
+                      <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground truncate">{l.brand}</p>
+                      <p className="font-serif text-base truncate mt-1">{l.name}</p>
+                      <p className="font-serif text-lg mt-1">{l.price ? `$${l.price}` : `Est. $${l.estimated_value ?? '—'}`}</p>
+                    </div>
+                    <span className="absolute top-3 left-3 text-[9px] uppercase tracking-[0.22em] px-2 py-0.5 bg-background/80 backdrop-blur border border-[hsl(var(--gold)/0.4)] text-[hsl(var(--gold))] flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3" /> Verified
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </motion.section>
+          )}
+
+          {/* BRAND RAIL */}
+          {topBrands.length > 0 && (
+            <div className="mb-10">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground">
+                  Shop by house
+                </p>
+                {brandFilter.length > 0 && (
+                  <button onClick={() => setBrandFilter([])} className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+                    <X className="w-3 h-3" /> Clear
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {topBrands.map(([brand, count]) => {
+                  const active = brandFilter.includes(brand);
+                  return (
+                    <button
+                      key={brand}
+                      onClick={() => toggleBrand(brand)}
+                      className={cn(
+                        "inline-flex items-center gap-2 px-4 py-2 border transition-all",
+                        active
+                          ? "bg-foreground text-background border-foreground"
+                          : "bg-card/50 border-border hover:border-foreground/40"
+                      )}
+                    >
+                      <span className="font-serif text-sm">{brand}</span>
+                      <span className={cn("text-[10px] tabular-nums", active ? "opacity-70" : "text-muted-foreground")}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Toolbar */}
           <div className="flex flex-col sm:flex-row gap-3 mb-4">
             <div className="relative flex-1">
