@@ -402,23 +402,12 @@ const MarketplacePage = () => {
                   className="group relative overflow-hidden rounded-2xl border border-border/40 bg-card/80 hover:border-primary/30 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-22px_hsl(35_38%_48%/0.35)] transition-all duration-500"
                 >
                   <div className="aspect-[4/5] bg-gradient-to-b from-muted/40 to-muted/10 relative overflow-hidden">
-                    {(verification.status === 'verified' || verification.status === 'uploaded') && listing.image_url ? (
-                      <img
-                        src={listing.image_url}
-                        alt={`${listing.brand} ${listing.name}`}
-                        loading="lazy"
-                        className="w-full h-full object-contain p-6 transition-transform duration-700 ease-out group-hover:scale-[1.04]"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-muted-foreground p-6 text-center">
-                        <span className="text-xs tracking-widest uppercase">
-                          {verification.status === 'none' ? 'Photo pending' : 'Photo not verified'}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground/70">
-                          Awaiting verified product image
-                        </span>
-                      </div>
-                    )}
+                    <ListingImage
+                      url={listing.image_url}
+                      alt={`${listing.brand} ${listing.name}`}
+                      verification={dbVerification}
+                      className="object-contain p-6 transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                    />
 
                     {/* Top-left: favorite + verified badge */}
                     <div className="absolute top-3 left-3 flex flex-col gap-2">
