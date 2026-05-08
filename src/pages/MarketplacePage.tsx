@@ -76,8 +76,9 @@ const MarketplacePage = () => {
     if (sortBy !== 'newest') params.set('sort', sortBy);
     if (debouncedPriceRange[0] > PRICE_MIN) params.set('min', String(debouncedPriceRange[0]));
     if (debouncedPriceRange[1] < PRICE_MAX) params.set('max', String(debouncedPriceRange[1]));
+    if (!hideUnverified) params.set('verified', '0');
     setSearchParams(params, { replace: true });
-  }, [debouncedSearch, listingTypeFilter, conditionFilter, sortBy, debouncedPriceRange, setSearchParams]);
+  }, [debouncedSearch, listingTypeFilter, conditionFilter, sortBy, debouncedPriceRange, hideUnverified, setSearchParams]);
 
   const { data: listings, isLoading } = useQuery({
     queryKey: ['listings', debouncedSearch, listingTypeFilter, conditionFilter, sortBy, debouncedPriceRange],
