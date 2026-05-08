@@ -8,51 +8,49 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Light Mode - inverted for light theme */
-    --background: 228 33% 97%; /* Soft White #F5F6FA */
-    --foreground: 240 10% 6%; /* Midnight Black #0E0E11 */
+    /* Light Mode - airy, warm off-white inspired by luxury fragrance sites */
+    --background: 36 30% 97%; /* Warm Ivory #FAF7F2 */
+    --foreground: 25 15% 18%; /* Deep Espresso */
 
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 6%;
+    --card-foreground: 25 15% 18%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 6%;
+    --popover-foreground: 25 15% 18%;
 
-    /* Signature Gold as Primary - used SPARINGLY for CTAs, prices, premium */
-    --primary: 43 53% 54%; /* Signature Gold #C8A24D */
-    --primary-foreground: 240 10% 6%;
+    /* Soft Champagne Gold - refined, less heavy */
+    --primary: 35 38% 48%; /* Champagne Bronze #B5934E */
+    --primary-foreground: 36 30% 98%;
 
-    --secondary: 224 12% 90%;
-    --secondary-foreground: 240 10% 6%;
+    --secondary: 35 20% 93%; /* Warm Beige */
+    --secondary-foreground: 25 15% 18%;
 
-    --muted: 224 12% 93%;
-    --muted-foreground: 240 8% 40%;
+    --muted: 35 18% 95%;
+    --muted-foreground: 25 8% 45%;
 
-    /* Muted Gold - hover states, secondary buttons */
-    --accent: 42 50% 48%; /* Muted Gold #B8923E */
-    --accent-foreground: 228 33% 97%;
+    --accent: 30 35% 88%; /* Soft Blush-Beige */
+    --accent-foreground: 25 15% 18%;
 
     /* Status Colors */
-    --destructive: 6 78% 57%; /* Error Red #E74C3C */
+    --destructive: 6 70% 52%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 145 63% 49%; /* Success Green #2ECC71 */
-    --warning: 37 91% 55%; /* Warning Amber #F5A623 */
-    --info: 213 72% 59%; /* Info Blue #4A90E2 */
+    --success: 145 50% 42%;
+    --warning: 37 80% 52%;
+    --info: 213 60% 52%;
 
-    --border: 224 12% 85%;
-    --input: 224 12% 85%;
-    --ring: 43 53% 54%;
+    --border: 30 15% 88%;
+    --input: 30 15% 88%;
+    --ring: 35 38% 48%;
 
     --radius: 0.75rem;
 
-    /* Gold Glow - for highlights, badges, subtle emphasis */
-    --gold-glow: 45 61% 67%; /* #E0C77A */
-    
-    /* Gradients & Effects */
-    --gradient-primary: linear-gradient(135deg, hsl(43 53% 54%) 0%, hsl(45 61% 67%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(228 33% 97%) 0%, hsl(224 12% 93%) 100%);
-    --shadow-luxury: 0 20px 60px -15px hsl(43 53% 54% / 0.2);
+    --gold-glow: 38 55% 70%;
+
+    /* Gradients & Effects - lighter, softer */
+    --gradient-primary: linear-gradient(135deg, hsl(35 38% 48%) 0%, hsl(38 55% 70%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(36 30% 97%) 0%, hsl(35 25% 94%) 100%);
+    --shadow-luxury: 0 20px 50px -20px hsl(35 38% 48% / 0.15);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
