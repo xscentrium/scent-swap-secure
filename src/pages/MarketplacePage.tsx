@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Navigation } from '@/components/Navigation';
@@ -7,9 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Star, Shield, Search, Filter, ArrowUpDown, Loader2 } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { Separator } from '@/components/ui/separator';
+import { Star, Shield, Search, ArrowUpDown, Loader2, X, SlidersHorizontal } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { FavoriteButton } from '@/components/FavoriteButton';
+import { cn } from '@/lib/utils';
 
 type Listing = {
   id: string;
@@ -31,11 +34,13 @@ type Listing = {
 const MarketplacePage = () => {
   const [search, setSearch] = useState('');
   const [listingTypeFilter, setListingTypeFilter] = useState('all');
-  const [conditionFilter, setConditionFilter] = useState('all');
+  const [conditionFilter, setConditionFilter] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState('newest');
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const { data: listings, isLoading } = useQuery({
-    queryKey: ['listings', search, listingTypeFilter, conditionFilter, sortBy],
+    queryKey: ['listings', search, listingTypeFilter, conditionFilter, sortBy, priceRange],
     queryFn: async () => {
       let query = supabase
         .from('listings')
@@ -56,9 +61,12 @@ const MarketplacePage = () => {
         query = query.eq('listing_type', listingTypeFilter as 'sale' | 'trade' | 'both');
       }
 
-      if (conditionFilter !== 'all') {
-        query = query.eq('condition', conditionFilter as 'new' | 'excellent' | 'good' | 'fair');
+      if (conditionFilter.length > 0) {
+        query = query.in('condition', conditionFilter as ('new' | 'excellent' | 'good' | 'fair')[]);
       }
+
+      if (priceRange[0] > 0) query = query.gte('price', priceRange[0]);
+      if (priceRange[1] < 1000) query = query.lte('price', priceRange[1]);
 
       if (sortBy === 'newest') {
         query = query.order('created_at', { ascending: false });
@@ -74,6 +82,32 @@ const MarketplacePage = () => {
       return data as Listing[];
     },
   });
+
+  const toggleCondition = (c: string) => {
+    setConditionFilter((prev) => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]);
+  };
+
+  const activeFilterCount = (listingTypeFilter !== 'all' ? 1 : 0) + conditionFilter.length +
+    (priceRange[0] > 0 || priceRange[1] < 1000 ? 1 : 0);
+
+  const clearAll = () => {
+    setListingTypeFilter('all');
+    setConditionFilter([]);
+    setPriceRange([0, 1000]);
+  };
+
+  const typeChips = [
+    { value: 'all', label: 'All' },
+    { value: 'sale', label: 'For Sale' },
+    { value: 'trade', label: 'For Trade' },
+    { value: 'both', label: 'Sale & Trade' },
+  ];
+  const conditionChips = [
+    { value: 'new', label: 'New' },
+    { value: 'excellent', label: 'Excellent' },
+    { value: 'good', label: 'Good' },
+    { value: 'fair', label: 'Fair' },
+  ];
 
   const getConditionColor = (condition: string) => {
     switch (condition) {
@@ -96,46 +130,32 @@ const MarketplacePage = () => {
             <p className="text-muted-foreground">Browse fragrances available for trade or purchase</p>
           </div>
 
-          {/* Filters */}
-          <div className="flex flex-col md:flex-row gap-4 mb-8">
+          {/* Top toolbar */}
+          <div className="flex flex-col sm:flex-row gap-3 mb-6">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="Search by name or brand..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10"
+                className="pl-10 bg-card/60 border-border/60"
               />
             </div>
-            <div className="flex gap-3">
-              <Select value={listingTypeFilter} onValueChange={setListingTypeFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <Filter className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="sale">For Sale</SelectItem>
-                  <SelectItem value="trade">For Trade</SelectItem>
-                  <SelectItem value="both">Sale & Trade</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={conditionFilter} onValueChange={setConditionFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Condition" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Conditions</SelectItem>
-                  <SelectItem value="new">New</SelectItem>
-                  <SelectItem value="excellent">Excellent</SelectItem>
-                  <SelectItem value="good">Good</SelectItem>
-                  <SelectItem value="fair">Fair</SelectItem>
-                </SelectContent>
-              </Select>
-
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="default"
+                className="lg:hidden"
+                onClick={() => setMobileFiltersOpen(v => !v)}
+              >
+                <SlidersHorizontal className="w-4 h-4 mr-2" />
+                Filters
+                {activeFilterCount > 0 && (
+                  <Badge variant="secondary" className="ml-2 h-5 px-1.5">{activeFilterCount}</Badge>
+                )}
+              </Button>
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-[170px] bg-card/60 border-border/60">
                   <ArrowUpDown className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Sort" />
                 </SelectTrigger>
@@ -148,13 +168,116 @@ const MarketplacePage = () => {
             </div>
           </div>
 
-          {/* Listings Grid */}
+          <div className="grid lg:grid-cols-[260px_1fr] gap-8">
+            {/* Sidebar Filters */}
+            <aside className={cn(
+              "space-y-6 rounded-xl border border-border/50 bg-card/40 backdrop-blur-sm p-5 h-fit lg:sticky lg:top-24",
+              !mobileFiltersOpen && "hidden lg:block"
+            )}>
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-medium tracking-wide uppercase text-muted-foreground">Filters</h2>
+                {activeFilterCount > 0 && (
+                  <button
+                    onClick={clearAll}
+                    className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+                  >
+                    <X className="w-3 h-3" /> Clear
+                  </button>
+                )}
+              </div>
+
+              {/* Listing Type chips */}
+              <div className="space-y-2.5">
+                <p className="text-xs font-medium text-foreground/80">Listing type</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {typeChips.map((c) => (
+                    <button
+                      key={c.value}
+                      onClick={() => setListingTypeFilter(c.value)}
+                      className={cn(
+                        "px-2.5 py-1 rounded-full text-xs border transition-all",
+                        listingTypeFilter === c.value
+                          ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                          : "bg-transparent border-border/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                      )}
+                    >
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <Separator className="bg-border/40" />
+
+              {/* Condition chips (multi) */}
+              <div className="space-y-2.5">
+                <p className="text-xs font-medium text-foreground/80">Condition</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {conditionChips.map((c) => {
+                    const active = conditionFilter.includes(c.value);
+                    return (
+                      <button
+                        key={c.value}
+                        onClick={() => toggleCondition(c.value)}
+                        className={cn(
+                          "px-2.5 py-1 rounded-full text-xs border transition-all",
+                          active
+                            ? "bg-primary/10 text-primary border-primary/40"
+                            : "bg-transparent border-border/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                        )}
+                      >
+                        {c.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <Separator className="bg-border/40" />
+
+              {/* Price slider */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-foreground/80">Price range</p>
+                  <span className="text-xs tabular-nums text-muted-foreground">
+                    ${priceRange[0]} – ${priceRange[1]}{priceRange[1] === 1000 ? '+' : ''}
+                  </span>
+                </div>
+                <Slider
+                  value={priceRange}
+                  onValueChange={(v) => setPriceRange([v[0], v[1]] as [number, number])}
+                  min={0}
+                  max={1000}
+                  step={10}
+                  className="py-1"
+                />
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    value={priceRange[0]}
+                    onChange={(e) => setPriceRange([Math.max(0, Number(e.target.value) || 0), priceRange[1]])}
+                    className="h-8 text-xs"
+                  />
+                  <span className="text-muted-foreground text-xs">to</span>
+                  <Input
+                    type="number"
+                    value={priceRange[1]}
+                    onChange={(e) => setPriceRange([priceRange[0], Math.min(1000, Number(e.target.value) || 0)])}
+                    className="h-8 text-xs"
+                  />
+                </div>
+              </div>
+            </aside>
+
+            {/* Results column */}
+            <div>
+              {/* Listings Grid */}
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
           ) : listings && listings.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
               {listings.map((listing) => (
                 <Card key={listing.id} className="group overflow-hidden hover:shadow-luxury transition-all duration-300 border-border/50">
                   <div className="aspect-square bg-muted relative overflow-hidden">
@@ -242,6 +365,8 @@ const MarketplacePage = () => {
               </Button>
             </div>
           )}
+            </div>
+          </div>
         </div>
       </main>
     </div>
