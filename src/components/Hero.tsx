@@ -56,27 +56,49 @@ export const Hero = () => {
       className="relative min-h-[92vh] flex items-center overflow-hidden"
     >
       {/* Background carousel with parallax */}
-      <motion.div className="absolute inset-0 z-0" style={{ y: yImg }}>
-        {slides.map((s, i) => (
-          <motion.div
-            key={s.id}
-            initial={false}
-            animate={{ opacity: i === index ? 1 : 0 }}
-            transition={{ duration: 1.4, ease: "easeInOut" }}
-            className="absolute inset-0"
-          >
-            <img
-              src={s.image_url ?? ""}
-              alt={`${s.brand} ${s.name}`}
-              className="w-full h-full object-cover scale-110"
-              loading={i === 0 ? "eager" : "lazy"}
-            />
-          </motion.div>
-        ))}
+      <motion.div
+        className="absolute inset-0 z-0 will-change-transform"
+        style={{ y: yImg }}
+      >
+        {slides.map((s, i) => {
+          // Only mount the active slide and the next one — keeps DOM/network light
+          const visible = i === index || i === (index + 1) % slides.length;
+          return (
+            <motion.div
+              key={s.id}
+              initial={false}
+              animate={{ opacity: i === index ? 1 : 0 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 1.0, ease: "easeInOut" }}
+              className="absolute inset-0"
+              style={{ willChange: "opacity" }}
+            >
+              {visible && (
+                <img
+                  src={s.image_url ?? ""}
+                  alt={`${s.brand} ${s.name}`}
+                  className="w-full h-full object-cover scale-105"
+                  loading={i === 0 ? "eager" : "lazy"}
+                  decoding="async"
+                  fetchPriority={i === 0 ? "high" : "low"}
+                  draggable={false}
+                />
+              )}
+            </motion.div>
+          );
+        })}
         {/* Soft warm gradient veils for legibility */}
         <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-background/30" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
       </motion.div>
+
+      {/* Preload the next slide so cross-fade has no flash */}
+      {slides[(index + 1) % Math.max(slides.length, 1)] && (
+        <link
+          rel="preload"
+          as="image"
+          href={slides[(index + 1) % slides.length].image_url ?? ""}
+        />
+      )}
 
       {/* Subtle ambient orbs */}
       <motion.div
