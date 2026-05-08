@@ -102,7 +102,8 @@ const AnimatedRoutes = () => {
         <Route path="/browse" element={<PageTransition><FragranceBrowse /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
-    </AnimatePresence>
+      </AnimatePresence>
+    </Layout>
   );
 };
 
