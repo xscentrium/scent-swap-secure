@@ -42,6 +42,7 @@ type Listing = {
 };
 
 const MarketplacePage = () => {
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // --- Initialize state from URL (?q=&type=&cond=&min=&max=&sort=) ---
