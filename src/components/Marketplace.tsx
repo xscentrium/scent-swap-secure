@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ShieldCheck, Star } from "lucide-react";
 import { FavoriteButton } from "@/components/FavoriteButton";
+import { ListingImage, isListingDisplayable } from "@/components/ListingImage";
 
 export const Marketplace = () => {
   const navigate = useNavigate();
@@ -19,9 +20,9 @@ export const Marketplace = () => {
         .select(`*, owner:profiles!owner_id(username, id_verified)`)
         .eq("is_active", true)
         .order("created_at", { ascending: false })
-        .limit(4);
+        .limit(20);
       if (error) throw error;
-      return data;
+      return (data ?? []).filter(isListingDisplayable).slice(0, 4);
     },
   });
 
@@ -57,10 +58,10 @@ export const Marketplace = () => {
                   onClick={() => navigate(`/marketplace?listing=${listing.id}`)}
                 >
                   <div className="relative aspect-square overflow-hidden bg-muted">
-                    <img
-                      src={listing.image_url}
+                    <ListingImage
+                      url={listing.image_url}
                       alt={`${listing.brand} ${listing.name}`}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      className="group-hover:scale-110 transition-transform duration-500"
                     />
                     <div
                       className="absolute top-3 left-3"
