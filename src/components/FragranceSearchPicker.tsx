@@ -192,16 +192,20 @@ export function FragranceSearchPicker({ open, onOpenChange, defaultPortfolio = "
                 </Select>
               </div>
               <div>
-                <label className="text-xs uppercase text-muted-foreground">Portfolio</label>
-                <Select value={portfolio} onValueChange={setPortfolio}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="main">Main collection</SelectItem>
-                    <SelectItem value="wishlist">Wishlist</SelectItem>
-                    <SelectItem value="sold">Sold</SelectItem>
-                    <SelectItem value="samples">Samples & decants</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs uppercase text-muted-foreground">Portfolio</label>
+                  {profileId && (
+                    <PortfolioManager
+                      profileId={profileId}
+                      trigger={
+                        <button type="button" className="text-xs text-primary hover:underline inline-flex items-center gap-1">
+                          <Settings2 className="h-3 w-3" /> Manage
+                        </button>
+                      }
+                    />
+                  )}
+                </div>
+                <PortfolioSelect profileId={profileId} value={portfolio} onChange={setPortfolio} />
               </div>
             </div>
 
