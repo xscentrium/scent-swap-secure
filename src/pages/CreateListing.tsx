@@ -117,32 +117,39 @@ const CreateListing = () => {
       
       if (data?.details) {
         setFragranceDetails(data.details);
-        
-        // Build auto-generated description
         const details = data.details;
+
+        // Auto-populate size from common sizes (prefer 100ml, else first)
+        const sizes: string[] = Array.isArray(details.commonSizes) ? details.commonSizes : [];
+        const preferredSize = sizes.find((s) => /100\s*ml/i.test(s)) || sizes[0] || '';
+
+        // Build auto-generated description
         let autoDescription = `${name} by ${brand}`;
-        if (details.concentration) {
-          autoDescription += ` (${details.concentration})`;
-        }
+        if (details.concentration) autoDescription += ` (${details.concentration})`;
         autoDescription += '.';
-        
         if (details.mainAccords?.length) {
           autoDescription += ` Main accords: ${details.mainAccords.slice(0, 3).join(', ')}.`;
         }
-        
         if (details.topNotes?.length) {
           autoDescription += ` Top notes include ${details.topNotes.slice(0, 3).join(', ')}.`;
         }
-        
-        // Only update description if it's empty
-        if (!formData.description) {
-          setFormData(prev => ({ ...prev, description: autoDescription }));
-        }
-        
-        toast.success('Fragrance details loaded!');
+
+        setFormData((prev) => ({
+          ...prev,
+          name,
+          brand,
+          size: prev.size || preferredSize,
+          description: prev.description || autoDescription,
+        }));
+
+        // Lock verified fields
+        setIsVerified(true);
+        setVerifiedSource('Fragrance database (AI-verified)');
+        toast.success('Fragrance details verified and locked');
       }
     } catch (e) {
       console.error('Failed to fetch fragrance details:', e);
+      toast.error('Could not verify fragrance details — fields stay editable');
     } finally {
       setIsLoadingDetails(false);
     }
@@ -151,6 +158,13 @@ const CreateListing = () => {
   const handleFragranceSelect = (fragrance: { name: string; brand: string }) => {
     setFormData(prev => ({ ...prev, name: fragrance.name, brand: fragrance.brand }));
     fetchFragranceDetails(fragrance.name, fragrance.brand);
+  };
+
+  const unlockFields = () => {
+    setIsVerified(false);
+    setFragranceDetails(null);
+    setVerifiedSource('');
+    toast.info('Fields unlocked — re-search to re-verify');
   };
 
   // Pre-fill from URL params (when converting from collection)
