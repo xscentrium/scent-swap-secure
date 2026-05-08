@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FragranceSearchPicker } from "@/components/FragranceSearchPicker";
 import { Plus } from "lucide-react";
+import { PersonalizedWhenToWear } from "@/components/PersonalizedWhenToWear";
 
 export default function FragranceDetail() {
   const { id } = useParams<{ id: string }>();
@@ -63,6 +64,8 @@ export default function FragranceDetail() {
       </Card>
 
       <RatingBars fragranceId={frag.id} />
+
+      <PersonalizedWhenToWear fragranceId={frag.id} />
 
       <p className="text-sm">
         <Link className="underline" to="/discover">← Back to discover</Link>

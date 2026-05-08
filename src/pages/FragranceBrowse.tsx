@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const ACCORD_GROUPS = [
   { label: "Woody", accord: "woody", color: "#6B4423" },
@@ -27,48 +28,109 @@ const ACCORD_GROUPS = [
 
 export default function FragranceBrowse() {
   const [params, setParams] = useSearchParams();
-  const tab = (params.get("by") as "note" | "accord") ?? "note";
-  const term = params.get("q") ?? "";
-  const [noteQ, setNoteQ] = useState(tab === "note" ? term : "");
+  const tab = (params.get("by") as "note" | "accord") ?? "accord";
+  const [noteQ, setNoteQ] = useState(params.get("q") ?? "");
+  const [selectedAccords, setSelectedAccords] = useState<string[]>(
+    (params.get("a") ?? "").split(",").filter(Boolean)
+  );
   const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const debouncedNote = useDebounce(noteQ, 300);
 
+  // Persist filters in URL
   useEffect(() => {
-    if (tab === "note" && term) {
-      supabase.rpc("search_fragrances_by_note", { note_q: term, lim: 80 }).then(({ data }) => setResults(data ?? []));
-    } else if (tab === "accord" && term) {
-      supabase.rpc("search_fragrances_by_accord", { accord_q: term, lim: 80 }).then(({ data }) => setResults(data ?? []));
-    } else { setResults([]); }
-  }, [tab, term]);
+    const next: Record<string, string> = { by: tab };
+    if (tab === "note" && debouncedNote) next.q = debouncedNote;
+    if (tab === "accord" && selectedAccords.length) next.a = selectedAccords.join(",");
+    setParams(next, { replace: true });
+  }, [tab, debouncedNote, selectedAccords]);
+
+  // Live search by note
+  useEffect(() => {
+    if (tab !== "note") return;
+    if (!debouncedNote) { setResults([]); return; }
+    setLoading(true);
+    supabase.rpc("search_fragrances_by_note", { note_q: debouncedNote, lim: 80 })
+      .then(({ data }) => { setResults(data ?? []); setLoading(false); });
+  }, [tab, debouncedNote]);
+
+  // Live multi-accord filter (intersect results across all selected accords)
+  useEffect(() => {
+    if (tab !== "accord") return;
+    if (selectedAccords.length === 0) { setResults([]); return; }
+    setLoading(true);
+    (async () => {
+      const lists = await Promise.all(
+        selectedAccords.map(a =>
+          supabase.rpc("search_fragrances_by_accord", { accord_q: a, lim: 200 }).then(r => r.data ?? [])
+        )
+      );
+      // intersect by id
+      const idCount = new Map<string, { row: any; count: number }>();
+      lists.flat().forEach((row: any) => {
+        const ex = idCount.get(row.id);
+        if (ex) ex.count += 1;
+        else idCount.set(row.id, { row, count: 1 });
+      });
+      const intersected = Array.from(idCount.values())
+        .filter(x => x.count === selectedAccords.length)
+        .map(x => x.row);
+      setResults(intersected);
+      setLoading(false);
+    })();
+  }, [tab, selectedAccords]);
+
+  const toggleAccord = (a: string) =>
+    setSelectedAccords(s => s.includes(a) ? s.filter(x => x !== a) : [...s, a]);
+
+  const setTab = (t: "note" | "accord") => setParams({ by: t }, { replace: true });
 
   return (
     <div className="container max-w-6xl py-8 space-y-6">
       <h1 className="text-3xl md:text-5xl font-serif">Browse fragrances</h1>
 
       <div className="flex gap-2">
-        <button onClick={() => setParams({ by: "note", q: noteQ })}
+        <button onClick={() => setTab("note")}
           className={`px-3 py-1.5 rounded-md text-sm ${tab === "note" ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>By note</button>
-        <button onClick={() => setParams({ by: "accord" })}
+        <button onClick={() => setTab("accord")}
           className={`px-3 py-1.5 rounded-md text-sm ${tab === "accord" ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>By accord</button>
       </div>
 
       {tab === "note" && (
         <Card className="p-4">
-          <p className="text-sm text-muted-foreground mb-2">Type a note like “bergamot”, “oud”, “vanilla”…</p>
-          <Input value={noteQ} onChange={e => { setNoteQ(e.target.value); setParams({ by: "note", q: e.target.value }); }} placeholder="Search note…" />
+          <p className="text-sm text-muted-foreground mb-2">Type a note like "bergamot", "oud", "vanilla"…</p>
+          <Input value={noteQ} onChange={e => setNoteQ(e.target.value)} placeholder="Search note…" />
         </Card>
       )}
 
       {tab === "accord" && (
-        <div className="flex flex-wrap gap-2">
-          {ACCORD_GROUPS.map(a => (
-            <button key={a.accord} onClick={() => setParams({ by: "accord", q: a.accord })}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium border ${term === a.accord ? 'ring-2 ring-primary' : ''}`}
-              style={{ backgroundColor: a.color, color: "#1a1a1a" }}>
-              {a.label}
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Pick one or more accord groups — results update live and require all selected.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {ACCORD_GROUPS.map(a => {
+              const active = selectedAccords.includes(a.accord);
+              return (
+                <button key={a.accord} onClick={() => toggleAccord(a.accord)}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium border transition ${active ? 'ring-2 ring-primary scale-105' : 'opacity-80 hover:opacity-100'}`}
+                  style={{ backgroundColor: a.color, color: "#1a1a1a" }}>
+                  {a.label}
+                </button>
+              );
+            })}
+          </div>
+          {selectedAccords.length > 0 && (
+            <button onClick={() => setSelectedAccords([])} className="text-xs text-muted-foreground underline">
+              Clear filters
             </button>
-          ))}
+          )}
         </div>
       )}
+
+      <div className="text-sm text-muted-foreground">
+        {loading ? "Searching…" : `${results.length} fragrance${results.length === 1 ? "" : "s"}`}
+      </div>
 
       <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
         {results.map((f: any) => (
@@ -83,7 +145,9 @@ export default function FragranceBrowse() {
             </Card>
           </Link>
         ))}
-        {term && results.length === 0 && <p className="text-sm text-muted-foreground col-span-full">No fragrances match.</p>}
+        {!loading && (tab === "note" ? debouncedNote : selectedAccords.length > 0) && results.length === 0 && (
+          <p className="text-sm text-muted-foreground col-span-full">No fragrances match.</p>
+        )}
       </div>
     </div>
   );

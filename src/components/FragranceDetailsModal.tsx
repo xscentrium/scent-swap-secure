@@ -14,6 +14,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FragranceReviews } from '@/components/FragranceReviews';
 import { PriceTracker } from '@/components/PriceTracker';
 import { FavoriteButton } from '@/components/FavoriteButton';
+import { AccordsBar } from '@/components/AccordsBar';
+import { RatingBars } from '@/components/RatingBars';
+import { useEffect } from 'react';
 import { Star, Sun, Moon, Snowflake, Leaf, Flower2, CloudSun, Clock, Wind } from 'lucide-react';
 
 type FragranceDetails = {
@@ -53,6 +56,14 @@ export const FragranceDetailsModal = ({
   imageUrl,
   onSelectSimilar,
 }: FragranceDetailsModalProps) => {
+  const [catalogId, setCatalogId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open || !name || !brand) return;
+    supabase.from('fragrances').select('id').ilike('name', name).ilike('brand', brand).maybeSingle()
+      .then(({ data }) => setCatalogId(data?.id ?? null));
+  }, [open, name, brand]);
+
   const { data: details, isLoading, error } = useQuery({
     queryKey: ['fragrance-details', name, brand],
     queryFn: async () => {
@@ -185,6 +196,14 @@ export const FragranceDetailsModal = ({
                       </Badge>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {catalogId && (
+                <div className="space-y-4">
+                  <Separator />
+                  <AccordsBar fragranceId={catalogId} />
+                  <RatingBars fragranceId={catalogId} />
                 </div>
               )}
 
