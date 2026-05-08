@@ -8,50 +8,52 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Light Mode - airy, warm off-white inspired by luxury fragrance sites */
-    --background: 36 30% 97%; /* Warm Ivory #FAF7F2 */
-    --foreground: 25 15% 18%; /* Deep Espresso */
+    /* Aesop / Le Labo — light editorial luxury */
+    --background: 40 22% 96%; /* Bone / Off-white #F5F2EC */
+    --foreground: 30 10% 14%; /* Matte ink */
 
     --card: 0 0% 100%;
-    --card-foreground: 25 15% 18%;
+    --card-foreground: 30 10% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 25 15% 18%;
+    --popover-foreground: 30 10% 14%;
 
-    /* Soft Champagne Gold - refined, less heavy */
-    --primary: 35 38% 48%; /* Champagne Bronze #B5934E */
-    --primary-foreground: 36 30% 98%;
+    /* Quiet ink primary — deep brown-black, not gold */
+    --primary: 30 12% 18%; /* Espresso ink */
+    --primary-foreground: 40 22% 96%;
 
-    --secondary: 35 20% 93%; /* Warm Beige */
-    --secondary-foreground: 25 15% 18%;
+    --secondary: 38 18% 92%; /* Warm parchment */
+    --secondary-foreground: 30 10% 14%;
 
-    --muted: 35 18% 95%;
-    --muted-foreground: 25 8% 45%;
+    --muted: 38 16% 94%;
+    --muted-foreground: 30 6% 42%;
 
-    --accent: 30 35% 88%; /* Soft Blush-Beige */
-    --accent-foreground: 25 15% 18%;
+    --accent: 32 22% 86%; /* Soft taupe */
+    --accent-foreground: 30 10% 14%;
 
-    /* Status Colors */
-    --destructive: 6 70% 52%;
+    /* Reserved accent — used sparingly for verified badges only */
+    --gold: 35 28% 48%;
+
+    --destructive: 6 55% 42%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 145 50% 42%;
-    --warning: 37 80% 52%;
-    --info: 213 60% 52%;
+    --success: 145 30% 32%;
+    --warning: 32 60% 42%;
+    --info: 213 30% 38%;
 
-    --border: 30 15% 88%;
-    --input: 30 15% 88%;
-    --ring: 35 38% 48%;
+    --border: 30 12% 86%; /* Hairline */
+    --input: 30 12% 86%;
+    --ring: 30 10% 14%;
 
-    --radius: 0.75rem;
+    --radius: 0.25rem; /* Editorial sharpness */
 
-    --gold-glow: 38 55% 70%;
+    --gold-glow: 35 28% 48%;
 
-    /* Gradients & Effects - lighter, softer */
-    --gradient-primary: linear-gradient(135deg, hsl(35 38% 48%) 0%, hsl(38 55% 70%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(36 30% 97%) 0%, hsl(35 25% 94%) 100%);
-    --shadow-luxury: 0 20px 50px -20px hsl(35 38% 48% / 0.15);
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* No gradients on cards/buttons. Hero subtle wash only. */
+    --gradient-primary: none;
+    --gradient-hero: linear-gradient(180deg, hsl(40 22% 96%) 0%, hsl(38 18% 92%) 100%);
+    --shadow-luxury: 0 1px 0 hsl(30 12% 86%);
+    --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .dark {
@@ -113,8 +115,15 @@ All colors MUST be HSL.
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Playfair Display', serif;
-    font-weight: 600;
+    font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  h1 { letter-spacing: -0.02em; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
 
   /* Ripple animation */
@@ -139,75 +148,31 @@ All colors MUST be HSL.
     transition: var(--transition-smooth);
   }
 
-  /* Premium hover effects */
+  /* Editorial hover — restrained */
   .hover-lift {
     @apply transition-all duration-300 ease-out;
   }
-  
   .hover-lift:hover {
-    @apply -translate-y-1;
-    box-shadow: 0 12px 24px -8px hsl(var(--primary) / 0.2);
+    @apply -translate-y-0.5;
+    box-shadow: 0 6px 20px -12px hsl(30 10% 14% / 0.18);
   }
 
-  .hover-glow {
-    @apply transition-all duration-300;
-  }
+  .hover-glow { @apply transition-all duration-300; }
+  .hover-glow:hover { box-shadow: 0 0 0 1px hsl(var(--foreground) / 0.18); }
 
-  .hover-glow:hover {
-    box-shadow: 0 0 20px hsl(var(--primary) / 0.3), 0 0 40px hsl(var(--primary) / 0.1);
-  }
+  .hover-shine { @apply relative overflow-hidden; }
+  .hover-shine::before { content: none; }
 
-  .hover-shine {
-    @apply relative overflow-hidden;
-  }
-
-  .hover-shine::before {
-    content: '';
-    @apply absolute inset-0 -translate-x-full;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      hsl(var(--primary) / 0.1),
-      transparent
-    );
-    transition: transform 0.5s ease;
-  }
-
-  .hover-shine:hover::before {
-    @apply translate-x-full;
-  }
-
-  /* Premium card styles */
   .card-premium {
-    @apply bg-card border border-border rounded-lg transition-all duration-300;
+    @apply bg-card border border-border transition-colors duration-200;
+    border-radius: var(--radius);
   }
+  .card-premium:hover { @apply border-foreground/30; }
 
-  .card-premium:hover {
-    @apply border-primary/30;
-    box-shadow: 0 8px 32px -8px hsl(var(--primary) / 0.15);
-  }
+  .btn-glow { @apply relative; }
+  .btn-glow::after { content: none; }
 
-  /* Interactive button glow */
-  .btn-glow {
-    @apply relative;
-  }
-
-  .btn-glow::after {
-    content: '';
-    @apply absolute inset-0 rounded-lg opacity-0 transition-opacity duration-300;
-    background: radial-gradient(circle at center, hsl(var(--primary) / 0.4) 0%, transparent 70%);
-    filter: blur(12px);
-    z-index: -1;
-  }
-
-  .btn-glow:hover::after {
-    @apply opacity-100;
-  }
-
-  /* Magnetic hover effect container */
-  .magnetic-hover {
-    @apply transition-transform duration-200 ease-out;
-  }
+  .magnetic-hover { @apply transition-transform duration-200 ease-out; }
 
   /* Skeleton shimmer animation */
   @keyframes shimmer {
