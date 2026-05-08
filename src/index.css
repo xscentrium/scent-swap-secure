@@ -8,17 +8,62 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Xscentrium — Warm charcoal luxury (neutral, no blue cast) */
-    --background: 30 6% 13%;      /* Warm charcoal */
-    --foreground: 36 12% 92%;     /* Warm platinum */
+    /* Light mode — Aesop / Le Labo editorial */
+    --background: 40 22% 96%;
+    --foreground: 30 10% 14%;
 
-    --card: 30 5% 17%;            /* Lifted graphite */
+    --card: 0 0% 100%;
+    --card-foreground: 30 10% 14%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 30 10% 14%;
+
+    --primary: 30 12% 18%;
+    --primary-foreground: 40 22% 96%;
+
+    --secondary: 38 18% 92%;
+    --secondary-foreground: 30 10% 14%;
+
+    --muted: 38 16% 94%;
+    --muted-foreground: 30 6% 42%;
+
+    --accent: 32 22% 86%;
+    --accent-foreground: 30 10% 14%;
+
+    --gold: 35 28% 48%;
+    --gold-glow: 35 28% 48%;
+
+    --destructive: 6 55% 42%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 145 30% 32%;
+    --warning: 32 60% 42%;
+    --info: 213 30% 38%;
+
+    --border: 30 12% 86%;
+    --input: 30 12% 86%;
+    --ring: 30 10% 14%;
+
+    --radius: 0.25rem;
+
+    --gradient-primary: none;
+    --gradient-hero: linear-gradient(180deg, hsl(40 22% 96%) 0%, hsl(38 18% 92%) 100%);
+    --shadow-luxury: 0 1px 0 hsl(30 12% 86%);
+    --shadow-glow: 0 0 30px hsl(35 28% 48% / 0.15);
+    --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
+    /* Dark mode — Xscentrium warm charcoal luxury */
+    --background: 30 6% 13%;
+    --foreground: 36 12% 92%;
+
+    --card: 30 5% 17%;
     --card-foreground: 36 12% 92%;
 
     --popover: 30 5% 18%;
     --popover-foreground: 36 12% 92%;
 
-    /* Signature Gold */
     --primary: 43 68% 62%;
     --primary-foreground: 30 6% 12%;
 
@@ -28,7 +73,7 @@ All colors MUST be HSL.
     --muted: 30 5% 20%;
     --muted-foreground: 32 8% 70%;
 
-    --accent: 42 58% 54%;         /* Muted Gold */
+    --accent: 42 58% 54%;
     --accent-foreground: 30 6% 12%;
 
     --gold: 43 68% 62%;
@@ -45,60 +90,10 @@ All colors MUST be HSL.
     --input: 30 5% 22%;
     --ring: 43 68% 62%;
 
-    --radius: 0.25rem;
-
     --gradient-primary: linear-gradient(135deg, hsl(43 68% 62%) 0%, hsl(45 70% 74%) 100%);
     --gradient-hero: linear-gradient(180deg, hsl(30 6% 13%) 0%, hsl(30 5% 17%) 100%);
     --shadow-luxury: 0 20px 60px -15px hsl(43 68% 62% / 0.28);
     --shadow-glow: 0 0 30px hsl(43 68% 62% / 0.2);
-    --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .dark {
-    /* Core - Dark Mode */
-    --background: 240 10% 6%; /* Midnight Black #0E0E11 - App background */
-    --foreground: 224 12% 81%; /* Platinum Silver #C9CCD6 - Primary text */
-
-    --card: 240 8% 11%; /* Charcoal Gray #1A1A1F - Cards, modals */
-    --card-foreground: 224 12% 81%; /* Platinum Silver */
-
-    --popover: 240 8% 13%;
-    --popover-foreground: 224 12% 81%;
-
-    /* Signature Gold - ONLY for money actions, premium, verification */
-    --primary: 43 53% 54%; /* Signature Gold #C8A24D */
-    --primary-foreground: 240 10% 6%;
-
-    --secondary: 240 8% 16%;
-    --secondary-foreground: 228 33% 97%; /* Soft White #F5F6FA */
-
-    --muted: 240 8% 15%;
-    --muted-foreground: 228 33% 85%; /* Soft White toned down */
-
-    /* Muted Gold - hover states */
-    --accent: 42 50% 48%; /* Muted Gold #B8923E */
-    --accent-foreground: 228 33% 97%;
-
-    /* Status Colors */
-    --destructive: 6 78% 57%; /* Error Red #E74C3C */
-    --destructive-foreground: 0 0% 100%;
-
-    --success: 145 63% 49%; /* Success Green #2ECC71 */
-    --warning: 37 91% 55%; /* Warning Amber #F5A623 */
-    --info: 213 72% 59%; /* Info Blue #4A90E2 */
-
-    --border: 240 8% 18%;
-    --input: 240 8% 16%;
-    --ring: 43 53% 54%;
-
-    /* Gold Glow - highlights, badges */
-    --gold-glow: 45 61% 67%; /* #E0C77A */
-    
-    /* Gradients & Effects */
-    --gradient-primary: linear-gradient(135deg, hsl(43 53% 54%) 0%, hsl(45 61% 67%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(240 10% 6%) 0%, hsl(240 8% 11%) 100%);
-    --shadow-luxury: 0 20px 60px -15px hsl(43 53% 54% / 0.25);
-    --shadow-glow: 0 0 30px hsl(43 53% 54% / 0.15);
   }
 }
 
