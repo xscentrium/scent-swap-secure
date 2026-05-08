@@ -41,6 +41,9 @@ export const Navigation = () => {
   const [open, setOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const location = useLocation();
+  // If a parent <Layout> already renders the nav, page-level <Navigation /> is a no-op
+  const alreadyRendered = useNavAlreadyRendered();
+  if (alreadyRendered) return null;
 
   const closeMenu = () => setOpen(false);
 
