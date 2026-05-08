@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Search, Plus } from "lucide-react";
+import { Loader2, Search, Plus, Settings2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { PortfolioManager, usePortfolios } from "@/components/PortfolioManager";
 
 type Frag = { id: string; brand: string; name: string; year: number | null; image_url: string | null };
 type Variant = { id: string; concentration: string; size_ml: number; batch_year: number | null };
