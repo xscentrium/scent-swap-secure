@@ -15,6 +15,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { NavigationSearch } from "@/components/NavigationSearch";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
+import { useNavAlreadyRendered } from "@/components/Layout";
 
 const primaryLinks = [
   { to: "/marketplace", label: "Marketplace" },
