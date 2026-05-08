@@ -277,6 +277,8 @@ export default function FragranceDetail() {
           </div>
         )}
 
+        <FragrancePairings fragranceId={frag.id} name={frag.name} brand={frag.brand} />
+
         <RatingBars fragranceId={frag.id} />
 
         <PersonalizedWhenToWear fragranceId={frag.id} />
