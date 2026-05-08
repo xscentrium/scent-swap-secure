@@ -30,14 +30,15 @@ export const FeaturedListings = () => {
         .from('listings')
         .select(`
           *,
-          owner:profiles!owner_id(username, id_verified)
+          owner:profiles!owner_id(username, id_verified),
+          image_verification:listing_image_verifications(status, reason, source)
         `)
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(24);
       
       if (error) throw error;
-      return (data ?? []).filter(isListingDisplayable).slice(0, 8);
+      return ((data as any[]) ?? []).filter(isListingDisplayable).slice(0, 8);
     },
   });
 
