@@ -157,13 +157,38 @@ const MarketplacePage = () => {
   const toggleCondition = (c: string) => {
     setConditionFilter((prev) => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]);
   };
+  const toggleBrand = (b: string) => {
+    setBrandFilter((prev) => prev.includes(b) ? prev.filter(x => x !== b) : [...prev, b]);
+  };
 
-  const activeFilterCount = (listingTypeFilter !== 'all' ? 1 : 0) + conditionFilter.length +
+  const parseSize = (s: string): number | null => {
+    const m = (s || '').match(/(\d+(?:\.\d+)?)/);
+    return m ? parseFloat(m[1]) : null;
+  };
+  const matchesSize = (raw: string) => {
+    if (sizeFilter === 'all') return true;
+    const ml = parseSize(raw);
+    if (ml == null) return false;
+    if (sizeFilter === 'travel') return ml < 30;
+    if (sizeFilter === 'small') return ml >= 30 && ml < 75;
+    if (sizeFilter === 'large') return ml >= 75;
+    return true;
+  };
+
+  const activeFilterCount =
+    (listingTypeFilter !== 'all' ? 1 : 0) +
+    conditionFilter.length +
+    brandFilter.length +
+    (sizeFilter !== 'all' ? 1 : 0) +
+    (verifiedSellerOnly ? 1 : 0) +
     (priceRange[0] > 0 || priceRange[1] < 1000 ? 1 : 0);
 
   const clearAll = () => {
     setListingTypeFilter('all');
     setConditionFilter([]);
+    setBrandFilter([]);
+    setSizeFilter('all');
+    setVerifiedSellerOnly(false);
     setPriceRange([PRICE_MIN, PRICE_MAX]);
     setPriceInput([String(PRICE_MIN), String(PRICE_MAX)]);
   };
@@ -179,7 +204,6 @@ const MarketplacePage = () => {
     const next: [number, number] = [...priceRange];
     next[idx] = clamped;
     if (next[0] > next[1]) {
-      // swap if user inverted them
       next.reverse();
     }
     setPriceRange(next as [number, number]);
@@ -187,7 +211,25 @@ const MarketplacePage = () => {
 
   const allListings = listings ?? [];
   const displayable = useMemo(() => allListings.filter((l) => isListingDisplayable(l as any)), [allListings]);
-  const visibleListings = hideUnverified ? displayable : allListings;
+  const baseVisible = hideUnverified ? displayable : allListings;
+  const visibleListings = useMemo(
+    () => baseVisible.filter((l) => matchesSize(l.size) && (!verifiedSellerOnly || l.profiles?.id_verified)),
+    [baseVisible, sizeFilter, verifiedSellerOnly]
+  );
+
+  // Featured strip — most recent verified-seller picks
+  const featuredListings = useMemo(
+    () => displayable.filter((l) => l.profiles?.id_verified).slice(0, 6),
+    [displayable]
+  );
+
+  // Brand facets from current dataset
+  const topBrands = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const l of allListings) counts.set(l.brand, (counts.get(l.brand) ?? 0) + 1);
+    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 12);
+  }, [allListings]);
+
   const hiddenCount = allListings.length - displayable.length;
   const resultCount = visibleListings.length;
   const resultLabel = isLoading
@@ -205,6 +247,12 @@ const MarketplacePage = () => {
     { value: 'excellent', label: 'Excellent' },
     { value: 'good', label: 'Good' },
     { value: 'fair', label: 'Fair' },
+  ];
+  const sizeChips = [
+    { value: 'all', label: 'Any' },
+    { value: 'travel', label: 'Travel <30ml' },
+    { value: 'small', label: '30–75ml' },
+    { value: 'large', label: '75ml+' },
   ];
 
   const getConditionColor = (condition: string) => {
