@@ -66,6 +66,7 @@ interface Listing {
     username: string;
     id_verified: boolean;
   };
+  image_verification?: DBVerification | DBVerification[];
 }
 
 interface ListingQuickViewProps {
