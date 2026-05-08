@@ -102,8 +102,8 @@ const MarketplacePage = () => {
         query = query.in('condition', conditionFilter as ('new' | 'excellent' | 'good' | 'fair')[]);
       }
 
-      if (priceRange[0] > 0) query = query.gte('price', priceRange[0]);
-      if (priceRange[1] < 1000) query = query.lte('price', priceRange[1]);
+      if (debouncedPriceRange[0] > PRICE_MIN) query = query.gte('price', debouncedPriceRange[0]);
+      if (debouncedPriceRange[1] < PRICE_MAX) query = query.lte('price', debouncedPriceRange[1]);
 
       if (sortBy === 'newest') {
         query = query.order('created_at', { ascending: false });
