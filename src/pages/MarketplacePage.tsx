@@ -106,7 +106,7 @@ const MarketplacePage = () => {
   }, [queryClient]);
 
   const { data: listings, isLoading } = useQuery({
-    queryKey: ['listings', debouncedSearch, listingTypeFilter, conditionFilter, sortBy, debouncedPriceRange],
+    queryKey: ['listings', debouncedSearch, listingTypeFilter, conditionFilter, sortBy, debouncedPriceRange, brandFilter],
     queryFn: async () => {
       let query = supabase
         .from('listings')
@@ -114,7 +114,8 @@ const MarketplacePage = () => {
           *,
           profiles!listings_owner_id_fkey (
             username,
-            avatar_url
+            avatar_url,
+            id_verified
           ),
           image_verification:listing_image_verifications(status, reason, source)
         `)
@@ -132,6 +133,8 @@ const MarketplacePage = () => {
       if (conditionFilter.length > 0) {
         query = query.in('condition', conditionFilter as ('new' | 'excellent' | 'good' | 'fair')[]);
       }
+
+      if (brandFilter.length > 0) query = query.in('brand', brandFilter);
 
       if (debouncedPriceRange[0] > PRICE_MIN) query = query.gte('price', debouncedPriceRange[0]);
       if (debouncedPriceRange[1] < PRICE_MAX) query = query.lte('price', debouncedPriceRange[1]);
