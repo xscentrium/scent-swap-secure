@@ -463,6 +463,22 @@ const MarketplacePage = () => {
                   <SelectItem value="price_high">Price: High to Low</SelectItem>
                 </SelectContent>
               </Select>
+              <div className="hidden sm:inline-flex border border-border bg-card/60 h-12">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  aria-label="Grid view"
+                  className={cn("px-3 transition-colors", viewMode === 'grid' ? "bg-foreground text-background" : "hover:bg-muted/50")}
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  aria-label="List view"
+                  className={cn("px-3 transition-colors border-l border-border", viewMode === 'list' ? "bg-foreground text-background" : "hover:bg-muted/50")}
+                >
+                  <Rows3 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
 
