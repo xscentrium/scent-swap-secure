@@ -22,7 +22,7 @@ export const Marketplace = () => {
         .order("created_at", { ascending: false })
         .limit(20);
       if (error) throw error;
-      return (data ?? []).filter(isListingDisplayable).slice(0, 4);
+      return ((data as any[]) ?? []).filter(isListingDisplayable).slice(0, 4);
     },
   });
 
