@@ -127,6 +127,7 @@ export const FragranceSearch = ({
               placeholder="Start typing to search..."
               className="pl-9"
               required={required}
+              disabled={disabled}
               autoComplete="off"
             />
             {isLoading && (
