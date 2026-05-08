@@ -1,0 +1,1 @@
+UPDATE public.listings SET image_url = image_url || '?v=2' WHERE image_url LIKE '%/listing-images/verified/%' AND image_url NOT LIKE '%?v=%';
