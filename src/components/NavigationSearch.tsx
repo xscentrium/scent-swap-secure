@@ -268,30 +268,23 @@ export const NavigationSearch = () => {
         }
       }
 
-      // Search collection items (fragrances)
+      // Search the fragrance catalog
       if (activeFilter === "all" || activeFilter === "fragrances") {
         const { data: fragrances } = await supabase
-          .from("collection_items")
-          .select("id, name, brand")
+          .from("fragrances")
+          .select("id, name, brand, year")
           .or(`name.ilike.%${searchQuery}%,brand.ilike.%${searchQuery}%`)
+          .eq("approved", true)
           .limit(activeFilter === "fragrances" ? 15 : 5);
 
         if (fragrances) {
-          const uniqueFragrances = fragrances.reduce((acc, item) => {
-            const key = `${item.name}-${item.brand}`;
-            if (!acc.has(key)) {
-              acc.set(key, item);
-            }
-            return acc;
-          }, new Map());
-
           searchResults.push(
-            ...Array.from(uniqueFragrances.values()).slice(0, activeFilter === "fragrances" ? 10 : 5).map((item: any) => ({
-              id: item.id,
+            ...fragrances.map((f: any) => ({
+              id: f.id,
               type: "fragrance" as const,
-              title: item.name,
-              subtitle: item.brand,
-              url: `/discover?search=${encodeURIComponent(item.name)}`,
+              title: f.name,
+              subtitle: f.year ? `${f.brand} · ${f.year}` : f.brand,
+              url: `/fragrance/${f.id}`,
             }))
           );
         }
