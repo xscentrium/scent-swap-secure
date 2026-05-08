@@ -163,6 +163,25 @@ export const ListingQuickView = ({
               </Badge>
             </div>
 
+            {/* Photo verification status */}
+            {(() => {
+              const dbV = Array.isArray(listing.image_verification) ? listing.image_verification[0] : listing.image_verification;
+              const v = verificationLabel(listing.image_url, dbV);
+              if (v.tone === 'ok') return null;
+              const Icon = v.tone === 'muted' ? ImageOff : AlertTriangle;
+              return (
+                <Alert variant={v.tone === 'bad' ? 'destructive' : 'default'}>
+                  <Icon className="h-4 w-4" />
+                  <AlertTitle>{v.label}</AlertTitle>
+                  <AlertDescription className="text-xs">
+                    {dbV?.reason || 'This listing\'s image is awaiting verification by our team.'}
+                    <br />
+                    <span className="text-muted-foreground">Estimated verification: within 24 hours of upload.</span>
+                  </AlertDescription>
+                </Alert>
+              );
+            })()}
+
             {/* Price */}
             <div className="bg-muted/50 rounded-lg p-4">
               <div className="flex items-center justify-between">
