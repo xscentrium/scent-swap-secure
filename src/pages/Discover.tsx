@@ -91,6 +91,43 @@ const Discover = () => {
             </Button>
           </div>
 
+          {search && (
+            <Card className="mb-6 p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <SearchIcon className="w-4 h-4 text-muted-foreground" />
+                <h2 className="font-serif text-xl">
+                  Results for "<span className="text-primary">{search}</span>"
+                </h2>
+                <Badge variant="outline" className="ml-auto">{catalogResults?.length ?? 0}</Badge>
+              </div>
+              {catalogResults && catalogResults.length > 0 ? (
+                <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {catalogResults.map((f: any) => (
+                    <Link key={f.id} to={`/fragrance/${f.id}`}>
+                      <Card className="p-4 hover:border-primary transition flex gap-3">
+                        <div className="w-14 h-14 rounded bg-muted overflow-hidden shrink-0">
+                          {f.image_url && <img src={f.image_url} alt={f.name} className="w-full h-full object-cover" />}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs text-muted-foreground truncate">{f.brand}</p>
+                          <p className="font-medium truncate">{f.name}</p>
+                          <div className="flex gap-1 mt-1">
+                            {f.year && <Badge variant="secondary" className="text-[10px] py-0">{f.year}</Badge>}
+                            {f.gender && <Badge variant="outline" className="text-[10px] py-0">{f.gender}</Badge>}
+                          </div>
+                        </div>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No fragrances found in the catalog yet. Try the <Link className="underline" to="/browse">Browse</Link> page or suggest one to be added.
+                </p>
+              )}
+            </Card>
+          )}
+
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-6">
