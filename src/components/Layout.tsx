@@ -13,7 +13,7 @@ export function Layout({ children }: { children: ReactNode }) {
   return (
     <NavRenderedCtx.Provider value={true}>
       <Navigation />
-      <main className="pt-16 min-h-screen">{children}</main>
+      <main className="min-h-screen">{children}</main>
     </NavRenderedCtx.Provider>
   );
 }
