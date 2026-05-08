@@ -1,5 +1,5 @@
-import { corsHeaders } from "@supabase/supabase-js/cors";
-import { createClient } from "@supabase/supabase-js";
+import { corsHeaders } from "jsr:@supabase/supabase-js@2/cors";
+import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const FEEDS = [
   { name: "Fragrantica", url: "https://www.fragrantica.com/rss/news.xml" },
