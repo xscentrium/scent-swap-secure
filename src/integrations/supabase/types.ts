@@ -147,34 +147,50 @@ export type Database = {
         Row: {
           brand: string
           created_at: string
+          fragrance_id: string | null
           id: string
           image_url: string | null
           name: string
           notes: string | null
+          portfolio: string
           profile_id: string
           size: string | null
+          variant_id: string | null
         }
         Insert: {
           brand: string
           created_at?: string
+          fragrance_id?: string | null
           id?: string
           image_url?: string | null
           name: string
           notes?: string | null
+          portfolio?: string
           profile_id: string
           size?: string | null
+          variant_id?: string | null
         }
         Update: {
           brand?: string
           created_at?: string
+          fragrance_id?: string | null
           id?: string
           image_url?: string | null
           name?: string
           notes?: string | null
+          portfolio?: string
           profile_id?: string
           size?: string | null
+          variant_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "collection_items_fragrance_id_fkey"
+            columns: ["fragrance_id"]
+            isOneToOne: false
+            referencedRelation: "fragrances"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "collection_items_profile_id_fkey"
             columns: ["profile_id"]
@@ -187,6 +203,13 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "fragrance_variants"
             referencedColumns: ["id"]
           },
         ]
@@ -370,6 +393,7 @@ export type Database = {
         Row: {
           created_at: string
           fragrance_brand: string
+          fragrance_id: string | null
           fragrance_name: string
           id: string
           image_url: string | null
@@ -378,6 +402,7 @@ export type Database = {
         Insert: {
           created_at?: string
           fragrance_brand: string
+          fragrance_id?: string | null
           fragrance_name: string
           id?: string
           image_url?: string | null
@@ -386,12 +411,20 @@ export type Database = {
         Update: {
           created_at?: string
           fragrance_brand?: string
+          fragrance_id?: string | null
           fragrance_name?: string
           id?: string
           image_url?: string | null
           profile_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "favorite_fragrances_fragrance_id_fkey"
+            columns: ["fragrance_id"]
+            isOneToOne: false
+            referencedRelation: "fragrances"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "favorite_fragrances_profile_id_fkey"
             columns: ["profile_id"]
@@ -454,6 +487,240 @@ export type Database = {
             columns: ["following_id"]
             isOneToOne: false
             referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forum_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          position: number
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          position?: number
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          position?: number
+          slug?: string
+        }
+        Relationships: []
+      }
+      forum_replies: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          parent_reply_id: string | null
+          profile_id: string
+          thread_id: string
+          upvotes: number
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          parent_reply_id?: string | null
+          profile_id: string
+          thread_id: string
+          upvotes?: number
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          parent_reply_id?: string | null
+          profile_id?: string
+          thread_id?: string
+          upvotes?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_replies_parent_reply_id_fkey"
+            columns: ["parent_reply_id"]
+            isOneToOne: false
+            referencedRelation: "forum_replies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "forum_replies_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "forum_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forum_tags: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      forum_threads: {
+        Row: {
+          body: string
+          category_id: string
+          created_at: string
+          id: string
+          is_locked: boolean
+          is_pinned: boolean
+          last_activity_at: string
+          profile_id: string
+          reply_count: number
+          title: string
+          updated_at: string
+          upvotes: number
+          view_count: number
+        }
+        Insert: {
+          body: string
+          category_id: string
+          created_at?: string
+          id?: string
+          is_locked?: boolean
+          is_pinned?: boolean
+          last_activity_at?: string
+          profile_id: string
+          reply_count?: number
+          title: string
+          updated_at?: string
+          upvotes?: number
+          view_count?: number
+        }
+        Update: {
+          body?: string
+          category_id?: string
+          created_at?: string
+          id?: string
+          is_locked?: boolean
+          is_pinned?: boolean
+          last_activity_at?: string
+          profile_id?: string
+          reply_count?: number
+          title?: string
+          updated_at?: string
+          upvotes?: number
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_threads_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "forum_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forum_votes: {
+        Row: {
+          created_at: string
+          id: string
+          profile_id: string
+          target_id: string
+          target_type: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          profile_id: string
+          target_id: string
+          target_type: string
+          value: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          profile_id?: string
+          target_id?: string
+          target_type?: string
+          value?: number
+        }
+        Relationships: []
+      }
+      fragrance_accords: {
+        Row: {
+          accord: string
+          fragrance_id: string
+          id: string
+          strength: number
+        }
+        Insert: {
+          accord: string
+          fragrance_id: string
+          id?: string
+          strength?: number
+        }
+        Update: {
+          accord?: string
+          fragrance_id?: string
+          id?: string
+          strength?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fragrance_accords_fragrance_id_fkey"
+            columns: ["fragrance_id"]
+            isOneToOne: false
+            referencedRelation: "fragrances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fragrance_notes: {
+        Row: {
+          fragrance_id: string
+          id: string
+          layer: string
+          note: string
+          position: number | null
+        }
+        Insert: {
+          fragrance_id: string
+          id?: string
+          layer: string
+          note: string
+          position?: number | null
+        }
+        Update: {
+          fragrance_id?: string
+          id?: string
+          layer?: string
+          note?: string
+          position?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fragrance_notes_fragrance_id_fkey"
+            columns: ["fragrance_id"]
+            isOneToOne: false
+            referencedRelation: "fragrances"
             referencedColumns: ["id"]
           },
         ]
@@ -587,6 +854,195 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      fragrance_season_votes: {
+        Row: {
+          created_at: string
+          fragrance_id: string
+          id: string
+          profile_id: string
+          tag: string
+        }
+        Insert: {
+          created_at?: string
+          fragrance_id: string
+          id?: string
+          profile_id: string
+          tag: string
+        }
+        Update: {
+          created_at?: string
+          fragrance_id?: string
+          id?: string
+          profile_id?: string
+          tag?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fragrance_season_votes_fragrance_id_fkey"
+            columns: ["fragrance_id"]
+            isOneToOne: false
+            referencedRelation: "fragrances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fragrance_suggestions: {
+        Row: {
+          brand: string
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          profile_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          year: number | null
+        }
+        Insert: {
+          brand: string
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          profile_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          year?: number | null
+        }
+        Update: {
+          brand?: string
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          profile_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
+      fragrance_user_ratings: {
+        Row: {
+          created_at: string
+          fragrance_id: string
+          id: string
+          profile_id: string
+          rating: string
+        }
+        Insert: {
+          created_at?: string
+          fragrance_id: string
+          id?: string
+          profile_id: string
+          rating: string
+        }
+        Update: {
+          created_at?: string
+          fragrance_id?: string
+          id?: string
+          profile_id?: string
+          rating?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fragrance_user_ratings_fragrance_id_fkey"
+            columns: ["fragrance_id"]
+            isOneToOne: false
+            referencedRelation: "fragrances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fragrance_variants: {
+        Row: {
+          barcode: string | null
+          batch_year: number | null
+          concentration: string
+          created_at: string
+          fragrance_id: string
+          id: string
+          size_ml: number
+        }
+        Insert: {
+          barcode?: string | null
+          batch_year?: number | null
+          concentration?: string
+          created_at?: string
+          fragrance_id: string
+          id?: string
+          size_ml: number
+        }
+        Update: {
+          barcode?: string | null
+          batch_year?: number | null
+          concentration?: string
+          created_at?: string
+          fragrance_id?: string
+          id?: string
+          size_ml?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fragrance_variants_fragrance_id_fkey"
+            columns: ["fragrance_id"]
+            isOneToOne: false
+            referencedRelation: "fragrances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fragrances: {
+        Row: {
+          approved: boolean
+          brand: string
+          created_at: string
+          description: string | null
+          gender: string | null
+          id: string
+          image_url: string | null
+          name: string
+          perfumer: string | null
+          slug: string | null
+          source: string | null
+          updated_at: string
+          year: number | null
+        }
+        Insert: {
+          approved?: boolean
+          brand: string
+          created_at?: string
+          description?: string | null
+          gender?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          perfumer?: string | null
+          slug?: string | null
+          source?: string | null
+          updated_at?: string
+          year?: number | null
+        }
+        Update: {
+          approved?: boolean
+          brand?: string
+          created_at?: string
+          description?: string | null
+          gender?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          perfumer?: string | null
+          slug?: string | null
+          source?: string | null
+          updated_at?: string
+          year?: number | null
+        }
+        Relationships: []
       }
       influencer_content: {
         Row: {
@@ -820,6 +1276,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      news_articles: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          is_ai_curated: boolean
+          published_at: string
+          source: string
+          source_url: string
+          summary: string | null
+          tags: string[] | null
+          title: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_ai_curated?: boolean
+          published_at?: string
+          source: string
+          source_url: string
+          summary?: string | null
+          tags?: string[] | null
+          title: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_ai_curated?: boolean
+          published_at?: string
+          source?: string
+          source_url?: string
+          summary?: string | null
+          tags?: string[] | null
+          title?: string
+        }
+        Relationships: []
       }
       notification_preferences: {
         Row: {
@@ -1147,6 +1645,7 @@ export type Database = {
           acquired_from: string | null
           brand: string
           created_at: string
+          fragrance_id: string | null
           id: string
           image_url: string | null
           name: string
@@ -1154,12 +1653,14 @@ export type Database = {
           profile_id: string
           size_ml: number
           type: string
+          variant_id: string | null
         }
         Insert: {
           acquired_date?: string | null
           acquired_from?: string | null
           brand: string
           created_at?: string
+          fragrance_id?: string | null
           id?: string
           image_url?: string | null
           name: string
@@ -1167,12 +1668,14 @@ export type Database = {
           profile_id: string
           size_ml: number
           type?: string
+          variant_id?: string | null
         }
         Update: {
           acquired_date?: string | null
           acquired_from?: string | null
           brand?: string
           created_at?: string
+          fragrance_id?: string | null
           id?: string
           image_url?: string | null
           name?: string
@@ -1180,8 +1683,16 @@ export type Database = {
           profile_id?: string
           size_ml?: number
           type?: string
+          variant_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "samples_decants_fragrance_id_fkey"
+            columns: ["fragrance_id"]
+            isOneToOne: false
+            referencedRelation: "fragrances"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "samples_decants_profile_id_fkey"
             columns: ["profile_id"]
@@ -1194,6 +1705,13 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "samples_decants_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "fragrance_variants"
             referencedColumns: ["id"]
           },
         ]
@@ -1412,6 +1930,36 @@ export type Database = {
             columns: ["resolved_by"]
             isOneToOne: false
             referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      thread_tags: {
+        Row: {
+          tag_id: string
+          thread_id: string
+        }
+        Insert: {
+          tag_id: string
+          thread_id: string
+        }
+        Update: {
+          tag_id?: string
+          thread_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "thread_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "forum_tags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "thread_tags_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "forum_threads"
             referencedColumns: ["id"]
           },
         ]
@@ -2138,6 +2686,38 @@ export type Database = {
       recalculate_trust_score: {
         Args: { p_profile_id: string }
         Returns: undefined
+      }
+      search_fragrances: {
+        Args: { lim?: number; q: string }
+        Returns: {
+          brand: string
+          gender: string
+          id: string
+          image_url: string
+          name: string
+          year: number
+        }[]
+      }
+      search_fragrances_by_accord: {
+        Args: { accord_q: string; lim?: number }
+        Returns: {
+          brand: string
+          id: string
+          image_url: string
+          name: string
+          strength: number
+          year: number
+        }[]
+      }
+      search_fragrances_by_note: {
+        Args: { lim?: number; note_q: string }
+        Returns: {
+          brand: string
+          id: string
+          image_url: string
+          name: string
+          year: number
+        }[]
       }
     }
     Enums: {

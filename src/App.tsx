@@ -44,6 +44,12 @@ import SellerPayouts from "./pages/SellerPayouts";
 import AdminAudit from "./pages/AdminAudit";
 import AdminListingsAudit from "./pages/AdminListingsAudit";
 import AdminImageQueue from "./pages/AdminImageQueue";
+import News from "./pages/News";
+import Forum from "./pages/Forum";
+import ForumNewThread from "./pages/ForumNewThread";
+import ForumThread from "./pages/ForumThread";
+import FragranceDetail from "./pages/FragranceDetail";
+import FragranceBrowse from "./pages/FragranceBrowse";
 
 const queryClient = new QueryClient();
 
@@ -86,6 +92,12 @@ const AnimatedRoutes = () => {
         <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
         <Route path="/onboarding" element={<PageTransition><Onboarding /></PageTransition>} />
         <Route path="/payouts" element={<PageTransition><SellerPayouts /></PageTransition>} />
+        <Route path="/news" element={<PageTransition><News /></PageTransition>} />
+        <Route path="/forum" element={<PageTransition><Forum /></PageTransition>} />
+        <Route path="/forum/new" element={<PageTransition><ForumNewThread /></PageTransition>} />
+        <Route path="/forum/thread/:id" element={<PageTransition><ForumThread /></PageTransition>} />
+        <Route path="/fragrance/:id" element={<PageTransition><FragranceDetail /></PageTransition>} />
+        <Route path="/browse" element={<PageTransition><FragranceBrowse /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>
