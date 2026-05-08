@@ -63,6 +63,13 @@ const MarketplacePage = () => {
   ]);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [hideUnverified, setHideUnverified] = useState(() => searchParams.get('verified') !== '0');
+  const [verifiedSellerOnly, setVerifiedSellerOnly] = useState(() => searchParams.get('vseller') === '1');
+  const [brandFilter, setBrandFilter] = useState<string[]>(() => {
+    const b = searchParams.get('brand');
+    return b ? b.split(',').filter(Boolean) : [];
+  });
+  const [sizeFilter, setSizeFilter] = useState<string>(() => searchParams.get('size') ?? 'all');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => (searchParams.get('view') === 'list' ? 'list' : 'grid'));
 
   // Debounce expensive filter inputs so the query doesn't fire per keystroke
   const debouncedSearch = useDebounce(search, 350);
