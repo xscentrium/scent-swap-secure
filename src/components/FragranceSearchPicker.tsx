@@ -219,3 +219,17 @@ export function FragranceSearchPicker({ open, onOpenChange, defaultPortfolio = "
     </Dialog>
   );
 }
+
+function PortfolioSelect({ profileId, value, onChange }: { profileId: string | null; value: string; onChange: (v: string) => void }) {
+  const { data: portfolios = [] } = usePortfolios(profileId);
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger><SelectValue /></SelectTrigger>
+      <SelectContent>
+        {portfolios.map(p => (
+          <SelectItem key={p.id} value={p.slug}>{p.name}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
