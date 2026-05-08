@@ -4,7 +4,7 @@ import { getImageVerification } from "@/lib/imageVerification";
 import { cn } from "@/lib/utils";
 
 export type DBVerification = {
-  status: "pending" | "verified" | "rejected" | "needs_reupload";
+  status: string;
   reason?: string | null;
   source?: string | null;
 } | null | undefined;
