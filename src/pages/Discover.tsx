@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Navigation } from '@/components/Navigation';
 import { AIRecommendations } from '@/components/AIRecommendations';
 import { FragranceLayering } from '@/components/FragranceLayering';
 import { FavoritesManager } from '@/components/FavoritesManager';
@@ -11,7 +10,19 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Sparkles, GitCompare, Search as SearchIcon } from 'lucide-react';
+import { motion } from 'framer-motion';
+import {
+  ArrowLeft,
+  Sparkles,
+  GitCompare,
+  Search as SearchIcon,
+  Layers,
+  Heart,
+  TrendingUp,
+  Users,
+  Wand2,
+  Compass,
+} from 'lucide-react';
 
 const Discover = () => {
   const { profile } = useAuth();
@@ -94,94 +105,184 @@ const Discover = () => {
   });
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
-      <main className="pt-20 pb-12">
+    <div className="min-h-screen bg-background relative">
+      {/* Ambient backdrop */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -left-40 w-[480px] h-[480px] rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute top-40 -right-40 w-[520px] h-[520px] rounded-full bg-accent/10 blur-3xl" />
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 1px 1px, hsl(var(--foreground)) 1px, transparent 0)",
+            backgroundSize: '28px 28px',
+          }}
+        />
+      </div>
+
+      <main className="relative pt-20 pb-16">
         <div className="container mx-auto px-4 max-w-6xl">
-          <Button variant="ghost" className="mb-4" asChild>
+          <Button variant="ghost" size="sm" className="mb-6" asChild>
             <Link to="/">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Home
             </Link>
           </Button>
 
-          <div className="mb-8">
-            <h1 className="text-3xl font-serif font-bold mb-2 flex items-center gap-3">
-              <Sparkles className="w-8 h-8 text-primary" />
-              Discover Fragrances
+          {/* Editorial header */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-10"
+          >
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/30 bg-primary/5 text-xs uppercase tracking-[0.18em] text-primary mb-5">
+              <Compass className="w-3.5 h-3.5" />
+              Discover
+            </div>
+            <h1 className="font-serif text-5xl md:text-6xl font-bold leading-[1.05] tracking-tight">
+              Find your next
+              <span className="block bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+                signature scent.
+              </span>
             </h1>
-            <p className="text-muted-foreground">
-              Get personalized recommendations, explore layering options, and save your favorites
+            <p className="mt-5 text-lg text-muted-foreground max-w-2xl">
+              AI-curated recommendations, expert layering pairings, and a live pulse on what the
+              community is wearing right now.
             </p>
-          </div>
 
-          {/* Quick Links */}
-          <div className="flex flex-wrap gap-3 mb-8">
-            <Button variant="outline" asChild>
-              <Link to="/compare">
-                <GitCompare className="w-4 h-4 mr-2" />
-                Compare Fragrances
-              </Link>
-            </Button>
-          </div>
+            {/* Quick action chips */}
+            <div className="mt-7 flex flex-wrap gap-3">
+              {[
+                { icon: Wand2, label: 'AI Picks', href: '#ai' },
+                { icon: Layers, label: 'Layering', href: '#layering' },
+                { icon: GitCompare, label: 'Compare', href: '/compare' },
+                { icon: TrendingUp, label: 'Trending', href: '#trending' },
+                { icon: Users, label: 'Friends', href: '#feed' },
+                { icon: Heart, label: 'Favorites', href: '#favorites' },
+              ].map((c) =>
+                c.href.startsWith('#') ? (
+                  <a
+                    key={c.label}
+                    href={c.href}
+                    className="group inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border/60 bg-card/50 backdrop-blur text-sm hover:border-primary/50 hover:bg-card transition-all"
+                  >
+                    <c.icon className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
+                    {c.label}
+                  </a>
+                ) : (
+                  <Link
+                    key={c.label}
+                    to={c.href}
+                    className="group inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border/60 bg-card/50 backdrop-blur text-sm hover:border-primary/50 hover:bg-card transition-all"
+                  >
+                    <c.icon className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
+                    {c.label}
+                  </Link>
+                )
+              )}
+            </div>
+          </motion.div>
 
           {search && (
-            <Card className="mb-6 p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <SearchIcon className="w-4 h-4 text-muted-foreground" />
-                <h2 className="font-serif text-xl">
-                  Results for "<span className="text-primary">{search}</span>"
-                </h2>
-                <Badge variant="outline" className="ml-auto">{catalogResults?.length ?? 0}</Badge>
-              </div>
-              {catalogResults && catalogResults.length > 0 ? (
-                <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
-                  {catalogResults.map((f: any) => (
-                    <Link key={f.id} to={`/fragrance/${f.id}`}>
-                      <Card className="p-4 hover:border-primary transition flex gap-3">
-                        <div className="w-14 h-14 rounded bg-muted overflow-hidden shrink-0">
-                          {f.image_url && <img src={f.image_url} alt={f.name} className="w-full h-full object-cover" />}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-xs text-muted-foreground truncate">{f.brand}</p>
-                          <p className="font-medium truncate">{f.name}</p>
-                          <div className="flex gap-1 mt-1">
-                            {f.year && <Badge variant="secondary" className="text-[10px] py-0">{f.year}</Badge>}
-                            {f.gender && <Badge variant="outline" className="text-[10px] py-0">{f.gender}</Badge>}
-                          </div>
-                        </div>
-                      </Card>
-                    </Link>
-                  ))}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-10"
+            >
+              <Card className="p-6 border-primary/20">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <SearchIcon className="w-4 h-4 text-primary" />
+                  </div>
+                  <h2 className="font-serif text-2xl">
+                    Results for{' '}
+                    <span className="italic text-primary">"{search}"</span>
+                  </h2>
+                  <Badge variant="outline" className="ml-auto">
+                    {catalogResults?.length ?? 0}
+                  </Badge>
                 </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No fragrances found in the catalog yet. Try the <Link className="underline" to="/browse">Browse</Link> page or suggest one to be added.
-                </p>
-              )}
-            </Card>
+                {catalogResults && catalogResults.length > 0 ? (
+                  <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    {catalogResults.map((f: any) => (
+                      <Link key={f.id} to={`/fragrance/${f.id}`}>
+                        <Card className="p-4 hover:border-primary transition flex gap-3">
+                          <div className="w-14 h-14 rounded bg-muted overflow-hidden shrink-0">
+                            {f.image_url && (
+                              <img
+                                src={f.image_url}
+                                alt={f.name}
+                                className="w-full h-full object-cover"
+                              />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs text-muted-foreground truncate">{f.brand}</p>
+                            <p className="font-medium truncate">{f.name}</p>
+                            <div className="flex gap-1 mt-1">
+                              {f.year && (
+                                <Badge variant="secondary" className="text-[10px] py-0">
+                                  {f.year}
+                                </Badge>
+                              )}
+                              {f.gender && (
+                                <Badge variant="outline" className="text-[10px] py-0">
+                                  {f.gender}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </Card>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No fragrances found in the catalog yet. Try the{' '}
+                    <Link className="underline" to="/browse">
+                      Browse
+                    </Link>{' '}
+                    page or suggest one to be added.
+                  </p>
+                )}
+              </Card>
+            </motion.div>
           )}
 
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-6">
-              {/* AI Recommendations */}
-              <AIRecommendations collection={collection} wishlist={wishlist} />
+              <section id="ai" className="scroll-mt-24">
+                <div className="flex items-center gap-2 mb-3 px-1">
+                  <Wand2 className="w-4 h-4 text-primary" />
+                  <h2 className="font-serif text-xl">Curated for you</h2>
+                  <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent ml-2" />
+                </div>
+                <AIRecommendations collection={collection} wishlist={wishlist} />
+              </section>
 
-              {/* Fragrance Layering */}
-              <FragranceLayering />
+              <section id="layering" className="scroll-mt-24">
+                <div className="flex items-center gap-2 mb-3 px-1">
+                  <Layers className="w-4 h-4 text-primary" />
+                  <h2 className="font-serif text-xl">The art of layering</h2>
+                  <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent ml-2" />
+                </div>
+                <FragranceLayering />
+              </section>
             </div>
 
             {/* Sidebar */}
             <div className="space-y-6">
-              {/* Social Feed - Friends Activity */}
-              <SocialFeed />
-              
-              {/* Trending Fragrances */}
-              <TrendingFragrances />
-              
-              {/* Favorites */}
-              <FavoritesManager />
+              <section id="feed" className="scroll-mt-24">
+                <SocialFeed />
+              </section>
+              <section id="trending" className="scroll-mt-24">
+                <TrendingFragrances />
+              </section>
+              <section id="favorites" className="scroll-mt-24">
+                <FavoritesManager />
+              </section>
             </div>
           </div>
         </div>
