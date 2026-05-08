@@ -34,9 +34,11 @@ type Listing = {
   listing_type: string;
   image_url: string | null;
   owner_id: string;
+  created_at?: string;
   profiles: {
     username: string;
     avatar_url: string | null;
+    id_verified?: boolean | null;
   } | null;
   image_verification?: DBVerification | DBVerification[];
 };
