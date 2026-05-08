@@ -277,7 +277,7 @@ const MarketplacePage = () => {
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
           ) : listings && listings.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
               {listings.map((listing) => (
                 <Card key={listing.id} className="group overflow-hidden hover:shadow-luxury transition-all duration-300 border-border/50">
                   <div className="aspect-square bg-muted relative overflow-hidden">
