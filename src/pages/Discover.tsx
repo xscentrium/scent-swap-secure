@@ -15,6 +15,23 @@ import { ArrowLeft, Sparkles, GitCompare, Search as SearchIcon } from 'lucide-re
 
 const Discover = () => {
   const { profile } = useAuth();
+  const [params] = useSearchParams();
+  const search = params.get('search')?.trim() ?? '';
+
+  const { data: catalogResults } = useQuery({
+    queryKey: ['discover-catalog-search', search],
+    queryFn: async () => {
+      if (!search) return [];
+      const { data } = await supabase
+        .from('fragrances')
+        .select('id, name, brand, year, image_url, gender')
+        .or(`name.ilike.%${search}%,brand.ilike.%${search}%`)
+        .eq('approved', true)
+        .limit(24);
+      return data ?? [];
+    },
+    enabled: !!search,
+  });
 
   const { data: collection } = useQuery({
     queryKey: ['collection', profile?.id],
