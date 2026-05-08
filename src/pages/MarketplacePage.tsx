@@ -696,7 +696,7 @@ const MarketplacePage = () => {
             </div>
           ) : visibleListings && visibleListings.length > 0 ? (
             <TooltipProvider delayDuration={150}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className={cn(viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6" : "grid grid-cols-1 gap-3")}>
               {visibleListings.map((listing, idx) => {
                 const dbVerification = Array.isArray(listing.image_verification)
                   ? listing.image_verification[0]
