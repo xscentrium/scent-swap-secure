@@ -268,14 +268,17 @@ export const NavigationSearch = () => {
         }
       }
 
-      // Search the fragrance catalog
+      // Search the fragrance catalog (token AND match across name/brand)
       if (activeFilter === "all" || activeFilter === "fragrances") {
-        const { data: fragrances } = await supabase
-          .from("fragrances")
+        const tokens = searchQuery.split(/\s+/).filter(t => t.length > 1);
+        let q = supabase.from("fragrances")
           .select("id, name, brand, year")
-          .or(`name.ilike.%${searchQuery}%,brand.ilike.%${searchQuery}%`)
-          .eq("approved", true)
-          .limit(activeFilter === "fragrances" ? 15 : 5);
+          .eq("approved", true);
+        for (const t of tokens) {
+          const safe = t.replace(/[%,()]/g, "");
+          q = q.or(`name.ilike.%${safe}%,brand.ilike.%${safe}%`);
+        }
+        const { data: fragrances } = await q.limit(activeFilter === "fragrances" ? 15 : 5);
 
         if (fragrances) {
           searchResults.push(
