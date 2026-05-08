@@ -12,6 +12,7 @@ import { Plus, Sparkles, Clock, Wind, Star, Sun, Moon, Snowflake, Leaf, Flower2,
 import { PersonalizedWhenToWear } from "@/components/PersonalizedWhenToWear";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { motion } from "framer-motion";
+import { Navigation } from "@/components/Navigation";
 
 const ACCORD_COLORS: Record<string, string> = {
   woody: "#6B4423", "warm spicy": "#C25E3C", aromatic: "#7DA89B", "fresh spicy": "#A8C66E",
