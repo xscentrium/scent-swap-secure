@@ -195,12 +195,14 @@ const MarketplacePage = () => {
           {/* Top toolbar */}
           <div className="flex flex-col sm:flex-row gap-3 mb-6">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
               <Input
                 placeholder="Search by name or brand..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 bg-card/60 border-border/60"
+                className="pl-10 bg-card/60 border-border/60 focus-visible:ring-primary/40"
+                aria-label="Search fragrances"
+                role="searchbox"
               />
             </div>
             <div className="flex gap-2">
