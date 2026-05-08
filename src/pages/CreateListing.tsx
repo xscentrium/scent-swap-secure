@@ -44,7 +44,10 @@ const CreateListing = () => {
     baseNotes?: string[];
     mainAccords?: string[];
     concentration?: string;
+    commonSizes?: string[];
   } | null>(null);
+  const [isVerified, setIsVerified] = useState(false);
+  const [verifiedSource, setVerifiedSource] = useState<string>('');
   
   const [formData, setFormData] = useState<{
     name: string;
