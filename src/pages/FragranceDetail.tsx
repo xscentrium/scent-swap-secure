@@ -101,7 +101,6 @@ export default function FragranceDetail() {
 
   return (
     <div className="min-h-screen">
-      <Navigation />
       {/* HERO */}
       <div className="relative overflow-hidden border-b">
         <div
