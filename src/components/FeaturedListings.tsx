@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/carousel";
 import { ShieldCheck, Star, Sparkles, Eye } from "lucide-react";
 import { FavoriteButton } from "@/components/FavoriteButton";
+import { ListingImage, isListingDisplayable } from "@/components/ListingImage";
 import { useNavigate } from "react-router-dom";
 import { ListingQuickView } from "@/components/ListingQuickView";
 
@@ -33,10 +34,10 @@ export const FeaturedListings = () => {
         `)
         .eq('is_active', true)
         .order('created_at', { ascending: false })
-        .limit(8);
+        .limit(24);
       
       if (error) throw error;
-      return data;
+      return (data ?? []).filter(isListingDisplayable).slice(0, 8);
     },
   });
 
@@ -103,10 +104,10 @@ export const FeaturedListings = () => {
                   }}
                 >
                   <div className="relative aspect-square overflow-hidden bg-muted">
-                    <img 
-                      src={listing.image_url || 'https://images.unsplash.com/photo-1541643600914-78b084683601?w=400'} 
-                      alt={listing.name}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    <ListingImage
+                      url={listing.image_url}
+                      alt={`${listing.brand} ${listing.name}`}
+                      className="group-hover:scale-110 transition-transform duration-500"
                     />
                     <div className="absolute top-3 left-3" onClick={(e) => e.stopPropagation()}>
                       <FavoriteButton
