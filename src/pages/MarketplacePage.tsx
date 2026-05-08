@@ -333,6 +333,21 @@ const MarketplacePage = () => {
 
               <Separator className="bg-border/40" />
 
+              {/* Verified-photo toggle */}
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <p className="text-xs font-medium text-foreground/80">Verified photo only</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {hideUnverified
+                      ? `${hiddenCount} hidden`
+                      : 'Showing listings without verified photos'}
+                  </p>
+                </div>
+                <Switch checked={hideUnverified} onCheckedChange={setHideUnverified} aria-label="Hide listings with unverified photos" />
+              </div>
+
+              <Separator className="bg-border/40" />
+
               {/* Price slider */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
