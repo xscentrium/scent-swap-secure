@@ -241,9 +241,15 @@ const CreateListing = () => {
       }
     }
 
-    // Validation: image is required
+    // Validation: image is required AND must come from an approved source
     if (!data.image_url) {
       toast.error('Fragrance photo is required');
+      return;
+    }
+    const { isImageAllowed, getImageVerification } = await import('@/lib/imageVerification');
+    if (!isImageAllowed(data.image_url)) {
+      const { label } = getImageVerification(data.image_url);
+      toast.error(`Image not accepted: ${label}. Upload a real product photo or use an approved source (Fragrantica, Sephora, Notino, Ulta).`);
       return;
     }
 

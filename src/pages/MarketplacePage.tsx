@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Navigation } from '@/components/Navigation';
@@ -9,10 +9,17 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Separator } from '@/components/ui/separator';
-import { Star, Shield, Search, ArrowUpDown, Loader2, X, SlidersHorizontal } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Shield, Search, ArrowUpDown, Loader2, X, SlidersHorizontal, BadgeCheck, AlertTriangle } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { FavoriteButton } from '@/components/FavoriteButton';
 import { cn } from '@/lib/utils';
+import { useDebounce } from '@/hooks/useDebounce';
+import { getImageVerification } from '@/lib/imageVerification';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
+const PRICE_MIN = 0;
+const PRICE_MAX = 1000;
+const clampPrice = (n: number) => Math.min(PRICE_MAX, Math.max(PRICE_MIN, Math.round(Number.isFinite(n) ? n : 0)));
 
 type Listing = {
   id: string;
@@ -32,15 +39,44 @@ type Listing = {
 };
 
 const MarketplacePage = () => {
-  const [search, setSearch] = useState('');
-  const [listingTypeFilter, setListingTypeFilter] = useState('all');
-  const [conditionFilter, setConditionFilter] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState('newest');
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // --- Initialize state from URL (?q=&type=&cond=&min=&max=&sort=) ---
+  const [search, setSearch] = useState(() => searchParams.get('q') ?? '');
+  const [listingTypeFilter, setListingTypeFilter] = useState(() => searchParams.get('type') ?? 'all');
+  const [conditionFilter, setConditionFilter] = useState<string[]>(() => {
+    const c = searchParams.get('cond');
+    return c ? c.split(',').filter(Boolean) : [];
+  });
+  const [sortBy, setSortBy] = useState(() => searchParams.get('sort') ?? 'newest');
+  const [priceRange, setPriceRange] = useState<[number, number]>(() => [
+    clampPrice(Number(searchParams.get('min') ?? PRICE_MIN)),
+    clampPrice(Number(searchParams.get('max') ?? PRICE_MAX)),
+  ]);
+  const [priceInput, setPriceInput] = useState<[string, string]>(() => [
+    String(clampPrice(Number(searchParams.get('min') ?? PRICE_MIN))),
+    String(clampPrice(Number(searchParams.get('max') ?? PRICE_MAX))),
+  ]);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
+  // Debounce expensive filter inputs so the query doesn't fire per keystroke
+  const debouncedSearch = useDebounce(search, 350);
+  const debouncedPriceRange = useDebounce(priceRange, 300);
+
+  // Sync state -> URL (replace, no history spam)
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (debouncedSearch) params.set('q', debouncedSearch);
+    if (listingTypeFilter !== 'all') params.set('type', listingTypeFilter);
+    if (conditionFilter.length) params.set('cond', conditionFilter.join(','));
+    if (sortBy !== 'newest') params.set('sort', sortBy);
+    if (debouncedPriceRange[0] > PRICE_MIN) params.set('min', String(debouncedPriceRange[0]));
+    if (debouncedPriceRange[1] < PRICE_MAX) params.set('max', String(debouncedPriceRange[1]));
+    setSearchParams(params, { replace: true });
+  }, [debouncedSearch, listingTypeFilter, conditionFilter, sortBy, debouncedPriceRange, setSearchParams]);
+
   const { data: listings, isLoading } = useQuery({
-    queryKey: ['listings', search, listingTypeFilter, conditionFilter, sortBy, priceRange],
+    queryKey: ['listings', debouncedSearch, listingTypeFilter, conditionFilter, sortBy, debouncedPriceRange],
     queryFn: async () => {
       let query = supabase
         .from('listings')
@@ -53,8 +89,9 @@ const MarketplacePage = () => {
         `)
         .eq('is_active', true);
 
-      if (search) {
-        query = query.or(`name.ilike.%${search}%,brand.ilike.%${search}%`);
+      if (debouncedSearch) {
+        const safe = debouncedSearch.replace(/[%,]/g, ' ').trim();
+        if (safe) query = query.or(`name.ilike.%${safe}%,brand.ilike.%${safe}%`);
       }
 
       if (listingTypeFilter !== 'all') {
@@ -65,8 +102,8 @@ const MarketplacePage = () => {
         query = query.in('condition', conditionFilter as ('new' | 'excellent' | 'good' | 'fair')[]);
       }
 
-      if (priceRange[0] > 0) query = query.gte('price', priceRange[0]);
-      if (priceRange[1] < 1000) query = query.lte('price', priceRange[1]);
+      if (debouncedPriceRange[0] > PRICE_MIN) query = query.gte('price', debouncedPriceRange[0]);
+      if (debouncedPriceRange[1] < PRICE_MAX) query = query.lte('price', debouncedPriceRange[1]);
 
       if (sortBy === 'newest') {
         query = query.order('created_at', { ascending: false });
@@ -93,8 +130,31 @@ const MarketplacePage = () => {
   const clearAll = () => {
     setListingTypeFilter('all');
     setConditionFilter([]);
-    setPriceRange([0, 1000]);
+    setPriceRange([PRICE_MIN, PRICE_MAX]);
+    setPriceInput([String(PRICE_MIN), String(PRICE_MAX)]);
   };
+
+  // Keep the editable price inputs in sync when slider moves
+  useEffect(() => {
+    setPriceInput([String(priceRange[0]), String(priceRange[1])]);
+  }, [priceRange]);
+
+  const commitPriceInput = useCallback((idx: 0 | 1) => {
+    const raw = Number(priceInput[idx]);
+    const clamped = clampPrice(Number.isFinite(raw) ? raw : (idx === 0 ? PRICE_MIN : PRICE_MAX));
+    const next: [number, number] = [...priceRange];
+    next[idx] = clamped;
+    if (next[0] > next[1]) {
+      // swap if user inverted them
+      next.reverse();
+    }
+    setPriceRange(next as [number, number]);
+  }, [priceInput, priceRange]);
+
+  const resultCount = listings?.length ?? 0;
+  const resultLabel = isLoading
+    ? 'Searching…'
+    : `${resultCount.toLocaleString()} fragrance${resultCount === 1 ? '' : 's'} found`;
 
   const typeChips = [
     { value: 'all', label: 'All' },
@@ -127,18 +187,22 @@ const MarketplacePage = () => {
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-4xl font-serif font-bold mb-2">Marketplace</h1>
-            <p className="text-muted-foreground">Browse fragrances available for trade or purchase</p>
+            <p className="text-muted-foreground" role="status" aria-live="polite">
+              {resultLabel}
+            </p>
           </div>
 
           {/* Top toolbar */}
           <div className="flex flex-col sm:flex-row gap-3 mb-6">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
               <Input
                 placeholder="Search by name or brand..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 bg-card/60 border-border/60"
+                className="pl-10 bg-card/60 border-border/60 focus-visible:ring-primary/40"
+                aria-label="Search fragrances"
+                role="searchbox"
               />
             </div>
             <div className="flex gap-2">
@@ -170,57 +234,81 @@ const MarketplacePage = () => {
 
           <div className="grid lg:grid-cols-[260px_1fr] gap-8">
             {/* Sidebar Filters */}
-            <aside className={cn(
-              "space-y-6 rounded-xl border border-border/50 bg-card/40 backdrop-blur-sm p-5 h-fit lg:sticky lg:top-24",
-              !mobileFiltersOpen && "hidden lg:block"
-            )}>
+            <aside
+              aria-label="Marketplace filters"
+              className={cn(
+                "space-y-6 rounded-xl border border-border/50 bg-card/40 backdrop-blur-sm p-5 h-fit lg:sticky lg:top-24",
+                !mobileFiltersOpen && "hidden lg:block"
+              )}
+            >
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-medium tracking-wide uppercase text-muted-foreground">Filters</h2>
                 {activeFilterCount > 0 && (
                   <button
+                    type="button"
                     onClick={clearAll}
-                    className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+                    className="text-xs text-primary hover:underline inline-flex items-center gap-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   >
-                    <X className="w-3 h-3" /> Clear
+                    <X className="w-3 h-3" aria-hidden="true" /> Clear all filters
                   </button>
                 )}
               </div>
 
-              {/* Listing Type chips */}
+              {/* Listing Type chips (radiogroup) */}
               <div className="space-y-2.5">
-                <p className="text-xs font-medium text-foreground/80">Listing type</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {typeChips.map((c) => (
-                    <button
-                      key={c.value}
-                      onClick={() => setListingTypeFilter(c.value)}
-                      className={cn(
-                        "px-2.5 py-1 rounded-full text-xs border transition-all",
-                        listingTypeFilter === c.value
-                          ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                          : "bg-transparent border-border/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
-                      )}
-                    >
-                      {c.label}
-                    </button>
-                  ))}
+                <p id="lbl-type" className="text-xs font-medium text-foreground/80">Listing type</p>
+                <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-labelledby="lbl-type">
+                  {typeChips.map((c) => {
+                    const checked = listingTypeFilter === c.value;
+                    return (
+                      <button
+                        type="button"
+                        key={c.value}
+                        role="radio"
+                        aria-checked={checked}
+                        tabIndex={checked ? 0 : -1}
+                        onClick={() => setListingTypeFilter(c.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                            e.preventDefault();
+                            const i = typeChips.findIndex((x) => x.value === listingTypeFilter);
+                            const next = e.key === 'ArrowRight'
+                              ? typeChips[(i + 1) % typeChips.length]
+                              : typeChips[(i - 1 + typeChips.length) % typeChips.length];
+                            setListingTypeFilter(next.value);
+                          }
+                        }}
+                        className={cn(
+                          "px-2.5 py-1 rounded-full text-xs border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                          checked
+                            ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                            : "bg-transparent border-border/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                        )}
+                      >
+                        {c.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               <Separator className="bg-border/40" />
 
-              {/* Condition chips (multi) */}
+              {/* Condition chips (multi-select group) */}
               <div className="space-y-2.5">
-                <p className="text-xs font-medium text-foreground/80">Condition</p>
-                <div className="flex flex-wrap gap-1.5">
+                <p id="lbl-cond" className="text-xs font-medium text-foreground/80">Condition</p>
+                <div className="flex flex-wrap gap-1.5" role="group" aria-labelledby="lbl-cond">
                   {conditionChips.map((c) => {
                     const active = conditionFilter.includes(c.value);
                     return (
                       <button
+                        type="button"
                         key={c.value}
+                        aria-pressed={active}
+                        aria-label={`Condition: ${c.label}${active ? ' (selected)' : ''}`}
                         onClick={() => toggleCondition(c.value)}
                         className={cn(
-                          "px-2.5 py-1 rounded-full text-xs border transition-all",
+                          "px-2.5 py-1 rounded-full text-xs border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                           active
                             ? "bg-primary/10 text-primary border-primary/40"
                             : "bg-transparent border-border/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
@@ -238,31 +326,44 @@ const MarketplacePage = () => {
               {/* Price slider */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium text-foreground/80">Price range</p>
-                  <span className="text-xs tabular-nums text-muted-foreground">
-                    ${priceRange[0]} – ${priceRange[1]}{priceRange[1] === 1000 ? '+' : ''}
+                  <p id="lbl-price" className="text-xs font-medium text-foreground/80">Price range</p>
+                  <span className="text-xs tabular-nums text-muted-foreground" aria-live="polite">
+                    ${priceRange[0]} – ${priceRange[1]}{priceRange[1] === PRICE_MAX ? '+' : ''}
                   </span>
                 </div>
                 <Slider
                   value={priceRange}
-                  onValueChange={(v) => setPriceRange([v[0], v[1]] as [number, number])}
-                  min={0}
-                  max={1000}
+                  onValueChange={(v) => setPriceRange([clampPrice(v[0]), clampPrice(v[1])] as [number, number])}
+                  min={PRICE_MIN}
+                  max={PRICE_MAX}
                   step={10}
                   className="py-1"
+                  aria-label="Price range, in dollars"
                 />
                 <div className="flex items-center gap-2">
                   <Input
                     type="number"
-                    value={priceRange[0]}
-                    onChange={(e) => setPriceRange([Math.max(0, Number(e.target.value) || 0), priceRange[1]])}
+                    inputMode="numeric"
+                    min={PRICE_MIN}
+                    max={PRICE_MAX}
+                    value={priceInput[0]}
+                    onChange={(e) => setPriceInput([e.target.value, priceInput[1]])}
+                    onBlur={() => commitPriceInput(0)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commitPriceInput(0); } }}
+                    aria-label="Minimum price"
                     className="h-8 text-xs"
                   />
-                  <span className="text-muted-foreground text-xs">to</span>
+                  <span className="text-muted-foreground text-xs" aria-hidden="true">to</span>
                   <Input
                     type="number"
-                    value={priceRange[1]}
-                    onChange={(e) => setPriceRange([priceRange[0], Math.min(1000, Number(e.target.value) || 0)])}
+                    inputMode="numeric"
+                    min={PRICE_MIN}
+                    max={PRICE_MAX}
+                    value={priceInput[1]}
+                    onChange={(e) => setPriceInput([priceInput[0], e.target.value])}
+                    onBlur={() => commitPriceInput(1)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commitPriceInput(1); } }}
+                    aria-label="Maximum price"
                     className="h-8 text-xs"
                   />
                 </div>
@@ -277,86 +378,126 @@ const MarketplacePage = () => {
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
           ) : listings && listings.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-              {listings.map((listing) => (
-                <Card key={listing.id} className="group overflow-hidden hover:shadow-luxury transition-all duration-300 border-border/50">
-                  <div className="aspect-square bg-muted relative overflow-hidden">
+            <TooltipProvider delayDuration={150}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              {listings.map((listing) => {
+                const verification = getImageVerification(listing.image_url);
+                return (
+                <Card
+                  key={listing.id}
+                  className="group relative overflow-hidden rounded-2xl border border-border/40 bg-card/80 hover:border-primary/30 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-22px_hsl(35_38%_48%/0.35)] transition-all duration-500"
+                >
+                  <div className="aspect-[4/5] bg-gradient-to-b from-muted/40 to-muted/10 relative overflow-hidden">
                     {listing.image_url ? (
                       <img
                         src={listing.image_url}
-                        alt={listing.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        alt={`${listing.brand} ${listing.name}`}
+                        loading="lazy"
+                        className="w-full h-full object-contain p-6 transition-transform duration-700 ease-out group-hover:scale-[1.04]"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground/60 text-xs tracking-widest uppercase">
                         No Image
                       </div>
                     )}
-                    <div className="absolute top-3 left-3">
+
+                    {/* Top-left: favorite + verified badge */}
+                    <div className="absolute top-3 left-3 flex flex-col gap-2">
                       <FavoriteButton
                         name={listing.name}
                         brand={listing.brand}
                         imageUrl={listing.image_url || undefined}
-                        className="bg-background/80 hover:bg-background"
+                        className="bg-background/85 backdrop-blur-sm hover:bg-background"
                       />
+                      {(verification.status === 'verified' || verification.status === 'uploaded') && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-background/85 backdrop-blur-sm border border-primary/30 text-primary">
+                              <BadgeCheck className="w-3 h-3" aria-hidden="true" />
+                              {verification.status === 'verified' ? 'Verified' : 'Seller photo'}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="right">{verification.label}</TooltipContent>
+                        </Tooltip>
+                      )}
+                      {(verification.status === 'unverified' || verification.status === 'banned') && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-background/85 backdrop-blur-sm border border-warning/40 text-warning">
+                              <AlertTriangle className="w-3 h-3" aria-hidden="true" />
+                              Unverified
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="right">{verification.label}</TooltipContent>
+                        </Tooltip>
+                      )}
                     </div>
-                    <div className="absolute top-3 right-3 flex flex-col gap-2">
+
+                    {/* Top-right: type chip */}
+                    <div className="absolute top-3 right-3">
                       {listing.listing_type === 'trade' && (
-                        <Badge className="bg-accent text-accent-foreground">Trade Only</Badge>
+                        <span className="text-[10px] tracking-[0.18em] uppercase px-2.5 py-1 rounded-full bg-background/85 backdrop-blur-sm border border-border/60 text-foreground/80">Trade</span>
                       )}
                       {listing.listing_type === 'sale' && (
-                        <Badge className="bg-primary text-primary-foreground">For Sale</Badge>
+                        <span className="text-[10px] tracking-[0.18em] uppercase px-2.5 py-1 rounded-full bg-primary/95 text-primary-foreground">For Sale</span>
                       )}
                       {listing.listing_type === 'both' && (
-                        <Badge className="gradient-primary text-primary-foreground border-0">Sale/Trade</Badge>
+                        <span className="text-[10px] tracking-[0.18em] uppercase px-2.5 py-1 rounded-full bg-background/85 backdrop-blur-sm border border-primary/40 text-primary">Sale · Trade</span>
                       )}
                     </div>
                   </div>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h3 className="font-semibold text-lg leading-tight">{listing.name}</h3>
-                        <p className="text-sm text-muted-foreground">{listing.brand}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Badge variant="outline" className={getConditionColor(listing.condition)}>
+
+                  <CardContent className="px-6 pt-6 pb-3 space-y-2.5">
+                    <p className="text-[10px] tracking-[0.22em] uppercase text-muted-foreground">
+                      {listing.brand}
+                    </p>
+                    <h3 className="font-serif text-xl leading-snug text-foreground">
+                      {listing.name}
+                    </h3>
+                    <div className="flex items-center gap-2 pt-1">
+                      <span className="text-[11px] tracking-wider uppercase text-muted-foreground">
                         {listing.condition}
-                      </Badge>
-                      <span className="text-sm text-muted-foreground">{listing.size}</span>
+                      </span>
+                      <span className="text-muted-foreground/40">·</span>
+                      <span className="text-[11px] text-muted-foreground">{listing.size}</span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      {listing.price && (
-                        <span className="text-xl font-bold text-primary">${listing.price}</span>
-                      )}
-                      {listing.estimated_value && !listing.price && (
+                  </CardContent>
+
+                  <CardFooter className="px-6 pb-6 pt-2 flex items-center justify-between gap-4">
+                    <div className="flex flex-col">
+                      {listing.price ? (
+                        <span className="font-serif text-2xl text-primary leading-none">
+                          ${listing.price}
+                        </span>
+                      ) : listing.estimated_value ? (
                         <span className="text-sm text-muted-foreground">
                           Est. ${listing.estimated_value}
                         </span>
-                      )}
+                      ) : null}
                       {listing.profiles && (
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Shield className="w-3 h-3" />
-                          <span>@{listing.profiles.username}</span>
-                        </div>
+                        <span className="mt-1 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                          <Shield className="w-3 h-3" aria-hidden="true" />
+                          @{listing.profiles.username}
+                        </span>
                       )}
                     </div>
-                  </CardContent>
-                  <CardFooter className="p-4 pt-0 gap-2">
-                    {listing.listing_type !== 'trade' && (
-                      <Button size="sm" className="flex-1">
-                        Buy Now
+                    {listing.listing_type !== 'sale' ? (
+                      <Button size="sm" variant="outline" className="rounded-full border-border/60" asChild>
+                        <Link to={`/trade/${listing.id}`}>
+                          {listing.listing_type === 'trade' ? 'Propose Trade' : 'Trade'}
+                        </Link>
                       </Button>
-                    )}
-                    {listing.listing_type !== 'sale' && (
-                      <Button size="sm" variant="outline" className="flex-1" asChild>
-                        <Link to={`/trade/${listing.id}`}>Propose Trade</Link>
+                    ) : (
+                      <Button size="sm" className="rounded-full">
+                        Buy Now
                       </Button>
                     )}
                   </CardFooter>
                 </Card>
-              ))}
+                );
+              })}
             </div>
+            </TooltipProvider>
           ) : (
             <div className="text-center py-12">
               <p className="text-muted-foreground mb-4">No listings found</p>

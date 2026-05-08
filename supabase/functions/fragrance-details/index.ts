@@ -90,9 +90,10 @@ Season/Day ratings are 1-5. Be accurate with known fragrance data.`
       console.error('Failed to parse fragrance details:', e);
     }
 
-    // Add placeholder image
+    // Do not attach placeholder images — verified-image workflow requires
+    // sellers to upload a real product photo.
     if (details) {
-      details.imageUrl = `https://picsum.photos/seed/${encodeURIComponent(name + brand)}/400/400`;
+      details.imageUrl = null;
     }
 
     return new Response(

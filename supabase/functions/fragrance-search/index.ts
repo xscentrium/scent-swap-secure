@@ -99,11 +99,9 @@ serve(async (req) => {
           console.error('Failed to generate image for', suggestion.name, e);
         }
         
-        // Fallback to placeholder if image generation fails
-        return {
-          ...suggestion,
-          imageUrl: `https://picsum.photos/seed/${encodeURIComponent(suggestion.name + suggestion.brand)}/80/80`,
-        };
+        // No placeholder fallback — keep imageUrl empty so the seller is forced
+        // to upload a real product photo (verified-image workflow).
+        return { ...suggestion, imageUrl: null };
       })
     );
 
