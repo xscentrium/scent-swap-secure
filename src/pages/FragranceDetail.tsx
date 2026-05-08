@@ -12,6 +12,7 @@ import { Plus, Sparkles, Clock, Wind, Star, Sun, Moon, Snowflake, Leaf, Flower2,
 import { PersonalizedWhenToWear } from "@/components/PersonalizedWhenToWear";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { motion } from "framer-motion";
+import { Navigation } from "@/components/Navigation";
 
 const ACCORD_COLORS: Record<string, string> = {
   woody: "#6B4423", "warm spicy": "#C25E3C", aromatic: "#7DA89B", "fresh spicy": "#A8C66E",
@@ -74,10 +75,13 @@ export default function FragranceDetail() {
 
   if (!frag) {
     return (
-      <div className="container max-w-6xl py-8 space-y-6">
-        <Skeleton className="h-96 w-full rounded-xl" />
-        <Skeleton className="h-32 w-full" />
-      </div>
+      <>
+        <Navigation />
+        <div className="container max-w-6xl py-8 space-y-6">
+          <Skeleton className="h-96 w-full rounded-xl" />
+          <Skeleton className="h-32 w-full" />
+        </div>
+      </>
     );
   }
 
@@ -100,6 +104,7 @@ export default function FragranceDetail() {
 
   return (
     <div className="min-h-screen">
+      <Navigation />
       {/* HERO */}
       <div className="relative overflow-hidden border-b">
         <div
