@@ -187,7 +187,9 @@ const MarketplacePage = () => {
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-4xl font-serif font-bold mb-2">Marketplace</h1>
-            <p className="text-muted-foreground">Browse fragrances available for trade or purchase</p>
+            <p className="text-muted-foreground" role="status" aria-live="polite">
+              {resultLabel}
+            </p>
           </div>
 
           {/* Top toolbar */}
