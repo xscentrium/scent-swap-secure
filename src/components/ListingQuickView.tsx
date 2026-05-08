@@ -29,6 +29,9 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { BatchCodeStatus } from '@/components/BatchCodeStatus';
 import { ListingEscrowTimeline } from '@/components/ListingEscrowTimeline';
+import { ListingImage, verificationLabel, type DBVerification } from '@/components/ListingImage';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertTriangle, BadgeCheck, ImageOff } from 'lucide-react';
 
 type FragranceDetails = {
   name: string;
