@@ -13,6 +13,8 @@ import { PersonalizedWhenToWear } from "@/components/PersonalizedWhenToWear";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { motion } from "framer-motion";
 import { FragrancePairings } from "@/components/FragrancePairings";
+import { FragranceBuyLinks } from "@/components/FragranceBuyLinks";
+import { FragranceOpenTrades } from "@/components/FragranceOpenTrades";
 
 const ACCORD_COLORS: Record<string, string> = {
   woody: "#6B4423", "warm spicy": "#C25E3C", aromatic: "#7DA89B", "fresh spicy": "#A8C66E",
@@ -231,51 +233,62 @@ export default function FragranceDetail() {
         </Card>
 
         {/* Performance & Seasons */}
-        {(ai?.longevity || ai?.sillage || ai?.seasonRating || ai?.dayNightRating) && (
-          <div className="grid md:grid-cols-2 gap-6">
-            <Card className="p-6 space-y-5">
-              <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Performance</p>
-              <div className="grid grid-cols-2 gap-4">
-                {ai?.longevity && (
-                  <div className="flex items-center gap-3">
-                    <Clock className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Longevity</p>
-                      <p className="text-sm font-medium">{ai.longevity}</p>
-                    </div>
-                  </div>
-                )}
-                {ai?.sillage && (
-                  <div className="flex items-center gap-3">
-                    <Wind className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Sillage</p>
-                      <p className="text-sm font-medium">{ai.sillage}</p>
-                    </div>
-                  </div>
-                )}
+        <div className="grid md:grid-cols-2 gap-6">
+          <Card className="p-6 space-y-5">
+            <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Performance</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center gap-3">
+                <Clock className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Longevity</p>
+                  {ai?.longevity ? (
+                    <p className="text-sm font-medium">{ai.longevity}</p>
+                  ) : aiLoading ? (
+                    <Skeleton className="h-4 w-20 mt-1" />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">—</p>
+                  )}
+                </div>
               </div>
-              {ai?.dayNightRating && (
-                <div className="grid grid-cols-2 gap-4 pt-2">
-                  <RatingChip icon={<Sun className="h-4 w-4 text-amber-500" />} label="Day" value={ai.dayNightRating.day} />
-                  <RatingChip icon={<Moon className="h-4 w-4 text-indigo-400" />} label="Night" value={ai.dayNightRating.night} />
+              <div className="flex items-center gap-3">
+                <Wind className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Sillage</p>
+                  {ai?.sillage ? (
+                    <p className="text-sm font-medium">{ai.sillage}</p>
+                  ) : aiLoading ? (
+                    <Skeleton className="h-4 w-20 mt-1" />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">—</p>
+                  )}
                 </div>
-              )}
-            </Card>
-
-            {ai?.seasonRating && (
-              <Card className="p-6 space-y-4">
-                <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Best seasons</p>
-                <div className="grid grid-cols-4 gap-3">
-                  <SeasonChip icon={<Flower2 className="h-4 w-4" />} label="Spring" value={ai.seasonRating.spring} />
-                  <SeasonChip icon={<Sun className="h-4 w-4" />} label="Summer" value={ai.seasonRating.summer} />
-                  <SeasonChip icon={<Leaf className="h-4 w-4" />} label="Fall" value={ai.seasonRating.fall} />
-                  <SeasonChip icon={<Snowflake className="h-4 w-4" />} label="Winter" value={ai.seasonRating.winter} />
-                </div>
-              </Card>
+              </div>
+            </div>
+            {ai?.dayNightRating && (
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                <RatingChip icon={<Sun className="h-4 w-4 text-amber-500" />} label="Day" value={ai.dayNightRating.day} />
+                <RatingChip icon={<Moon className="h-4 w-4 text-indigo-400" />} label="Night" value={ai.dayNightRating.night} />
+              </div>
             )}
-          </div>
-        )}
+          </Card>
+
+          {ai?.seasonRating ? (
+            <Card className="p-6 space-y-4">
+              <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Best seasons</p>
+              <div className="grid grid-cols-4 gap-3">
+                <SeasonChip icon={<Flower2 className="h-4 w-4" />} label="Spring" value={ai.seasonRating.spring} />
+                <SeasonChip icon={<Sun className="h-4 w-4" />} label="Summer" value={ai.seasonRating.summer} />
+                <SeasonChip icon={<Leaf className="h-4 w-4" />} label="Fall" value={ai.seasonRating.fall} />
+                <SeasonChip icon={<Snowflake className="h-4 w-4" />} label="Winter" value={ai.seasonRating.winter} />
+              </div>
+            </Card>
+          ) : aiLoading ? (
+            <Card className="p-6"><Skeleton className="h-24 w-full" /></Card>
+          ) : null}
+        </div>
+
+        <FragranceBuyLinks name={frag.name} brand={frag.brand} />
+        <FragranceOpenTrades name={frag.name} brand={frag.brand} />
 
         <FragrancePairings fragranceId={frag.id} name={frag.name} brand={frag.brand} />
 
