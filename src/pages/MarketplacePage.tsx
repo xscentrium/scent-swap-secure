@@ -81,6 +81,17 @@ const MarketplacePage = () => {
     setSearchParams(params, { replace: true });
   }, [debouncedSearch, listingTypeFilter, conditionFilter, sortBy, debouncedPriceRange, hideUnverified, setSearchParams]);
 
+  // Live-update when admin approves/rejects an image or a seller replaces it
+  useEffect(() => {
+    const ch = supabase
+      .channel('marketplace-image-verifications')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'listing_image_verifications' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['listings'] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [queryClient]);
+
   const { data: listings, isLoading } = useQuery({
     queryKey: ['listings', debouncedSearch, listingTypeFilter, conditionFilter, sortBy, debouncedPriceRange],
     queryFn: async () => {
