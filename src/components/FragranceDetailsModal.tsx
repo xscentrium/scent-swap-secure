@@ -14,6 +14,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FragranceReviews } from '@/components/FragranceReviews';
 import { PriceTracker } from '@/components/PriceTracker';
 import { FavoriteButton } from '@/components/FavoriteButton';
+import { AccordsBar } from '@/components/AccordsBar';
+import { RatingBars } from '@/components/RatingBars';
+import { useEffect } from 'react';
 import { Star, Sun, Moon, Snowflake, Leaf, Flower2, CloudSun, Clock, Wind } from 'lucide-react';
 
 type FragranceDetails = {
