@@ -56,6 +56,14 @@ export const FragranceDetailsModal = ({
   imageUrl,
   onSelectSimilar,
 }: FragranceDetailsModalProps) => {
+  const [catalogId, setCatalogId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open || !name || !brand) return;
+    supabase.from('fragrances').select('id').ilike('name', name).ilike('brand', brand).maybeSingle()
+      .then(({ data }) => setCatalogId(data?.id ?? null));
+  }, [open, name, brand]);
+
   const { data: details, isLoading, error } = useQuery({
     queryKey: ['fragrance-details', name, brand],
     queryFn: async () => {
