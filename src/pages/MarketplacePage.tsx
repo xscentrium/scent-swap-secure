@@ -38,6 +38,7 @@ type Listing = {
     username: string;
     avatar_url: string | null;
   } | null;
+  image_verification?: DBVerification | DBVerification[];
 };
 
 const MarketplacePage = () => {
