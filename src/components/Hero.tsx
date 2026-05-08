@@ -8,12 +8,17 @@ import { supabase } from "@/integrations/supabase/client";
 
 type HeroListing = { id: string; name: string; brand: string; image_url: string | null };
 
+// Respect users who prefer reduced motion: disable parallax & long fades.
+const prefersReducedMotion = typeof window !== "undefined"
+  && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
 export const Hero = () => {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
-  const yImg = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
-  const yText = useTransform(scrollYProgress, [0, 1], ["0%", "-10%"]);
-  const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+  // Smaller parallax distance + GPU-friendly transform-only animation
+  const yImg = useTransform(scrollYProgress, [0, 1], ["0%", prefersReducedMotion ? "0%" : "12%"]);
+  const yText = useTransform(scrollYProgress, [0, 1], ["0%", prefersReducedMotion ? "0%" : "-6%"]);
+  const opacity = useTransform(scrollYProgress, [0, 0.85], [1, 0]);
 
   const [index, setIndex] = useState(0);
 
