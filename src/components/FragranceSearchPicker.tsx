@@ -39,9 +39,22 @@ export function FragranceSearchPicker({ open, onOpenChange, defaultPortfolio = "
       .then(({ data }) => setProfileId(data?.id ?? null));
   }, [user]);
 
+  // preselect support
+  useEffect(() => {
+    if (open && preselectedFragrance) {
+      setSelected({
+        id: preselectedFragrance.id,
+        brand: preselectedFragrance.brand,
+        name: preselectedFragrance.name,
+        year: preselectedFragrance.year ?? null,
+        image_url: preselectedFragrance.image_url ?? null,
+      });
+    }
+  }, [open, preselectedFragrance]);
+
   // debounced search
   useEffect(() => {
-    if (!open) return;
+    if (!open || preselectedFragrance) return;
     const t = setTimeout(async () => {
       setLoading(true);
       const { data, error } = await supabase.rpc("search_fragrances", { q, lim: 25 });
