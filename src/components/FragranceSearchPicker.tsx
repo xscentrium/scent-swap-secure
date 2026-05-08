@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Search, Plus } from "lucide-react";
+import { Loader2, Search, Plus, Settings2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { PortfolioManager, usePortfolios } from "@/components/PortfolioManager";
 
 type Frag = { id: string; brand: string; name: string; year: number | null; image_url: string | null };
 type Variant = { id: string; concentration: string; size_ml: number; batch_year: number | null };
@@ -191,16 +192,20 @@ export function FragranceSearchPicker({ open, onOpenChange, defaultPortfolio = "
                 </Select>
               </div>
               <div>
-                <label className="text-xs uppercase text-muted-foreground">Portfolio</label>
-                <Select value={portfolio} onValueChange={setPortfolio}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="main">Main collection</SelectItem>
-                    <SelectItem value="wishlist">Wishlist</SelectItem>
-                    <SelectItem value="sold">Sold</SelectItem>
-                    <SelectItem value="samples">Samples & decants</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs uppercase text-muted-foreground">Portfolio</label>
+                  {profileId && (
+                    <PortfolioManager
+                      profileId={profileId}
+                      trigger={
+                        <button type="button" className="text-xs text-primary hover:underline inline-flex items-center gap-1">
+                          <Settings2 className="h-3 w-3" /> Manage
+                        </button>
+                      }
+                    />
+                  )}
+                </div>
+                <PortfolioSelect profileId={profileId} value={portfolio} onChange={setPortfolio} />
               </div>
             </div>
 
@@ -212,5 +217,19 @@ export function FragranceSearchPicker({ open, onOpenChange, defaultPortfolio = "
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function PortfolioSelect({ profileId, value, onChange }: { profileId: string | null; value: string; onChange: (v: string) => void }) {
+  const { data: portfolios = [] } = usePortfolios(profileId);
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger><SelectValue /></SelectTrigger>
+      <SelectContent>
+        {portfolios.map(p => (
+          <SelectItem key={p.id} value={p.slug}>{p.name}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
