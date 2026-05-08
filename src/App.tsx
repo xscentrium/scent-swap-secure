@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { AccountSetupDialog } from "@/components/AccountSetupDialog";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PageTransition } from "@/components/PageTransition";
+import { Layout } from "@/components/Layout";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { ThemeProvider } from "next-themes";
 import { AnimatePresence } from "framer-motion";
@@ -57,7 +58,8 @@ const AnimatedRoutes = () => {
   const location = useLocation();
   
   return (
-    <AnimatePresence mode="wait">
+    <Layout>
+      <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<PageTransition><Index /></PageTransition>} />
         <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
@@ -100,7 +102,8 @@ const AnimatedRoutes = () => {
         <Route path="/browse" element={<PageTransition><FragranceBrowse /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
-    </AnimatePresence>
+      </AnimatePresence>
+    </Layout>
   );
 };
 

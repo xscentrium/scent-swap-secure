@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { fragrances, goal } = await req.json();
+    const { fragrances, goal, anchor } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -22,7 +22,13 @@ serve(async (req) => {
 
     let userPrompt = '';
 
-    if (fragrances && fragrances.length > 0) {
+    if (anchor && anchor.name && anchor.brand) {
+      userPrompt = `Suggest 6 fragrances that layer beautifully WITH "${anchor.name}" by "${anchor.brand}".
+For each pairing, consider the anchor's note profile and recommend a partner fragrance (real, well-known) that complements or enhances it.
+
+Return as JSON: { "pairings": [{ "partnerName": string, "partnerBrand": string, "reason": string, "layeringMethod": string, "resultProfile": string, "bestFor": string[], "compatibility": number (1-10) }] }
+Order by compatibility descending. No prose outside JSON.`;
+    } else if (fragrances && fragrances.length > 0) {
       userPrompt = `Analyze these fragrances for layering compatibility: ${JSON.stringify(fragrances)}
 
 For each possible combination, provide:
@@ -52,7 +58,7 @@ Return as JSON: { "suggestions": [{ "fragrances": [{ "name": string, "brand": st
 Return as JSON: { "suggestions": [{ "fragrances": [{ "name": string, "brand": string }], "reason": string, "layeringMethod": string, "resultProfile": string, "popularity": string }] }`;
     }
 
-    console.log('Fetching AI layering suggestions:', { fragranceCount: fragrances?.length, goal });
+    console.log('Fetching AI layering:', { anchor, fragranceCount: fragrances?.length, goal });
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',

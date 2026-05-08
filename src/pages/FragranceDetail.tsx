@@ -12,7 +12,7 @@ import { Plus, Sparkles, Clock, Wind, Star, Sun, Moon, Snowflake, Leaf, Flower2,
 import { PersonalizedWhenToWear } from "@/components/PersonalizedWhenToWear";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { motion } from "framer-motion";
-import { Navigation } from "@/components/Navigation";
+import { FragrancePairings } from "@/components/FragrancePairings";
 
 const ACCORD_COLORS: Record<string, string> = {
   woody: "#6B4423", "warm spicy": "#C25E3C", aromatic: "#7DA89B", "fresh spicy": "#A8C66E",
@@ -75,13 +75,10 @@ export default function FragranceDetail() {
 
   if (!frag) {
     return (
-      <>
-        <Navigation />
-        <div className="container max-w-6xl py-8 space-y-6">
-          <Skeleton className="h-96 w-full rounded-xl" />
-          <Skeleton className="h-32 w-full" />
-        </div>
-      </>
+      <div className="container max-w-6xl pt-24 pb-8 space-y-6">
+        <Skeleton className="h-96 w-full rounded-xl" />
+        <Skeleton className="h-32 w-full" />
+      </div>
     );
   }
 
@@ -103,8 +100,7 @@ export default function FragranceDetail() {
   const perfumer = frag.perfumer || ai?.perfumer;
 
   return (
-    <div className="min-h-screen">
-      <Navigation />
+    <div className="min-h-screen pt-16">
       {/* HERO */}
       <div className="relative overflow-hidden border-b">
         <div
@@ -280,6 +276,8 @@ export default function FragranceDetail() {
             )}
           </div>
         )}
+
+        <FragrancePairings fragranceId={frag.id} name={frag.name} brand={frag.brand} />
 
         <RatingBars fragranceId={frag.id} />
 
