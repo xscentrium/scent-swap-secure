@@ -156,10 +156,14 @@ const MarketplacePage = () => {
     setPriceRange(next as [number, number]);
   }, [priceInput, priceRange]);
 
-  const resultCount = listings?.length ?? 0;
+  const allListings = listings ?? [];
+  const displayable = useMemo(() => allListings.filter((l) => isListingDisplayable(l as any)), [allListings]);
+  const visibleListings = hideUnverified ? displayable : allListings;
+  const hiddenCount = allListings.length - displayable.length;
+  const resultCount = visibleListings.length;
   const resultLabel = isLoading
     ? 'Searching…'
-    : `${resultCount.toLocaleString()} fragrance${resultCount === 1 ? '' : 's'} found`;
+    : `${resultCount.toLocaleString()} fragrance${resultCount === 1 ? '' : 's'} found${hideUnverified && hiddenCount ? ` · ${hiddenCount} hidden (unverified photo)` : ''}`;
 
   const typeChips = [
     { value: 'all', label: 'All' },
