@@ -17,9 +17,11 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   defaultPortfolio?: "main" | "wishlist" | "sold" | "samples";
   onAdded?: () => void;
+  /** Pre-select a fragrance and skip search step */
+  preselectedFragrance?: { id: string; brand: string; name: string; year?: number | null; image_url?: string | null };
 }
 
-export function FragranceSearchPicker({ open, onOpenChange, defaultPortfolio = "main", onAdded }: Props) {
+export function FragranceSearchPicker({ open, onOpenChange, defaultPortfolio = "main", onAdded, preselectedFragrance }: Props) {
   const { user } = useAuth();
   const [q, setQ] = useState("");
   const [results, setResults] = useState<Frag[]>([]);
@@ -37,9 +39,22 @@ export function FragranceSearchPicker({ open, onOpenChange, defaultPortfolio = "
       .then(({ data }) => setProfileId(data?.id ?? null));
   }, [user]);
 
+  // preselect support
+  useEffect(() => {
+    if (open && preselectedFragrance) {
+      setSelected({
+        id: preselectedFragrance.id,
+        brand: preselectedFragrance.brand,
+        name: preselectedFragrance.name,
+        year: preselectedFragrance.year ?? null,
+        image_url: preselectedFragrance.image_url ?? null,
+      });
+    }
+  }, [open, preselectedFragrance]);
+
   // debounced search
   useEffect(() => {
-    if (!open) return;
+    if (!open || preselectedFragrance) return;
     const t = setTimeout(async () => {
       setLoading(true);
       const { data, error } = await supabase.rpc("search_fragrances", { q, lim: 25 });
