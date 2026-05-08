@@ -71,7 +71,11 @@ export default function FragranceDetail() {
         <Link className="underline" to="/discover">← Back to discover</Link>
       </p>
 
-      <FragranceSearchPicker open={pickerOpen} onOpenChange={setPickerOpen} />
+      <FragranceSearchPicker
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        preselectedFragrance={frag}
+      />
     </div>
   );
 }
