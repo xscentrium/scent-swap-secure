@@ -365,6 +365,8 @@ const MarketplacePage = () => {
               </Button>
             </div>
           )}
+            </div>
+          </div>
         </div>
       </main>
     </div>
