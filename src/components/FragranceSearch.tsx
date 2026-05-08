@@ -20,6 +20,7 @@ interface FragranceSearchProps {
   nameId?: string;
   brandId?: string;
   required?: boolean;
+  disabled?: boolean;
 }
 
 export const FragranceSearch = ({
