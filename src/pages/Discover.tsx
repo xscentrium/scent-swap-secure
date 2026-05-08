@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Navigation } from '@/components/Navigation';
 import { AIRecommendations } from '@/components/AIRecommendations';
 import { FragranceLayering } from '@/components/FragranceLayering';
@@ -9,7 +9,9 @@ import { TrendingFragrances } from '@/components/TrendingFragrances';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Sparkles, GitCompare } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, Sparkles, GitCompare, Search as SearchIcon } from 'lucide-react';
 
 const Discover = () => {
   const { profile } = useAuth();
