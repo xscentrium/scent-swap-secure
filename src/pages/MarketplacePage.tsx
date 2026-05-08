@@ -378,86 +378,126 @@ const MarketplacePage = () => {
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
           ) : listings && listings.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-              {listings.map((listing) => (
-                <Card key={listing.id} className="group overflow-hidden hover:shadow-luxury transition-all duration-300 border-border/50">
-                  <div className="aspect-square bg-muted relative overflow-hidden">
+            <TooltipProvider delayDuration={150}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              {listings.map((listing) => {
+                const verification = getImageVerification(listing.image_url);
+                return (
+                <Card
+                  key={listing.id}
+                  className="group relative overflow-hidden rounded-2xl border border-border/40 bg-card/80 hover:border-primary/30 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-22px_hsl(35_38%_48%/0.35)] transition-all duration-500"
+                >
+                  <div className="aspect-[4/5] bg-gradient-to-b from-muted/40 to-muted/10 relative overflow-hidden">
                     {listing.image_url ? (
                       <img
                         src={listing.image_url}
-                        alt={listing.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        alt={`${listing.brand} ${listing.name}`}
+                        loading="lazy"
+                        className="w-full h-full object-contain p-6 transition-transform duration-700 ease-out group-hover:scale-[1.04]"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground/60 text-xs tracking-widest uppercase">
                         No Image
                       </div>
                     )}
-                    <div className="absolute top-3 left-3">
+
+                    {/* Top-left: favorite + verified badge */}
+                    <div className="absolute top-3 left-3 flex flex-col gap-2">
                       <FavoriteButton
                         name={listing.name}
                         brand={listing.brand}
                         imageUrl={listing.image_url || undefined}
-                        className="bg-background/80 hover:bg-background"
+                        className="bg-background/85 backdrop-blur-sm hover:bg-background"
                       />
+                      {(verification.status === 'verified' || verification.status === 'uploaded') && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-background/85 backdrop-blur-sm border border-primary/30 text-primary">
+                              <BadgeCheck className="w-3 h-3" aria-hidden="true" />
+                              {verification.status === 'verified' ? 'Verified' : 'Seller photo'}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="right">{verification.label}</TooltipContent>
+                        </Tooltip>
+                      )}
+                      {(verification.status === 'unverified' || verification.status === 'banned') && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-background/85 backdrop-blur-sm border border-warning/40 text-warning">
+                              <AlertTriangle className="w-3 h-3" aria-hidden="true" />
+                              Unverified
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="right">{verification.label}</TooltipContent>
+                        </Tooltip>
+                      )}
                     </div>
-                    <div className="absolute top-3 right-3 flex flex-col gap-2">
+
+                    {/* Top-right: type chip */}
+                    <div className="absolute top-3 right-3">
                       {listing.listing_type === 'trade' && (
-                        <Badge className="bg-accent text-accent-foreground">Trade Only</Badge>
+                        <span className="text-[10px] tracking-[0.18em] uppercase px-2.5 py-1 rounded-full bg-background/85 backdrop-blur-sm border border-border/60 text-foreground/80">Trade</span>
                       )}
                       {listing.listing_type === 'sale' && (
-                        <Badge className="bg-primary text-primary-foreground">For Sale</Badge>
+                        <span className="text-[10px] tracking-[0.18em] uppercase px-2.5 py-1 rounded-full bg-primary/95 text-primary-foreground">For Sale</span>
                       )}
                       {listing.listing_type === 'both' && (
-                        <Badge className="gradient-primary text-primary-foreground border-0">Sale/Trade</Badge>
+                        <span className="text-[10px] tracking-[0.18em] uppercase px-2.5 py-1 rounded-full bg-background/85 backdrop-blur-sm border border-primary/40 text-primary">Sale · Trade</span>
                       )}
                     </div>
                   </div>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h3 className="font-semibold text-lg leading-tight">{listing.name}</h3>
-                        <p className="text-sm text-muted-foreground">{listing.brand}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Badge variant="outline" className={getConditionColor(listing.condition)}>
+
+                  <CardContent className="px-6 pt-6 pb-3 space-y-2.5">
+                    <p className="text-[10px] tracking-[0.22em] uppercase text-muted-foreground">
+                      {listing.brand}
+                    </p>
+                    <h3 className="font-serif text-xl leading-snug text-foreground">
+                      {listing.name}
+                    </h3>
+                    <div className="flex items-center gap-2 pt-1">
+                      <span className="text-[11px] tracking-wider uppercase text-muted-foreground">
                         {listing.condition}
-                      </Badge>
-                      <span className="text-sm text-muted-foreground">{listing.size}</span>
+                      </span>
+                      <span className="text-muted-foreground/40">·</span>
+                      <span className="text-[11px] text-muted-foreground">{listing.size}</span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      {listing.price && (
-                        <span className="text-xl font-bold text-primary">${listing.price}</span>
-                      )}
-                      {listing.estimated_value && !listing.price && (
+                  </CardContent>
+
+                  <CardFooter className="px-6 pb-6 pt-2 flex items-center justify-between gap-4">
+                    <div className="flex flex-col">
+                      {listing.price ? (
+                        <span className="font-serif text-2xl text-primary leading-none">
+                          ${listing.price}
+                        </span>
+                      ) : listing.estimated_value ? (
                         <span className="text-sm text-muted-foreground">
                           Est. ${listing.estimated_value}
                         </span>
-                      )}
+                      ) : null}
                       {listing.profiles && (
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Shield className="w-3 h-3" />
-                          <span>@{listing.profiles.username}</span>
-                        </div>
+                        <span className="mt-1 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                          <Shield className="w-3 h-3" aria-hidden="true" />
+                          @{listing.profiles.username}
+                        </span>
                       )}
                     </div>
-                  </CardContent>
-                  <CardFooter className="p-4 pt-0 gap-2">
-                    {listing.listing_type !== 'trade' && (
-                      <Button size="sm" className="flex-1">
-                        Buy Now
+                    {listing.listing_type !== 'sale' ? (
+                      <Button size="sm" variant="outline" className="rounded-full border-border/60" asChild>
+                        <Link to={`/trade/${listing.id}`}>
+                          {listing.listing_type === 'trade' ? 'Propose Trade' : 'Trade'}
+                        </Link>
                       </Button>
-                    )}
-                    {listing.listing_type !== 'sale' && (
-                      <Button size="sm" variant="outline" className="flex-1" asChild>
-                        <Link to={`/trade/${listing.id}`}>Propose Trade</Link>
+                    ) : (
+                      <Button size="sm" className="rounded-full">
+                        Buy Now
                       </Button>
                     )}
                   </CardFooter>
                 </Card>
-              ))}
+                );
+              })}
             </div>
+            </TooltipProvider>
           ) : (
             <div className="text-center py-12">
               <p className="text-muted-foreground mb-4">No listings found</p>
