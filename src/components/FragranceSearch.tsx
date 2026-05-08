@@ -32,6 +32,7 @@ export const FragranceSearch = ({
   nameId = 'name',
   brandId = 'brand',
   required = false,
+  disabled = false,
 }: FragranceSearchProps) => {
   const [suggestions, setSuggestions] = useState<FragranceSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
