@@ -385,11 +385,23 @@ const CreateListing = () => {
                     nameId="listing-name"
                     brandId="listing-brand"
                     required
+                    disabled={isVerified}
                   />
                   {isLoadingDetails && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Loading fragrance details...
+                    </div>
+                  )}
+                  {isVerified && (
+                    <div className="flex items-center justify-between rounded-md border border-green-500/30 bg-green-500/10 px-3 py-2 text-xs">
+                      <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>Verified from {verifiedSource || 'fragrance database'} — fields locked</span>
+                      </div>
+                      <Button type="button" variant="ghost" size="sm" onClick={unlockFields} className="h-6 text-xs">
+                        Unlock
+                      </Button>
                     </div>
                   )}
                 </div>
