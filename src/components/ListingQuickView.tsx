@@ -29,6 +29,9 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { BatchCodeStatus } from '@/components/BatchCodeStatus';
 import { ListingEscrowTimeline } from '@/components/ListingEscrowTimeline';
+import { ListingImage, verificationLabel, type DBVerification } from '@/components/ListingImage';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertTriangle, BadgeCheck, ImageOff } from 'lucide-react';
 
 type FragranceDetails = {
   name: string;
@@ -63,6 +66,7 @@ interface Listing {
     username: string;
     id_verified: boolean;
   };
+  image_verification?: DBVerification | DBVerification[];
 }
 
 interface ListingQuickViewProps {
@@ -122,10 +126,10 @@ export const ListingQuickView = ({
         <div className="grid md:grid-cols-2 gap-0">
           {/* Left - Image */}
           <div className="relative aspect-square md:aspect-auto bg-muted">
-            <img
-              src={listing.image_url || 'https://images.unsplash.com/photo-1541643600914-78b084683601?w=600'}
+            <ListingImage
+              url={listing.image_url}
               alt={listing.name}
-              className="w-full h-full object-cover"
+              verification={Array.isArray(listing.image_verification) ? listing.image_verification[0] : listing.image_verification}
             />
             <div className="absolute top-4 left-4">
               <FavoriteButton
@@ -158,6 +162,25 @@ export const ListingQuickView = ({
                 {listing.listing_type === 'sale' ? 'For Sale' : listing.listing_type === 'trade' ? 'For Trade' : 'Sale or Trade'}
               </Badge>
             </div>
+
+            {/* Photo verification status */}
+            {(() => {
+              const dbV = Array.isArray(listing.image_verification) ? listing.image_verification[0] : listing.image_verification;
+              const v = verificationLabel(listing.image_url, dbV);
+              if (v.tone === 'ok') return null;
+              const Icon = v.tone === 'muted' ? ImageOff : AlertTriangle;
+              return (
+                <Alert variant={v.tone === 'bad' ? 'destructive' : 'default'}>
+                  <Icon className="h-4 w-4" />
+                  <AlertTitle>{v.label}</AlertTitle>
+                  <AlertDescription className="text-xs">
+                    {dbV?.reason || 'This listing\'s image is awaiting verification by our team.'}
+                    <br />
+                    <span className="text-muted-foreground">Estimated verification: within 24 hours of upload.</span>
+                  </AlertDescription>
+                </Alert>
+              );
+            })()}
 
             {/* Price */}
             <div className="bg-muted/50 rounded-lg p-4">

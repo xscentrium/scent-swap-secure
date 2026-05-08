@@ -17,12 +17,12 @@ export const Marketplace = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("listings")
-        .select(`*, owner:profiles!owner_id(username, id_verified)`)
+        .select(`*, owner:profiles!owner_id(username, id_verified), image_verification:listing_image_verifications(status, reason, source)`)
         .eq("is_active", true)
         .order("created_at", { ascending: false })
         .limit(20);
       if (error) throw error;
-      return (data ?? []).filter(isListingDisplayable).slice(0, 4);
+      return ((data as any[]) ?? []).filter(isListingDisplayable).slice(0, 4);
     },
   });
 
@@ -61,6 +61,7 @@ export const Marketplace = () => {
                     <ListingImage
                       url={listing.image_url}
                       alt={`${listing.brand} ${listing.name}`}
+                      verification={Array.isArray(listing.image_verification) ? listing.image_verification[0] : listing.image_verification}
                       className="group-hover:scale-110 transition-transform duration-500"
                     />
                     <div

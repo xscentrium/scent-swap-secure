@@ -3,20 +3,27 @@ import { Badge } from "@/components/ui/badge";
 import { getImageVerification } from "@/lib/imageVerification";
 import { cn } from "@/lib/utils";
 
+export type DBVerification = {
+  status: string;
+  reason?: string | null;
+  source?: string | null;
+} | null | undefined;
+
 interface ListingImageProps {
   url?: string | null;
   alt: string;
   className?: string;
+  /** Optional DB-stored verification row. Takes precedence over URL heuristic. */
+  verification?: DBVerification;
 }
 
 /**
- * Renders a listing photo only if it comes from a verified product-image
- * source or our own uploads bucket. Anything else shows a clear warning
- * placeholder instead of a wrong/random photo.
+ * Renders a listing photo only if it's been admin-verified OR comes from the
+ * uploads bucket. Anything else shows a clear placeholder. Uses the DB
+ * verification row when available, falling back to URL heuristics.
  */
-export const ListingImage = ({ url, alt, className }: ListingImageProps) => {
-  const v = getImageVerification(url);
-  const trusted = v.status === "verified" || v.status === "uploaded";
+export const ListingImage = ({ url, alt, className, verification }: ListingImageProps) => {
+  const trusted = isTrusted(url, verification);
 
   if (trusted && url) {
     return (
@@ -29,7 +36,8 @@ export const ListingImage = ({ url, alt, className }: ListingImageProps) => {
     );
   }
 
-  const isMissing = v.status === "none";
+  const status = effectiveStatus(url, verification);
+  const isMissing = status === "missing";
   return (
     <div
       className={cn(
@@ -45,7 +53,13 @@ export const ListingImage = ({ url, alt, className }: ListingImageProps) => {
         <AlertTriangle className="w-8 h-8 text-amber-500" />
       )}
       <p className="text-xs font-medium">
-        {isMissing ? "Photo pending" : "Photo not verified"}
+        {status === "missing"
+          ? "Photo pending"
+          : status === "rejected"
+          ? "Photo rejected"
+          : status === "needs_reupload"
+          ? "Awaiting new photo"
+          : "Photo not verified"}
       </p>
       <Badge variant="outline" className="text-[10px]">
         Awaiting verified image
@@ -54,14 +68,55 @@ export const ListingImage = ({ url, alt, className }: ListingImageProps) => {
   );
 };
 
+function effectiveStatus(
+  url?: string | null,
+  v?: DBVerification,
+): "verified" | "missing" | "pending" | "rejected" | "needs_reupload" {
+  if (v) {
+    if (v.status === "verified") return "verified";
+    if (v.status === "rejected") return "rejected";
+    if (v.status === "needs_reupload") return "needs_reupload";
+    if (!url) return "missing";
+    return "pending";
+  }
+  const heur = getImageVerification(url);
+  if (heur.status === "verified" || heur.status === "uploaded") return "verified";
+  if (heur.status === "none") return "missing";
+  return "pending";
+}
+
+function isTrusted(url?: string | null, v?: DBVerification): boolean {
+  if (!url) return false;
+  if (v) return v.status === "verified";
+  const heur = getImageVerification(url);
+  return heur.status === "verified" || heur.status === "uploaded";
+}
+
 /** True when a listing has the metadata + a trustworthy image required to display. */
 export const isListingDisplayable = (listing: {
   brand?: string | null;
   name?: string | null;
   size?: string | null;
   image_url?: string | null;
+  image_verification?: DBVerification | DBVerification[];
 }) => {
   if (!listing.brand?.trim() || !listing.name?.trim() || !listing.size?.trim()) return false;
-  const v = getImageVerification(listing.image_url);
-  return v.status === "verified" || v.status === "uploaded";
+  const v = Array.isArray(listing.image_verification)
+    ? listing.image_verification[0]
+    : listing.image_verification;
+  return isTrusted(listing.image_url, v);
 };
+
+/** Helper to derive a short status label for badges/toolbars. */
+export const verificationLabel = (
+  url?: string | null,
+  v?: DBVerification,
+): { label: string; tone: "ok" | "warn" | "bad" | "muted" } => {
+  const s = effectiveStatus(url, v);
+  if (s === "verified") return { label: "Verified", tone: "ok" };
+  if (s === "rejected") return { label: "Rejected", tone: "bad" };
+  if (s === "needs_reupload") return { label: "Re-upload requested", tone: "warn" };
+  if (s === "missing") return { label: "Photo pending", tone: "muted" };
+  return { label: "Photo not verified", tone: "warn" };
+};
+

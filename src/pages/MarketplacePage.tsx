@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Navigation } from '@/components/Navigation';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
@@ -15,6 +15,8 @@ import { FavoriteButton } from '@/components/FavoriteButton';
 import { cn } from '@/lib/utils';
 import { useDebounce } from '@/hooks/useDebounce';
 import { getImageVerification } from '@/lib/imageVerification';
+import { ListingImage, isListingDisplayable, verificationLabel, type DBVerification } from '@/components/ListingImage';
+import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const PRICE_MIN = 0;
@@ -36,9 +38,11 @@ type Listing = {
     username: string;
     avatar_url: string | null;
   } | null;
+  image_verification?: DBVerification | DBVerification[];
 };
 
 const MarketplacePage = () => {
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // --- Initialize state from URL (?q=&type=&cond=&min=&max=&sort=) ---
@@ -58,6 +62,7 @@ const MarketplacePage = () => {
     String(clampPrice(Number(searchParams.get('max') ?? PRICE_MAX))),
   ]);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [hideUnverified, setHideUnverified] = useState(() => searchParams.get('verified') !== '0');
 
   // Debounce expensive filter inputs so the query doesn't fire per keystroke
   const debouncedSearch = useDebounce(search, 350);
@@ -72,8 +77,20 @@ const MarketplacePage = () => {
     if (sortBy !== 'newest') params.set('sort', sortBy);
     if (debouncedPriceRange[0] > PRICE_MIN) params.set('min', String(debouncedPriceRange[0]));
     if (debouncedPriceRange[1] < PRICE_MAX) params.set('max', String(debouncedPriceRange[1]));
+    if (!hideUnverified) params.set('verified', '0');
     setSearchParams(params, { replace: true });
-  }, [debouncedSearch, listingTypeFilter, conditionFilter, sortBy, debouncedPriceRange, setSearchParams]);
+  }, [debouncedSearch, listingTypeFilter, conditionFilter, sortBy, debouncedPriceRange, hideUnverified, setSearchParams]);
+
+  // Live-update when admin approves/rejects an image or a seller replaces it
+  useEffect(() => {
+    const ch = supabase
+      .channel('marketplace-image-verifications')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'listing_image_verifications' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['listings'] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [queryClient]);
 
   const { data: listings, isLoading } = useQuery({
     queryKey: ['listings', debouncedSearch, listingTypeFilter, conditionFilter, sortBy, debouncedPriceRange],
@@ -85,7 +102,8 @@ const MarketplacePage = () => {
           profiles!listings_owner_id_fkey (
             username,
             avatar_url
-          )
+          ),
+          image_verification:listing_image_verifications(status, reason, source)
         `)
         .eq('is_active', true);
 
@@ -151,10 +169,14 @@ const MarketplacePage = () => {
     setPriceRange(next as [number, number]);
   }, [priceInput, priceRange]);
 
-  const resultCount = listings?.length ?? 0;
+  const allListings = listings ?? [];
+  const displayable = useMemo(() => allListings.filter((l) => isListingDisplayable(l as any)), [allListings]);
+  const visibleListings = hideUnverified ? displayable : allListings;
+  const hiddenCount = allListings.length - displayable.length;
+  const resultCount = visibleListings.length;
   const resultLabel = isLoading
     ? 'Searching…'
-    : `${resultCount.toLocaleString()} fragrance${resultCount === 1 ? '' : 's'} found`;
+    : `${resultCount.toLocaleString()} fragrance${resultCount === 1 ? '' : 's'} found${hideUnverified && hiddenCount ? ` · ${hiddenCount} hidden (unverified photo)` : ''}`;
 
   const typeChips = [
     { value: 'all', label: 'All' },
@@ -323,6 +345,21 @@ const MarketplacePage = () => {
 
               <Separator className="bg-border/40" />
 
+              {/* Verified-photo toggle */}
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <p className="text-xs font-medium text-foreground/80">Verified photo only</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {hideUnverified
+                      ? `${hiddenCount} hidden`
+                      : 'Showing listings without verified photos'}
+                  </p>
+                </div>
+                <Switch checked={hideUnverified} onCheckedChange={setHideUnverified} aria-label="Hide listings with unverified photos" />
+              </div>
+
+              <Separator className="bg-border/40" />
+
               {/* Price slider */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -377,34 +414,27 @@ const MarketplacePage = () => {
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
-          ) : listings && listings.length > 0 ? (
+          ) : visibleListings && visibleListings.length > 0 ? (
             <TooltipProvider delayDuration={150}>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-              {listings.map((listing) => {
+              {visibleListings.map((listing) => {
+                const dbVerification = Array.isArray(listing.image_verification)
+                  ? listing.image_verification[0]
+                  : listing.image_verification;
                 const verification = getImageVerification(listing.image_url);
+                const vlabel = verificationLabel(listing.image_url, dbVerification);
                 return (
                 <Card
                   key={listing.id}
                   className="group relative overflow-hidden rounded-2xl border border-border/40 bg-card/80 hover:border-primary/30 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-22px_hsl(35_38%_48%/0.35)] transition-all duration-500"
                 >
                   <div className="aspect-[4/5] bg-gradient-to-b from-muted/40 to-muted/10 relative overflow-hidden">
-                    {(verification.status === 'verified' || verification.status === 'uploaded') && listing.image_url ? (
-                      <img
-                        src={listing.image_url}
-                        alt={`${listing.brand} ${listing.name}`}
-                        loading="lazy"
-                        className="w-full h-full object-contain p-6 transition-transform duration-700 ease-out group-hover:scale-[1.04]"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-muted-foreground p-6 text-center">
-                        <span className="text-xs tracking-widest uppercase">
-                          {verification.status === 'none' ? 'Photo pending' : 'Photo not verified'}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground/70">
-                          Awaiting verified product image
-                        </span>
-                      </div>
-                    )}
+                    <ListingImage
+                      url={listing.image_url}
+                      alt={`${listing.brand} ${listing.name}`}
+                      verification={dbVerification}
+                      className="object-contain p-6 transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                    />
 
                     {/* Top-left: favorite + verified badge */}
                     <div className="absolute top-3 left-3 flex flex-col gap-2">
@@ -414,26 +444,25 @@ const MarketplacePage = () => {
                         imageUrl={listing.image_url || undefined}
                         className="bg-background/85 backdrop-blur-sm hover:bg-background"
                       />
-                      {(verification.status === 'verified' || verification.status === 'uploaded') && (
+                      {vlabel.tone === 'ok' ? (
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-background/85 backdrop-blur-sm border border-primary/30 text-primary">
                               <BadgeCheck className="w-3 h-3" aria-hidden="true" />
-                              {verification.status === 'verified' ? 'Verified' : 'Seller photo'}
+                              {vlabel.label}
                             </span>
                           </TooltipTrigger>
-                          <TooltipContent side="right">{verification.label}</TooltipContent>
+                          <TooltipContent side="right">{dbVerification?.reason || verification.label}</TooltipContent>
                         </Tooltip>
-                      )}
-                      {(verification.status === 'unverified' || verification.status === 'banned') && (
+                      ) : (
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-background/85 backdrop-blur-sm border border-warning/40 text-warning">
                               <AlertTriangle className="w-3 h-3" aria-hidden="true" />
-                              Unverified
+                              {vlabel.label}
                             </span>
                           </TooltipTrigger>
-                          <TooltipContent side="right">{verification.label}</TooltipContent>
+                          <TooltipContent side="right">{dbVerification?.reason || verification.label}</TooltipContent>
                         </Tooltip>
                       )}
                     </div>

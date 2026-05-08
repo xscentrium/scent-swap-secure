@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.search-volume-alert]
 verify_jwt = false
+
+[functions.verify-listing-images]
+verify_jwt = false
