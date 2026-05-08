@@ -17,9 +17,11 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   defaultPortfolio?: "main" | "wishlist" | "sold" | "samples";
   onAdded?: () => void;
+  /** Pre-select a fragrance and skip search step */
+  preselectedFragrance?: { id: string; brand: string; name: string; year?: number | null; image_url?: string | null };
 }
 
-export function FragranceSearchPicker({ open, onOpenChange, defaultPortfolio = "main", onAdded }: Props) {
+export function FragranceSearchPicker({ open, onOpenChange, defaultPortfolio = "main", onAdded, preselectedFragrance }: Props) {
   const { user } = useAuth();
   const [q, setQ] = useState("");
   const [results, setResults] = useState<Frag[]>([]);
