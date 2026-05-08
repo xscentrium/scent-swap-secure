@@ -70,7 +70,16 @@ async function fetchFragrancesByBrand(brand: string) {
 
 async function upsertFragrances(supabase: any, hits: any[]) {
   if (!hits.length) return { inserted: 0, notes: 0 };
-  const rows = hits.map((h) => ({
+  // Dedupe by (brand|name|year) — API can return same triple twice
+  const seen = new Set<string>();
+  const dedupedHits: any[] = [];
+  for (const h of hits) {
+    const k = `${h.brand?.name ?? "Unknown"}|${h.name}|${yearFromMs(h.releasedAt) ?? ""}`;
+    if (seen.has(k)) continue;
+    seen.add(k);
+    dedupedHits.push(h);
+  }
+  const rows = dedupedHits.map((h) => ({
     brand: h.brand?.name ?? "Unknown",
     name: h.name,
     year: yearFromMs(h.releasedAt),
