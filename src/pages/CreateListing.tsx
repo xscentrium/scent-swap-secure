@@ -452,13 +452,29 @@ const CreateListing = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="size">Size *</Label>
-                    <Input
-                      id="size"
-                      placeholder="e.g., 100ml"
-                      value={formData.size}
-                      onChange={(e) => setFormData({ ...formData, size: e.target.value })}
-                      required
-                    />
+                    {isVerified && fragranceDetails?.commonSizes && fragranceDetails.commonSizes.length > 0 ? (
+                      <Select
+                        value={formData.size}
+                        onValueChange={(value) => setFormData({ ...formData, size: value })}
+                      >
+                        <SelectTrigger id="size">
+                          <SelectValue placeholder="Choose verified size" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {fragranceDetails.commonSizes.map((s) => (
+                            <SelectItem key={s} value={s}>{s}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input
+                        id="size"
+                        placeholder="e.g., 100ml"
+                        value={formData.size}
+                        onChange={(e) => setFormData({ ...formData, size: e.target.value })}
+                        required
+                      />
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="condition">Condition *</Label>
