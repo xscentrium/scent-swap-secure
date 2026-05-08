@@ -15,6 +15,8 @@ import { FavoriteButton } from '@/components/FavoriteButton';
 import { cn } from '@/lib/utils';
 import { useDebounce } from '@/hooks/useDebounce';
 import { getImageVerification } from '@/lib/imageVerification';
+import { ListingImage, isListingDisplayable, verificationLabel, type DBVerification } from '@/components/ListingImage';
+import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const PRICE_MIN = 0;
