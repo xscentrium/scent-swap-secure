@@ -478,21 +478,35 @@ const MarketplacePage = () => {
             <div>
               {/* Listings Grid */}
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="border border-border/40 bg-card/40 rounded-sm animate-pulse">
+                  <div className="aspect-[4/5] bg-muted/40" />
+                  <div className="p-6 space-y-3">
+                    <div className="h-2 w-1/3 bg-muted/60" />
+                    <div className="h-5 w-2/3 bg-muted/60" />
+                    <div className="h-2 w-1/2 bg-muted/40" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : visibleListings && visibleListings.length > 0 ? (
             <TooltipProvider delayDuration={150}>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-              {visibleListings.map((listing) => {
+              {visibleListings.map((listing, idx) => {
                 const dbVerification = Array.isArray(listing.image_verification)
                   ? listing.image_verification[0]
                   : listing.image_verification;
                 const verification = getImageVerification(listing.image_url);
                 const vlabel = verificationLabel(listing.image_url, dbVerification);
                 return (
-                <Card
+                <motion.div
                   key={listing.id}
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: Math.min(idx * 0.04, 0.4), ease: [0.22, 1, 0.36, 1] }}
+                >
+                <Card
                   className="group relative overflow-hidden rounded-2xl border border-border/40 bg-card/80 hover:border-primary/30 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-22px_hsl(35_38%_48%/0.35)] transition-all duration-500"
                 >
                   <div className="aspect-[4/5] bg-gradient-to-b from-muted/40 to-muted/10 relative overflow-hidden">
