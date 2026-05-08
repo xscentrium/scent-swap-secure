@@ -14,14 +14,8 @@ import { motion } from 'framer-motion';
 import {
   ArrowLeft,
   Sparkles,
-  GitCompare,
   Search as SearchIcon,
-  Layers,
-  Heart,
-  TrendingUp,
-  Users,
   Wand2,
-  Compass,
 } from 'lucide-react';
 
 const Discover = () => {
