@@ -705,6 +705,48 @@ export type Database = {
         }
         Relationships: []
       }
+      listing_image_verifications: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string | null
+          last_checked_at: string
+          listing_id: string
+          reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          last_checked_at?: string
+          listing_id: string
+          reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          last_checked_at?: string
+          listing_id?: string
+          reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       listings: {
         Row: {
           brand: string
