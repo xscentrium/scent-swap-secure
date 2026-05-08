@@ -75,7 +75,7 @@ export default function FragranceDetail() {
 
   if (!frag) {
     return (
-      <div className="container max-w-6xl py-8 space-y-6">
+      <div className="container max-w-6xl pt-24 pb-8 space-y-6">
         <Skeleton className="h-96 w-full rounded-xl" />
         <Skeleton className="h-32 w-full" />
       </div>
