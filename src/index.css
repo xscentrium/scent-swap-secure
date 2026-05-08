@@ -8,50 +8,50 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Xscentrium — Midnight luxury (default) */
-    --background: 240 12% 5%;     /* Deeper Midnight Black */
-    --foreground: 224 14% 86%;    /* Platinum Silver */
+    /* Xscentrium — Twilight luxury (softened, not crushed black) */
+    --background: 232 16% 13%;    /* Soft midnight slate */
+    --foreground: 224 20% 93%;    /* Bright platinum */
 
-    --card: 240 10% 9%;           /* Charcoal Gray */
-    --card-foreground: 224 14% 86%;
+    --card: 232 14% 17%;          /* Lifted charcoal */
+    --card-foreground: 224 20% 93%;
 
-    --popover: 240 10% 10%;
-    --popover-foreground: 224 14% 86%;
+    --popover: 232 14% 18%;
+    --popover-foreground: 224 20% 93%;
 
     /* Signature Gold */
-    --primary: 43 60% 56%;
-    --primary-foreground: 240 12% 5%;
+    --primary: 43 68% 62%;
+    --primary-foreground: 232 16% 12%;
 
-    --secondary: 240 8% 14%;
-    --secondary-foreground: 228 33% 97%;
+    --secondary: 232 12% 22%;
+    --secondary-foreground: 224 22% 96%;
 
-    --muted: 240 8% 12%;
-    --muted-foreground: 228 12% 62%;
+    --muted: 232 12% 20%;
+    --muted-foreground: 228 14% 72%;
 
-    --accent: 42 55% 50%;         /* Muted Gold */
-    --accent-foreground: 240 12% 5%;
+    --accent: 42 58% 54%;         /* Muted Gold */
+    --accent-foreground: 232 16% 12%;
 
     /* Reserved accent — verified badges, premium touches */
-    --gold: 43 60% 56%;
-    --gold-glow: 45 65% 70%;
+    --gold: 43 68% 62%;
+    --gold-glow: 45 70% 74%;
 
-    --destructive: 6 75% 55%;
+    --destructive: 6 75% 58%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 145 55% 48%;
-    --warning: 37 90% 55%;
-    --info: 213 70% 60%;
+    --success: 145 55% 52%;
+    --warning: 37 90% 58%;
+    --info: 213 72% 64%;
 
-    --border: 240 8% 16%;
-    --input: 240 8% 14%;
-    --ring: 43 60% 56%;
+    --border: 232 10% 24%;
+    --input: 232 12% 22%;
+    --ring: 43 68% 62%;
 
     --radius: 0.25rem;
 
-    --gradient-primary: linear-gradient(135deg, hsl(43 60% 56%) 0%, hsl(45 65% 70%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(240 12% 5%) 0%, hsl(240 10% 9%) 100%);
-    --shadow-luxury: 0 20px 60px -15px hsl(43 60% 56% / 0.25);
-    --shadow-glow: 0 0 30px hsl(43 60% 56% / 0.18);
+    --gradient-primary: linear-gradient(135deg, hsl(43 68% 62%) 0%, hsl(45 70% 74%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(232 16% 13%) 0%, hsl(232 14% 17%) 100%);
+    --shadow-luxury: 0 20px 60px -15px hsl(43 68% 62% / 0.28);
+    --shadow-glow: 0 0 30px hsl(43 68% 62% / 0.2);
     --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
