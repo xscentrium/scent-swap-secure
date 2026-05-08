@@ -84,20 +84,14 @@ const MarketplacePage = () => {
           *,
           profiles!listings_owner_id_fkey (
             username,
-    queryFn: async () => {
-      let query = supabase
-        .from('listings')
-        .select(`
-          *,
-          profiles!listings_owner_id_fkey (
-            username,
             avatar_url
           )
         `)
         .eq('is_active', true);
 
-      if (search) {
-        query = query.or(`name.ilike.%${search}%,brand.ilike.%${search}%`);
+      if (debouncedSearch) {
+        const safe = debouncedSearch.replace(/[%,]/g, ' ').trim();
+        if (safe) query = query.or(`name.ilike.%${safe}%,brand.ilike.%${safe}%`);
       }
 
       if (listingTypeFilter !== 'all') {
