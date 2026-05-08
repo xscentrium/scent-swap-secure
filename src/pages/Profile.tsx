@@ -28,6 +28,7 @@ import { toast } from 'sonner';
 import { FollowButton } from '@/components/FollowButton';
 import { UserActions } from '@/components/UserActions';
 import { CreatorNotifyButton } from '@/components/CreatorNotifyButton';
+import { ProfileEscrowHistory } from '@/components/ProfileEscrowHistory';
 
 type ProfileData = {
   id: string;
@@ -402,6 +403,12 @@ const Profile = () => {
               <TabsTrigger value="samples">Samples</TabsTrigger>
               <TabsTrigger value="badges">Badges</TabsTrigger>
               <TabsTrigger value="trades">Trade History</TabsTrigger>
+              {isOwnProfile && (
+                <TabsTrigger value="escrow">
+                  <Shield className="w-4 h-4 mr-1" />
+                  Escrow
+                </TabsTrigger>
+              )}
             </TabsList>
 
             <TabsContent value="listings">
@@ -508,6 +515,12 @@ const Profile = () => {
                 <p>Trade history will appear here</p>
               </div>
             </TabsContent>
+
+            {isOwnProfile && (
+              <TabsContent value="escrow">
+                <ProfileEscrowHistory profileId={profileData.id} />
+              </TabsContent>
+            )}
           </Tabs>
         </div>
       </main>

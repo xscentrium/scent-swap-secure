@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BatchCodeStatus } from '@/components/BatchCodeStatus';
+import { ListingEscrowTimeline } from '@/components/ListingEscrowTimeline';
 
 type FragranceDetails = {
   name: string;
@@ -186,6 +187,8 @@ export const ListingQuickView = ({
             )}
 
             <BatchCodeStatus listingId={listing.id} />
+
+            <ListingEscrowTimeline listingId={listing.id} />
 
             <Separator />
 
