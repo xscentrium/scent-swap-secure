@@ -89,7 +89,8 @@ const MarketplacePage = () => {
           profiles!listings_owner_id_fkey (
             username,
             avatar_url
-          )
+          ),
+          image_verification:listing_image_verifications(status, reason, source)
         `)
         .eq('is_active', true);
 
