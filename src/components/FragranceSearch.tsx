@@ -20,6 +20,7 @@ interface FragranceSearchProps {
   nameId?: string;
   brandId?: string;
   required?: boolean;
+  disabled?: boolean;
 }
 
 export const FragranceSearch = ({
@@ -31,6 +32,7 @@ export const FragranceSearch = ({
   nameId = 'name',
   brandId = 'brand',
   required = false,
+  disabled = false,
 }: FragranceSearchProps) => {
   const [suggestions, setSuggestions] = useState<FragranceSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -125,6 +127,7 @@ export const FragranceSearch = ({
               placeholder="Start typing to search..."
               className="pl-9"
               required={required}
+              disabled={disabled}
               autoComplete="off"
             />
             {isLoading && (
@@ -174,6 +177,7 @@ export const FragranceSearch = ({
             onChange={(e) => onBrandChange(e.target.value)}
             placeholder="e.g., Chanel"
             required={required}
+            disabled={disabled}
           />
         </div>
       </div>

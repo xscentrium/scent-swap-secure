@@ -44,7 +44,10 @@ const CreateListing = () => {
     baseNotes?: string[];
     mainAccords?: string[];
     concentration?: string;
+    commonSizes?: string[];
   } | null>(null);
+  const [isVerified, setIsVerified] = useState(false);
+  const [verifiedSource, setVerifiedSource] = useState<string>('');
   
   const [formData, setFormData] = useState<{
     name: string;
@@ -114,32 +117,39 @@ const CreateListing = () => {
       
       if (data?.details) {
         setFragranceDetails(data.details);
-        
-        // Build auto-generated description
         const details = data.details;
+
+        // Auto-populate size from common sizes (prefer 100ml, else first)
+        const sizes: string[] = Array.isArray(details.commonSizes) ? details.commonSizes : [];
+        const preferredSize = sizes.find((s) => /100\s*ml/i.test(s)) || sizes[0] || '';
+
+        // Build auto-generated description
         let autoDescription = `${name} by ${brand}`;
-        if (details.concentration) {
-          autoDescription += ` (${details.concentration})`;
-        }
+        if (details.concentration) autoDescription += ` (${details.concentration})`;
         autoDescription += '.';
-        
         if (details.mainAccords?.length) {
           autoDescription += ` Main accords: ${details.mainAccords.slice(0, 3).join(', ')}.`;
         }
-        
         if (details.topNotes?.length) {
           autoDescription += ` Top notes include ${details.topNotes.slice(0, 3).join(', ')}.`;
         }
-        
-        // Only update description if it's empty
-        if (!formData.description) {
-          setFormData(prev => ({ ...prev, description: autoDescription }));
-        }
-        
-        toast.success('Fragrance details loaded!');
+
+        setFormData((prev) => ({
+          ...prev,
+          name,
+          brand,
+          size: prev.size || preferredSize,
+          description: prev.description || autoDescription,
+        }));
+
+        // Lock verified fields
+        setIsVerified(true);
+        setVerifiedSource('Fragrance database (AI-verified)');
+        toast.success('Fragrance details verified and locked');
       }
     } catch (e) {
       console.error('Failed to fetch fragrance details:', e);
+      toast.error('Could not verify fragrance details — fields stay editable');
     } finally {
       setIsLoadingDetails(false);
     }
@@ -148,6 +158,13 @@ const CreateListing = () => {
   const handleFragranceSelect = (fragrance: { name: string; brand: string }) => {
     setFormData(prev => ({ ...prev, name: fragrance.name, brand: fragrance.brand }));
     fetchFragranceDetails(fragrance.name, fragrance.brand);
+  };
+
+  const unlockFields = () => {
+    setIsVerified(false);
+    setFragranceDetails(null);
+    setVerifiedSource('');
+    toast.info('Fields unlocked — re-search to re-verify');
   };
 
   // Pre-fill from URL params (when converting from collection)
@@ -368,11 +385,23 @@ const CreateListing = () => {
                     nameId="listing-name"
                     brandId="listing-brand"
                     required
+                    disabled={isVerified}
                   />
                   {isLoadingDetails && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Loading fragrance details...
+                    </div>
+                  )}
+                  {isVerified && (
+                    <div className="flex items-center justify-between rounded-md border border-green-500/30 bg-green-500/10 px-3 py-2 text-xs">
+                      <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>Verified from {verifiedSource || 'fragrance database'} — fields locked</span>
+                      </div>
+                      <Button type="button" variant="ghost" size="sm" onClick={unlockFields} className="h-6 text-xs">
+                        Unlock
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -423,13 +452,29 @@ const CreateListing = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="size">Size *</Label>
-                    <Input
-                      id="size"
-                      placeholder="e.g., 100ml"
-                      value={formData.size}
-                      onChange={(e) => setFormData({ ...formData, size: e.target.value })}
-                      required
-                    />
+                    {isVerified && fragranceDetails?.commonSizes && fragranceDetails.commonSizes.length > 0 ? (
+                      <Select
+                        value={formData.size}
+                        onValueChange={(value) => setFormData({ ...formData, size: value })}
+                      >
+                        <SelectTrigger id="size">
+                          <SelectValue placeholder="Choose verified size" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {fragranceDetails.commonSizes.map((s) => (
+                            <SelectItem key={s} value={s}>{s}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input
+                        id="size"
+                        placeholder="e.g., 100ml"
+                        value={formData.size}
+                        onChange={(e) => setFormData({ ...formData, size: e.target.value })}
+                        required
+                      />
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="condition">Condition *</Label>

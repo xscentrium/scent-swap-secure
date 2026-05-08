@@ -43,6 +43,7 @@ Format:
   "name": "Full fragrance name",
   "brand": "Brand name",
   "concentration": "EDP/EDT/Parfum/etc",
+  "commonSizes": ["30ml", "50ml", "100ml"],
   "releaseYear": 2020,
   "perfumer": "Perfumer name(s)",
   "topNotes": ["note1", "note2"],
