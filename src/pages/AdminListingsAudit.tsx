@@ -130,7 +130,7 @@ const AdminListingsAudit = () => {
 
   const updateMutation = useMutation({
     mutationFn: async (payload: { id: string; patch: Partial<Listing> }) => {
-      const { error } = await supabase.from('listings').update(payload.patch).eq('id', payload.id);
+      const { error } = await supabase.from('listings').update(payload.patch as any).eq('id', payload.id);
       if (error) throw error;
     },
     onSuccess: () => {
