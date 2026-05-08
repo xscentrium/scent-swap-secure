@@ -65,6 +65,8 @@ export default function FragranceDetail() {
 
       <RatingBars fragranceId={frag.id} />
 
+      <PersonalizedWhenToWear fragranceId={frag.id} />
+
       <p className="text-sm">
         <Link className="underline" to="/discover">← Back to discover</Link>
       </p>
