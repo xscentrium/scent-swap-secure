@@ -49,8 +49,7 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       <NotificationPermissionBanner />
-      <Navigation />
-      <main className="pt-16">
+      <main>
         <Hero />
         {profile && (
           <>
