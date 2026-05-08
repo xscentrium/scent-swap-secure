@@ -100,7 +100,7 @@ export default function FragranceDetail() {
   const perfumer = frag.perfumer || ai?.perfumer;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pt-16">
       {/* HERO */}
       <div className="relative overflow-hidden border-b">
         <div
