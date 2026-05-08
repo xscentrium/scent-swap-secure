@@ -39,15 +39,51 @@ type Listing = {
 };
 
 const MarketplacePage = () => {
-  const [search, setSearch] = useState('');
-  const [listingTypeFilter, setListingTypeFilter] = useState('all');
-  const [conditionFilter, setConditionFilter] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState('newest');
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // --- Initialize state from URL (?q=&type=&cond=&min=&max=&sort=) ---
+  const [search, setSearch] = useState(() => searchParams.get('q') ?? '');
+  const [listingTypeFilter, setListingTypeFilter] = useState(() => searchParams.get('type') ?? 'all');
+  const [conditionFilter, setConditionFilter] = useState<string[]>(() => {
+    const c = searchParams.get('cond');
+    return c ? c.split(',').filter(Boolean) : [];
+  });
+  const [sortBy, setSortBy] = useState(() => searchParams.get('sort') ?? 'newest');
+  const [priceRange, setPriceRange] = useState<[number, number]>(() => [
+    clampPrice(Number(searchParams.get('min') ?? PRICE_MIN)),
+    clampPrice(Number(searchParams.get('max') ?? PRICE_MAX)),
+  ]);
+  const [priceInput, setPriceInput] = useState<[string, string]>(() => [
+    String(clampPrice(Number(searchParams.get('min') ?? PRICE_MIN))),
+    String(clampPrice(Number(searchParams.get('max') ?? PRICE_MAX))),
+  ]);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
+  // Debounce expensive filter inputs so the query doesn't fire per keystroke
+  const debouncedSearch = useDebounce(search, 350);
+  const debouncedPriceRange = useDebounce(priceRange, 300);
+
+  // Sync state -> URL (replace, no history spam)
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (debouncedSearch) params.set('q', debouncedSearch);
+    if (listingTypeFilter !== 'all') params.set('type', listingTypeFilter);
+    if (conditionFilter.length) params.set('cond', conditionFilter.join(','));
+    if (sortBy !== 'newest') params.set('sort', sortBy);
+    if (debouncedPriceRange[0] > PRICE_MIN) params.set('min', String(debouncedPriceRange[0]));
+    if (debouncedPriceRange[1] < PRICE_MAX) params.set('max', String(debouncedPriceRange[1]));
+    setSearchParams(params, { replace: true });
+  }, [debouncedSearch, listingTypeFilter, conditionFilter, sortBy, debouncedPriceRange, setSearchParams]);
+
   const { data: listings, isLoading } = useQuery({
-    queryKey: ['listings', search, listingTypeFilter, conditionFilter, sortBy, priceRange],
+    queryKey: ['listings', debouncedSearch, listingTypeFilter, conditionFilter, sortBy, debouncedPriceRange],
+    queryFn: async () => {
+      let query = supabase
+        .from('listings')
+        .select(`
+          *,
+          profiles!listings_owner_id_fkey (
+            username,
     queryFn: async () => {
       let query = supabase
         .from('listings')
