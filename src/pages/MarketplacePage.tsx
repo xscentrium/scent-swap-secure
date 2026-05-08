@@ -130,8 +130,31 @@ const MarketplacePage = () => {
   const clearAll = () => {
     setListingTypeFilter('all');
     setConditionFilter([]);
-    setPriceRange([0, 1000]);
+    setPriceRange([PRICE_MIN, PRICE_MAX]);
+    setPriceInput([String(PRICE_MIN), String(PRICE_MAX)]);
   };
+
+  // Keep the editable price inputs in sync when slider moves
+  useEffect(() => {
+    setPriceInput([String(priceRange[0]), String(priceRange[1])]);
+  }, [priceRange]);
+
+  const commitPriceInput = useCallback((idx: 0 | 1) => {
+    const raw = Number(priceInput[idx]);
+    const clamped = clampPrice(Number.isFinite(raw) ? raw : (idx === 0 ? PRICE_MIN : PRICE_MAX));
+    const next: [number, number] = [...priceRange];
+    next[idx] = clamped;
+    if (next[0] > next[1]) {
+      // swap if user inverted them
+      next.reverse();
+    }
+    setPriceRange(next as [number, number]);
+  }, [priceInput, priceRange]);
+
+  const resultCount = listings?.length ?? 0;
+  const resultLabel = isLoading
+    ? 'Searching…'
+    : `${resultCount.toLocaleString()} fragrance${resultCount === 1 ? '' : 's'} found`;
 
   const typeChips = [
     { value: 'all', label: 'All' },
