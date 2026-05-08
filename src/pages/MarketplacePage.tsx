@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Navigation } from '@/components/Navigation';
@@ -9,10 +9,17 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Separator } from '@/components/ui/separator';
-import { Star, Shield, Search, ArrowUpDown, Loader2, X, SlidersHorizontal } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Shield, Search, ArrowUpDown, Loader2, X, SlidersHorizontal, BadgeCheck, AlertTriangle } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { FavoriteButton } from '@/components/FavoriteButton';
 import { cn } from '@/lib/utils';
+import { useDebounce } from '@/hooks/useDebounce';
+import { getImageVerification } from '@/lib/imageVerification';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
+const PRICE_MIN = 0;
+const PRICE_MAX = 1000;
+const clampPrice = (n: number) => Math.min(PRICE_MAX, Math.max(PRICE_MIN, Math.round(Number.isFinite(n) ? n : 0)));
 
 type Listing = {
   id: string;
