@@ -609,6 +609,7 @@ const MarketplacePage = () => {
                     )}
                   </CardFooter>
                 </Card>
+                </motion.div>
                 );
               })}
             </div>
