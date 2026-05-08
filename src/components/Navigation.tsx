@@ -216,10 +216,19 @@ export const Navigation = () => {
 
           {/* Mobile Menu */}
           <div className="flex lg:hidden items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-lg">
-              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            </Button>
+            <button
+              onClick={toggleTheme}
+              role="switch"
+              aria-checked={theme === 'dark'}
+              aria-label="Toggle dark mode"
+              className="relative inline-flex h-8 w-[58px] items-center rounded-full border border-primary/40 bg-muted/60 px-1"
+            >
+              <span
+                className={`flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-primary to-[hsl(var(--gold-glow))] text-primary-foreground shadow-md transition-transform duration-300 ${theme === 'dark' ? 'translate-x-[26px]' : 'translate-x-0'}`}
+              >
+                {theme === 'dark' ? <Moon className="h-3.5 w-3.5" /> : <Sun className="h-3.5 w-3.5" />}
+              </span>
+            </button>
             {user && profile && <NotificationBell />}
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger asChild>
