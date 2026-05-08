@@ -87,8 +87,12 @@ const MarketplacePage = () => {
     if (debouncedPriceRange[0] > PRICE_MIN) params.set('min', String(debouncedPriceRange[0]));
     if (debouncedPriceRange[1] < PRICE_MAX) params.set('max', String(debouncedPriceRange[1]));
     if (!hideUnverified) params.set('verified', '0');
+    if (verifiedSellerOnly) params.set('vseller', '1');
+    if (brandFilter.length) params.set('brand', brandFilter.join(','));
+    if (sizeFilter !== 'all') params.set('size', sizeFilter);
+    if (viewMode === 'list') params.set('view', 'list');
     setSearchParams(params, { replace: true });
-  }, [debouncedSearch, listingTypeFilter, conditionFilter, sortBy, debouncedPriceRange, hideUnverified, setSearchParams]);
+  }, [debouncedSearch, listingTypeFilter, conditionFilter, sortBy, debouncedPriceRange, hideUnverified, verifiedSellerOnly, brandFilter, sizeFilter, viewMode, setSearchParams]);
 
   // Live-update when admin approves/rejects an image or a seller replaces it
   useEffect(() => {
