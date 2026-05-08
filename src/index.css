@@ -8,48 +8,47 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Xscentrium — Twilight luxury (softened, not crushed black) */
-    --background: 232 16% 13%;    /* Soft midnight slate */
-    --foreground: 224 20% 93%;    /* Bright platinum */
+    /* Xscentrium — Warm charcoal luxury (neutral, no blue cast) */
+    --background: 30 6% 13%;      /* Warm charcoal */
+    --foreground: 36 12% 92%;     /* Warm platinum */
 
-    --card: 232 14% 17%;          /* Lifted charcoal */
-    --card-foreground: 224 20% 93%;
+    --card: 30 5% 17%;            /* Lifted graphite */
+    --card-foreground: 36 12% 92%;
 
-    --popover: 232 14% 18%;
-    --popover-foreground: 224 20% 93%;
+    --popover: 30 5% 18%;
+    --popover-foreground: 36 12% 92%;
 
     /* Signature Gold */
     --primary: 43 68% 62%;
-    --primary-foreground: 232 16% 12%;
+    --primary-foreground: 30 6% 12%;
 
-    --secondary: 232 12% 22%;
-    --secondary-foreground: 224 22% 96%;
+    --secondary: 30 5% 22%;
+    --secondary-foreground: 36 14% 96%;
 
-    --muted: 232 12% 20%;
-    --muted-foreground: 228 14% 72%;
+    --muted: 30 5% 20%;
+    --muted-foreground: 32 8% 70%;
 
     --accent: 42 58% 54%;         /* Muted Gold */
-    --accent-foreground: 232 16% 12%;
+    --accent-foreground: 30 6% 12%;
 
-    /* Reserved accent — verified badges, premium touches */
     --gold: 43 68% 62%;
     --gold-glow: 45 70% 74%;
 
     --destructive: 6 75% 58%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 145 55% 52%;
+    --success: 145 50% 52%;
     --warning: 37 90% 58%;
-    --info: 213 72% 64%;
+    --info: 213 40% 64%;
 
-    --border: 232 10% 24%;
-    --input: 232 12% 22%;
+    --border: 30 5% 24%;
+    --input: 30 5% 22%;
     --ring: 43 68% 62%;
 
     --radius: 0.25rem;
 
     --gradient-primary: linear-gradient(135deg, hsl(43 68% 62%) 0%, hsl(45 70% 74%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(232 16% 13%) 0%, hsl(232 14% 17%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(30 6% 13%) 0%, hsl(30 5% 17%) 100%);
     --shadow-luxury: 0 20px 60px -15px hsl(43 68% 62% / 0.28);
     --shadow-glow: 0 0 30px hsl(43 68% 62% / 0.2);
     --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
