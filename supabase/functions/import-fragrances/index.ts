@@ -105,19 +105,19 @@ async function upsertFragrances(supabase: any, hits: any[]) {
   }
 
   const noteRows: any[] = [];
-  for (const h of hits) {
+  const noteSeen = new Set<string>();
+  for (const h of dedupedHits) {
     const key = `${h.brand?.name ?? "Unknown"}|${h.name}|${yearFromMs(h.releasedAt) ?? ""}`;
     const fid = idMap.get(key);
     if (!fid || !Array.isArray(h.notes)) continue;
     for (let i = 0; i < h.notes.length; i++) {
       const n = h.notes[i];
       if (!n?.name) continue;
-      noteRows.push({
-        fragrance_id: fid,
-        note: String(n.name).slice(0, 100),
-        layer: "middle", // API doesn't expose layer; bucket as middle
-        position: i,
-      });
+      const noteText = String(n.name).slice(0, 100);
+      const dedupKey = `${fid}|${noteText.toLowerCase()}|middle`;
+      if (noteSeen.has(dedupKey)) continue;
+      noteSeen.add(dedupKey);
+      noteRows.push({ fragrance_id: fid, note: noteText, layer: "middle", position: i });
     }
   }
 
