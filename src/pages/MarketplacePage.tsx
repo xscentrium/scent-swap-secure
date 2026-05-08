@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Separator } from '@/components/ui/separator';
-import { Shield, Search, ArrowUpDown, Loader2, X, SlidersHorizontal, BadgeCheck, AlertTriangle, Sparkles, Plus, TrendingUp, ShieldCheck } from 'lucide-react';
+import { Shield, Search, ArrowUpDown, Loader2, X, SlidersHorizontal, BadgeCheck, AlertTriangle, Sparkles, Plus, TrendingUp, ShieldCheck, LayoutGrid, Rows3, Flame, ArrowRight } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { FavoriteButton } from '@/components/FavoriteButton';
 import { cn } from '@/lib/utils';
@@ -34,9 +34,11 @@ type Listing = {
   listing_type: string;
   image_url: string | null;
   owner_id: string;
+  created_at?: string;
   profiles: {
     username: string;
     avatar_url: string | null;
+    id_verified?: boolean | null;
   } | null;
   image_verification?: DBVerification | DBVerification[];
 };
@@ -63,6 +65,13 @@ const MarketplacePage = () => {
   ]);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [hideUnverified, setHideUnverified] = useState(() => searchParams.get('verified') !== '0');
+  const [verifiedSellerOnly, setVerifiedSellerOnly] = useState(() => searchParams.get('vseller') === '1');
+  const [brandFilter, setBrandFilter] = useState<string[]>(() => {
+    const b = searchParams.get('brand');
+    return b ? b.split(',').filter(Boolean) : [];
+  });
+  const [sizeFilter, setSizeFilter] = useState<string>(() => searchParams.get('size') ?? 'all');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => (searchParams.get('view') === 'list' ? 'list' : 'grid'));
 
   // Debounce expensive filter inputs so the query doesn't fire per keystroke
   const debouncedSearch = useDebounce(search, 350);
@@ -78,8 +87,12 @@ const MarketplacePage = () => {
     if (debouncedPriceRange[0] > PRICE_MIN) params.set('min', String(debouncedPriceRange[0]));
     if (debouncedPriceRange[1] < PRICE_MAX) params.set('max', String(debouncedPriceRange[1]));
     if (!hideUnverified) params.set('verified', '0');
+    if (verifiedSellerOnly) params.set('vseller', '1');
+    if (brandFilter.length) params.set('brand', brandFilter.join(','));
+    if (sizeFilter !== 'all') params.set('size', sizeFilter);
+    if (viewMode === 'list') params.set('view', 'list');
     setSearchParams(params, { replace: true });
-  }, [debouncedSearch, listingTypeFilter, conditionFilter, sortBy, debouncedPriceRange, hideUnverified, setSearchParams]);
+  }, [debouncedSearch, listingTypeFilter, conditionFilter, sortBy, debouncedPriceRange, hideUnverified, verifiedSellerOnly, brandFilter, sizeFilter, viewMode, setSearchParams]);
 
   // Live-update when admin approves/rejects an image or a seller replaces it
   useEffect(() => {
@@ -93,7 +106,7 @@ const MarketplacePage = () => {
   }, [queryClient]);
 
   const { data: listings, isLoading } = useQuery({
-    queryKey: ['listings', debouncedSearch, listingTypeFilter, conditionFilter, sortBy, debouncedPriceRange],
+    queryKey: ['listings', debouncedSearch, listingTypeFilter, conditionFilter, sortBy, debouncedPriceRange, brandFilter],
     queryFn: async () => {
       let query = supabase
         .from('listings')
@@ -101,7 +114,8 @@ const MarketplacePage = () => {
           *,
           profiles!listings_owner_id_fkey (
             username,
-            avatar_url
+            avatar_url,
+            id_verified
           ),
           image_verification:listing_image_verifications(status, reason, source)
         `)
@@ -119,6 +133,8 @@ const MarketplacePage = () => {
       if (conditionFilter.length > 0) {
         query = query.in('condition', conditionFilter as ('new' | 'excellent' | 'good' | 'fair')[]);
       }
+
+      if (brandFilter.length > 0) query = query.in('brand', brandFilter);
 
       if (debouncedPriceRange[0] > PRICE_MIN) query = query.gte('price', debouncedPriceRange[0]);
       if (debouncedPriceRange[1] < PRICE_MAX) query = query.lte('price', debouncedPriceRange[1]);
@@ -141,13 +157,38 @@ const MarketplacePage = () => {
   const toggleCondition = (c: string) => {
     setConditionFilter((prev) => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]);
   };
+  const toggleBrand = (b: string) => {
+    setBrandFilter((prev) => prev.includes(b) ? prev.filter(x => x !== b) : [...prev, b]);
+  };
 
-  const activeFilterCount = (listingTypeFilter !== 'all' ? 1 : 0) + conditionFilter.length +
+  const parseSize = (s: string): number | null => {
+    const m = (s || '').match(/(\d+(?:\.\d+)?)/);
+    return m ? parseFloat(m[1]) : null;
+  };
+  const matchesSize = (raw: string) => {
+    if (sizeFilter === 'all') return true;
+    const ml = parseSize(raw);
+    if (ml == null) return false;
+    if (sizeFilter === 'travel') return ml < 30;
+    if (sizeFilter === 'small') return ml >= 30 && ml < 75;
+    if (sizeFilter === 'large') return ml >= 75;
+    return true;
+  };
+
+  const activeFilterCount =
+    (listingTypeFilter !== 'all' ? 1 : 0) +
+    conditionFilter.length +
+    brandFilter.length +
+    (sizeFilter !== 'all' ? 1 : 0) +
+    (verifiedSellerOnly ? 1 : 0) +
     (priceRange[0] > 0 || priceRange[1] < 1000 ? 1 : 0);
 
   const clearAll = () => {
     setListingTypeFilter('all');
     setConditionFilter([]);
+    setBrandFilter([]);
+    setSizeFilter('all');
+    setVerifiedSellerOnly(false);
     setPriceRange([PRICE_MIN, PRICE_MAX]);
     setPriceInput([String(PRICE_MIN), String(PRICE_MAX)]);
   };
@@ -163,7 +204,6 @@ const MarketplacePage = () => {
     const next: [number, number] = [...priceRange];
     next[idx] = clamped;
     if (next[0] > next[1]) {
-      // swap if user inverted them
       next.reverse();
     }
     setPriceRange(next as [number, number]);
@@ -171,7 +211,25 @@ const MarketplacePage = () => {
 
   const allListings = listings ?? [];
   const displayable = useMemo(() => allListings.filter((l) => isListingDisplayable(l as any)), [allListings]);
-  const visibleListings = hideUnverified ? displayable : allListings;
+  const baseVisible = hideUnverified ? displayable : allListings;
+  const visibleListings = useMemo(
+    () => baseVisible.filter((l) => matchesSize(l.size) && (!verifiedSellerOnly || l.profiles?.id_verified)),
+    [baseVisible, sizeFilter, verifiedSellerOnly]
+  );
+
+  // Featured strip — most recent verified-seller picks
+  const featuredListings = useMemo(
+    () => displayable.filter((l) => l.profiles?.id_verified).slice(0, 6),
+    [displayable]
+  );
+
+  // Brand facets from current dataset
+  const topBrands = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const l of allListings) counts.set(l.brand, (counts.get(l.brand) ?? 0) + 1);
+    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 12);
+  }, [allListings]);
+
   const hiddenCount = allListings.length - displayable.length;
   const resultCount = visibleListings.length;
   const resultLabel = isLoading
@@ -189,6 +247,12 @@ const MarketplacePage = () => {
     { value: 'excellent', label: 'Excellent' },
     { value: 'good', label: 'Good' },
     { value: 'fair', label: 'Fair' },
+  ];
+  const sizeChips = [
+    { value: 'all', label: 'Any' },
+    { value: 'travel', label: 'Travel <30ml' },
+    { value: 'small', label: '30–75ml' },
+    { value: 'large', label: '75ml+' },
   ];
 
   const getConditionColor = (condition: string) => {
@@ -277,6 +341,92 @@ const MarketplacePage = () => {
             </div>
           </motion.section>
 
+          {/* FEATURED STRIP — verified picks */}
+          {featuredListings.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="mb-12"
+            >
+              <div className="flex items-end justify-between mb-5">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground mb-1">
+                    Editor's edit
+                  </p>
+                  <h2 className="font-serif text-2xl md:text-3xl flex items-center gap-3">
+                    <Flame className="w-5 h-5 text-[hsl(var(--gold))]" />
+                    Verified-seller picks
+                  </h2>
+                </div>
+              </div>
+              <div className="flex gap-4 overflow-x-auto pb-3 -mx-4 px-4 snap-x">
+                {featuredListings.map((l) => (
+                  <Link
+                    key={l.id}
+                    to={`/marketplace?listing=${l.id}`}
+                    className="group relative shrink-0 w-[240px] snap-start border border-border bg-card/70 backdrop-blur-sm hover:border-foreground/40 transition-all"
+                  >
+                    <div className="aspect-[4/5] bg-gradient-to-b from-muted/40 to-muted/10 overflow-hidden">
+                      <ListingImage
+                        url={l.image_url}
+                        alt={`${l.brand} ${l.name}`}
+                        verification={Array.isArray(l.image_verification) ? l.image_verification[0] : l.image_verification}
+                        className="object-contain p-5 transition-transform duration-700 group-hover:scale-105"
+                      />
+                    </div>
+                    <div className="p-4">
+                      <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground truncate">{l.brand}</p>
+                      <p className="font-serif text-base truncate mt-1">{l.name}</p>
+                      <p className="font-serif text-lg mt-1">{l.price ? `$${l.price}` : `Est. $${l.estimated_value ?? '—'}`}</p>
+                    </div>
+                    <span className="absolute top-3 left-3 text-[9px] uppercase tracking-[0.22em] px-2 py-0.5 bg-background/80 backdrop-blur border border-[hsl(var(--gold)/0.4)] text-[hsl(var(--gold))] flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3" /> Verified
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </motion.section>
+          )}
+
+          {/* BRAND RAIL */}
+          {topBrands.length > 0 && (
+            <div className="mb-10">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground">
+                  Shop by house
+                </p>
+                {brandFilter.length > 0 && (
+                  <button onClick={() => setBrandFilter([])} className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+                    <X className="w-3 h-3" /> Clear
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {topBrands.map(([brand, count]) => {
+                  const active = brandFilter.includes(brand);
+                  return (
+                    <button
+                      key={brand}
+                      onClick={() => toggleBrand(brand)}
+                      className={cn(
+                        "inline-flex items-center gap-2 px-4 py-2 border transition-all",
+                        active
+                          ? "bg-foreground text-background border-foreground"
+                          : "bg-card/50 border-border hover:border-foreground/40"
+                      )}
+                    >
+                      <span className="font-serif text-sm">{brand}</span>
+                      <span className={cn("text-[10px] tabular-nums", active ? "opacity-70" : "text-muted-foreground")}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Toolbar */}
           <div className="flex flex-col sm:flex-row gap-3 mb-4">
             <div className="relative flex-1">
@@ -313,6 +463,22 @@ const MarketplacePage = () => {
                   <SelectItem value="price_high">Price: High to Low</SelectItem>
                 </SelectContent>
               </Select>
+              <div className="hidden sm:inline-flex border border-border bg-card/60 h-12">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  aria-label="Grid view"
+                  className={cn("px-3 transition-colors", viewMode === 'grid' ? "bg-foreground text-background" : "hover:bg-muted/50")}
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  aria-label="List view"
+                  className={cn("px-3 transition-colors border-l border-border", viewMode === 'list' ? "bg-foreground text-background" : "hover:bg-muted/50")}
+                >
+                  <Rows3 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -412,17 +578,55 @@ const MarketplacePage = () => {
 
               <Separator className="bg-border/40" />
 
+              {/* Size buckets */}
+              <div className="space-y-2.5">
+                <p id="lbl-size" className="text-xs font-medium text-foreground/80">Bottle size</p>
+                <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-labelledby="lbl-size">
+                  {sizeChips.map((s) => {
+                    const checked = sizeFilter === s.value;
+                    return (
+                      <button
+                        key={s.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={checked}
+                        onClick={() => setSizeFilter(s.value)}
+                        className={cn(
+                          "px-2.5 py-1 rounded-full text-xs border transition-all",
+                          checked
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-transparent border-border/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                        )}
+                      >
+                        {s.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <Separator className="bg-border/40" />
+
               {/* Verified-photo toggle */}
               <div className="flex items-center justify-between gap-3">
                 <div className="space-y-0.5">
                   <p className="text-xs font-medium text-foreground/80">Verified photo only</p>
                   <p className="text-[10px] text-muted-foreground">
-                    {hideUnverified
-                      ? `${hiddenCount} hidden`
-                      : 'Showing listings without verified photos'}
+                    {hideUnverified ? `${hiddenCount} hidden` : 'Showing listings without verified photos'}
                   </p>
                 </div>
                 <Switch checked={hideUnverified} onCheckedChange={setHideUnverified} aria-label="Hide listings with unverified photos" />
+              </div>
+
+              {/* Verified-seller toggle */}
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <p className="text-xs font-medium text-foreground/80 flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[hsl(var(--gold))]" /> Verified sellers only
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">ID-confirmed traders</p>
+                </div>
+                <Switch checked={verifiedSellerOnly} onCheckedChange={setVerifiedSellerOnly} aria-label="Show only verified sellers" />
               </div>
 
               <Separator className="bg-border/40" />
@@ -492,7 +696,7 @@ const MarketplacePage = () => {
             </div>
           ) : visibleListings && visibleListings.length > 0 ? (
             <TooltipProvider delayDuration={150}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className={cn(viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6" : "grid grid-cols-1 gap-3")}>
               {visibleListings.map((listing, idx) => {
                 const dbVerification = Array.isArray(listing.image_verification)
                   ? listing.image_verification[0]
