@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { AccountSetupDialog } from "@/components/AccountSetupDialog";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PageTransition } from "@/components/PageTransition";
+import { Layout } from "@/components/Layout";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { ThemeProvider } from "next-themes";
 import { AnimatePresence } from "framer-motion";
