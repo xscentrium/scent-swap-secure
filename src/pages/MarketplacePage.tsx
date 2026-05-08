@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Separator } from '@/components/ui/separator';
-import { Shield, Search, ArrowUpDown, Loader2, X, SlidersHorizontal, BadgeCheck, AlertTriangle, Sparkles, Plus, TrendingUp, ShieldCheck } from 'lucide-react';
+import { Shield, Search, ArrowUpDown, Loader2, X, SlidersHorizontal, BadgeCheck, AlertTriangle, Sparkles, Plus, TrendingUp, ShieldCheck, LayoutGrid, Rows3, Flame, ArrowRight } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { FavoriteButton } from '@/components/FavoriteButton';
 import { cn } from '@/lib/utils';
