@@ -34,11 +34,13 @@ type Listing = {
 const MarketplacePage = () => {
   const [search, setSearch] = useState('');
   const [listingTypeFilter, setListingTypeFilter] = useState('all');
-  const [conditionFilter, setConditionFilter] = useState('all');
+  const [conditionFilter, setConditionFilter] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState('newest');
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const { data: listings, isLoading } = useQuery({
-    queryKey: ['listings', search, listingTypeFilter, conditionFilter, sortBy],
+    queryKey: ['listings', search, listingTypeFilter, conditionFilter, sortBy, priceRange],
     queryFn: async () => {
       let query = supabase
         .from('listings')
