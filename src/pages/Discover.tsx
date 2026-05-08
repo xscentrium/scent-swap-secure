@@ -33,7 +33,36 @@ const Discover = () => {
         q = q.or(`name.ilike.%${safe}%,brand.ilike.%${safe}%`);
       }
       const { data } = await q.limit(40);
-      return data ?? [];
+      let local = data ?? [];
+
+      // If local catalog has few/no matches, hit the live API (auto-imports into DB)
+      if (local.length < 5) {
+        try {
+          const { data: live } = await supabase.functions.invoke('fragrance-search-live', {
+            body: null,
+            // @ts-ignore — invoke supports query via path; fall back to manual fetch
+          });
+          // invoke doesn't pass query string, so use direct fetch:
+          const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fragrance-search-live?q=${encodeURIComponent(search)}&limit=30`;
+          const r = await fetch(url, {
+            headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+          });
+          if (r.ok) {
+            const json = await r.json();
+            const remote = (json.results ?? []) as any[];
+            const seen = new Set(local.map((f: any) => f.id));
+            for (const f of remote) {
+              if (!seen.has(f.id)) {
+                local.push(f);
+                seen.add(f.id);
+              }
+            }
+          }
+        } catch (e) {
+          console.error('live search failed', e);
+        }
+      }
+      return local;
     },
     enabled: !!search,
   });
