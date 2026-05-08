@@ -43,6 +43,7 @@ import Onboarding from "./pages/Onboarding";
 import SellerPayouts from "./pages/SellerPayouts";
 import AdminAudit from "./pages/AdminAudit";
 import AdminListingsAudit from "./pages/AdminListingsAudit";
+import AdminImageQueue from "./pages/AdminImageQueue";
 
 const queryClient = new QueryClient();
 
