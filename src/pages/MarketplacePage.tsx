@@ -578,17 +578,55 @@ const MarketplacePage = () => {
 
               <Separator className="bg-border/40" />
 
+              {/* Size buckets */}
+              <div className="space-y-2.5">
+                <p id="lbl-size" className="text-xs font-medium text-foreground/80">Bottle size</p>
+                <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-labelledby="lbl-size">
+                  {sizeChips.map((s) => {
+                    const checked = sizeFilter === s.value;
+                    return (
+                      <button
+                        key={s.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={checked}
+                        onClick={() => setSizeFilter(s.value)}
+                        className={cn(
+                          "px-2.5 py-1 rounded-full text-xs border transition-all",
+                          checked
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-transparent border-border/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                        )}
+                      >
+                        {s.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <Separator className="bg-border/40" />
+
               {/* Verified-photo toggle */}
               <div className="flex items-center justify-between gap-3">
                 <div className="space-y-0.5">
                   <p className="text-xs font-medium text-foreground/80">Verified photo only</p>
                   <p className="text-[10px] text-muted-foreground">
-                    {hideUnverified
-                      ? `${hiddenCount} hidden`
-                      : 'Showing listings without verified photos'}
+                    {hideUnverified ? `${hiddenCount} hidden` : 'Showing listings without verified photos'}
                   </p>
                 </div>
                 <Switch checked={hideUnverified} onCheckedChange={setHideUnverified} aria-label="Hide listings with unverified photos" />
+              </div>
+
+              {/* Verified-seller toggle */}
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <p className="text-xs font-medium text-foreground/80 flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[hsl(var(--gold))]" /> Verified sellers only
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">ID-confirmed traders</p>
+                </div>
+                <Switch checked={verifiedSellerOnly} onCheckedChange={setVerifiedSellerOnly} aria-label="Show only verified sellers" />
               </div>
 
               <Separator className="bg-border/40" />
