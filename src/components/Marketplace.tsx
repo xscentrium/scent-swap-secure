@@ -17,7 +17,7 @@ export const Marketplace = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("listings")
-        .select(`*, owner:profiles!owner_id(username, id_verified)`)
+        .select(`*, owner:profiles!owner_id(username, id_verified), image_verification:listing_image_verifications(status, reason, source)`)
         .eq("is_active", true)
         .order("created_at", { ascending: false })
         .limit(20);
