@@ -22,12 +22,17 @@ const Discover = () => {
     queryKey: ['discover-catalog-search', search],
     queryFn: async () => {
       if (!search) return [];
-      const { data } = await supabase
-        .from('fragrances')
+      const tokens = search.split(/\s+/).filter(t => t.length > 1);
+      if (tokens.length === 0) return [];
+      // Each token must match either name or brand (AND across tokens, OR within)
+      let q = supabase.from('fragrances')
         .select('id, name, brand, year, image_url, gender')
-        .or(`name.ilike.%${search}%,brand.ilike.%${search}%`)
-        .eq('approved', true)
-        .limit(24);
+        .eq('approved', true);
+      for (const t of tokens) {
+        const safe = t.replace(/[%,()]/g, '');
+        q = q.or(`name.ilike.%${safe}%,brand.ilike.%${safe}%`);
+      }
+      const { data } = await q.limit(40);
       return data ?? [];
     },
     enabled: !!search,
