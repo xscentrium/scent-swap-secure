@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Navigation } from '@/components/Navigation';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Separator } from '@/components/ui/separator';
-import { Shield, Search, ArrowUpDown, Loader2, X, SlidersHorizontal, BadgeCheck, AlertTriangle } from 'lucide-react';
+import { Shield, Search, ArrowUpDown, Loader2, X, SlidersHorizontal, BadgeCheck, AlertTriangle, Sparkles, Plus, TrendingUp, ShieldCheck } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { FavoriteButton } from '@/components/FavoriteButton';
 import { cn } from '@/lib/utils';
@@ -18,6 +17,7 @@ import { getImageVerification } from '@/lib/imageVerification';
 import { ListingImage, isListingDisplayable, verificationLabel, type DBVerification } from '@/components/ListingImage';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { motion } from 'framer-motion';
 
 const PRICE_MIN = 0;
 const PRICE_MAX = 1000;
@@ -202,27 +202,90 @@ const MarketplacePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
-      <main className="pt-20 pb-12">
-        <div className="container mx-auto px-4">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-4xl font-serif font-bold mb-2">Marketplace</h1>
-            <p className="text-muted-foreground" role="status" aria-live="polite">
-              {resultLabel}
-            </p>
-          </div>
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Editorial backdrop */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-40 -right-32 w-[560px] h-[560px] rounded-full bg-[hsl(var(--gold)/0.08)] blur-3xl" />
+        <div className="absolute top-[40%] -left-40 w-[520px] h-[520px] rounded-full bg-accent/30 blur-3xl" />
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 1px 1px, hsl(var(--foreground)) 1px, transparent 0)",
+            backgroundSize: '32px 32px',
+          }}
+        />
+      </div>
 
-          {/* Top toolbar */}
-          <div className="flex flex-col sm:flex-row gap-3 mb-6">
+      <main className="relative pt-20 pb-16">
+        <div className="container mx-auto px-4 max-w-7xl">
+          {/* HERO */}
+          <motion.section
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="mb-12 grid lg:grid-cols-12 gap-8 items-end"
+          >
+            <div className="lg:col-span-8">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="h-px w-10 bg-foreground/40" />
+                <span className="text-[11px] uppercase tracking-[0.32em] text-muted-foreground">
+                  Vol. 02 — Marketplace
+                </span>
+              </div>
+              <h1 className="font-serif font-bold leading-[0.95] tracking-tight text-[clamp(2.5rem,6vw,5rem)]">
+                Bottles with{' '}
+                <span className="italic font-light text-muted-foreground">stories</span>
+                <span className="block">to be continued.</span>
+              </h1>
+              <p className="mt-6 text-base md:text-lg text-muted-foreground max-w-xl leading-relaxed">
+                Hand-curated decants and full bottles from verified collectors. Every trade is escrow-protected.
+              </p>
+
+              <div className="mt-7 flex flex-wrap items-center gap-5 text-xs uppercase tracking-[0.22em] text-muted-foreground">
+                <span className="inline-flex items-center gap-2">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[hsl(var(--gold))]" /> Escrow secured
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <BadgeCheck className="w-3.5 h-3.5 text-[hsl(var(--gold))]" /> ID-verified sellers
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <Sparkles className="w-3.5 h-3.5 text-[hsl(var(--gold))]" /> Photo-authenticated
+                </span>
+              </div>
+            </div>
+
+            <div className="lg:col-span-4 flex flex-col gap-3">
+              <Button asChild size="lg" className="rounded-none h-12 tracking-wide justify-between">
+                <Link to="/create-listing">
+                  List a Fragrance
+                  <Plus className="w-4 h-4" />
+                </Link>
+              </Button>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="border border-border bg-card/60 backdrop-blur-sm p-4 rounded-sm">
+                  <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Live</p>
+                  <p className="font-serif text-3xl mt-1">{allListings.length}</p>
+                  <p className="text-[10px] text-muted-foreground">listings</p>
+                </div>
+                <div className="border border-border bg-card/60 backdrop-blur-sm p-4 rounded-sm">
+                  <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Held</p>
+                  <p className="font-serif text-3xl mt-1">50%</p>
+                  <p className="text-[10px] text-muted-foreground">in escrow</p>
+                </div>
+              </div>
+            </div>
+          </motion.section>
+
+          {/* Toolbar */}
+          <div className="flex flex-col sm:flex-row gap-3 mb-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
               <Input
                 placeholder="Search by name or brand..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 bg-card/60 border-border/60 focus-visible:ring-primary/40"
+                className="pl-11 h-12 rounded-none bg-card/60 border-border/60 focus-visible:ring-foreground/30"
                 aria-label="Search fragrances"
                 role="searchbox"
               />
@@ -230,8 +293,7 @@ const MarketplacePage = () => {
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                size="default"
-                className="lg:hidden"
+                className="lg:hidden h-12 rounded-none"
                 onClick={() => setMobileFiltersOpen(v => !v)}
               >
                 <SlidersHorizontal className="w-4 h-4 mr-2" />
@@ -241,7 +303,7 @@ const MarketplacePage = () => {
                 )}
               </Button>
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-[170px] bg-card/60 border-border/60">
+                <SelectTrigger className="w-[180px] h-12 rounded-none bg-card/60 border-border/60">
                   <ArrowUpDown className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Sort" />
                 </SelectTrigger>
@@ -253,6 +315,11 @@ const MarketplacePage = () => {
               </Select>
             </div>
           </div>
+
+          <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground mb-6 flex items-center gap-2" role="status" aria-live="polite">
+            <TrendingUp className="w-3 h-3" />
+            {resultLabel}
+          </p>
 
           <div className="grid lg:grid-cols-[260px_1fr] gap-8">
             {/* Sidebar Filters */}
@@ -411,21 +478,35 @@ const MarketplacePage = () => {
             <div>
               {/* Listings Grid */}
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="border border-border/40 bg-card/40 rounded-sm animate-pulse">
+                  <div className="aspect-[4/5] bg-muted/40" />
+                  <div className="p-6 space-y-3">
+                    <div className="h-2 w-1/3 bg-muted/60" />
+                    <div className="h-5 w-2/3 bg-muted/60" />
+                    <div className="h-2 w-1/2 bg-muted/40" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : visibleListings && visibleListings.length > 0 ? (
             <TooltipProvider delayDuration={150}>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-              {visibleListings.map((listing) => {
+              {visibleListings.map((listing, idx) => {
                 const dbVerification = Array.isArray(listing.image_verification)
                   ? listing.image_verification[0]
                   : listing.image_verification;
                 const verification = getImageVerification(listing.image_url);
                 const vlabel = verificationLabel(listing.image_url, dbVerification);
                 return (
-                <Card
+                <motion.div
                   key={listing.id}
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: Math.min(idx * 0.04, 0.4), ease: [0.22, 1, 0.36, 1] }}
+                >
+                <Card
                   className="group relative overflow-hidden rounded-2xl border border-border/40 bg-card/80 hover:border-primary/30 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-22px_hsl(35_38%_48%/0.35)] transition-all duration-500"
                 >
                   <div className="aspect-[4/5] bg-gradient-to-b from-muted/40 to-muted/10 relative overflow-hidden">
@@ -528,6 +609,7 @@ const MarketplacePage = () => {
                     )}
                   </CardFooter>
                 </Card>
+                </motion.div>
                 );
               })}
             </div>
