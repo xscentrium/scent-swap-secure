@@ -417,26 +417,25 @@ const MarketplacePage = () => {
                         imageUrl={listing.image_url || undefined}
                         className="bg-background/85 backdrop-blur-sm hover:bg-background"
                       />
-                      {(verification.status === 'verified' || verification.status === 'uploaded') && (
+                      {vlabel.tone === 'ok' ? (
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-background/85 backdrop-blur-sm border border-primary/30 text-primary">
                               <BadgeCheck className="w-3 h-3" aria-hidden="true" />
-                              {verification.status === 'verified' ? 'Verified' : 'Seller photo'}
+                              {vlabel.label}
                             </span>
                           </TooltipTrigger>
-                          <TooltipContent side="right">{verification.label}</TooltipContent>
+                          <TooltipContent side="right">{dbVerification?.reason || verification.label}</TooltipContent>
                         </Tooltip>
-                      )}
-                      {(verification.status === 'unverified' || verification.status === 'banned') && (
+                      ) : (
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-background/85 backdrop-blur-sm border border-warning/40 text-warning">
                               <AlertTriangle className="w-3 h-3" aria-hidden="true" />
-                              Unverified
+                              {vlabel.label}
                             </span>
                           </TooltipTrigger>
-                          <TooltipContent side="right">{verification.label}</TooltipContent>
+                          <TooltipContent side="right">{dbVerification?.reason || verification.label}</TooltipContent>
                         </Tooltip>
                       )}
                     </div>
