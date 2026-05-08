@@ -126,10 +126,10 @@ export const ListingQuickView = ({
         <div className="grid md:grid-cols-2 gap-0">
           {/* Left - Image */}
           <div className="relative aspect-square md:aspect-auto bg-muted">
-            <img
-              src={listing.image_url || 'https://images.unsplash.com/photo-1541643600914-78b084683601?w=600'}
+            <ListingImage
+              url={listing.image_url}
               alt={listing.name}
-              className="w-full h-full object-cover"
+              verification={Array.isArray(listing.image_verification) ? listing.image_verification[0] : listing.image_verification}
             />
             <div className="absolute top-4 left-4">
               <FavoriteButton
