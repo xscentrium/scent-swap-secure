@@ -177,6 +177,7 @@ export const FragranceSearch = ({
             onChange={(e) => onBrandChange(e.target.value)}
             placeholder="e.g., Chanel"
             required={required}
+            disabled={disabled}
           />
         </div>
       </div>
