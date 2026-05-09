@@ -122,7 +122,7 @@ const Auth = () => {
       .from('profiles')
       .select('id')
       .eq('username', signupUsername.toLowerCase())
-      .single();
+      .maybeSingle();
 
     if (existingUser) {
       setIsSubmitting(false);
