@@ -13,8 +13,11 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 const emailSchema = z.string().email('Please enter a valid email');
-const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
-const usernameSchema = z.string().min(3, 'Username must be at least 3 characters').max(20, 'Username must be less than 20 characters');
+const passwordSchema = z.string().min(8, 'Password must be at least 8 characters');
+const usernameSchema = z.string()
+  .min(3, 'Username must be at least 3 characters')
+  .max(20, 'Username must be less than 20 characters')
+  .regex(/^[a-zA-Z0-9_]+$/, 'Username can only use letters, numbers, and underscores');
 
 const GoogleIcon = () => (
   <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -54,16 +57,22 @@ const Auth = () => {
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
-    const result = await lovable.auth.signInWithOAuth('google', {
-      redirect_uri: `${window.location.origin}/`,
-    });
+    try {
+      const result = await lovable.auth.signInWithOAuth('google', {
+        redirect_uri: window.location.origin,
+        extraParams: { prompt: 'select_account' },
+      });
 
-    if (result.error) {
-      toast.error(result.error.message || 'Google sign-in failed');
+      if (result.error) {
+        toast.error(result.error.message || 'Google sign-in failed');
+        setIsGoogleLoading(false);
+        return;
+      }
+      if (!result.redirected) navigate('/');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Google sign-in failed');
       setIsGoogleLoading(false);
-      return;
     }
-    // If redirected, browser will navigate away; otherwise session is set.
   };
 
   useEffect(() => {
@@ -140,8 +149,10 @@ const Auth = () => {
         toast.error(error.message);
       }
     } else {
-      toast.success('Account created! Please check your email to verify.');
-      navigate('/');
+      toast.success('Account created! Please check your email to verify before signing in.');
+      setSignupEmail('');
+      setSignupPassword('');
+      setSignupUsername('');
     }
   };
 
