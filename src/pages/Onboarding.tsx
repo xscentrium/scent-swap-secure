@@ -110,8 +110,13 @@ const Onboarding = () => {
       if (error) throw error;
       toast.success("You're all set 🎉");
       navigate('/marketplace');
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Failed to create listing');
+    } catch (e: any) {
+      const msg = e?.message || 'Failed to create listing';
+      if (typeof msg === 'string' && msg.toLowerCase().includes('row-level security')) {
+        toast.error('Trade listings require ID verification. Switch "Listing type" to "Sale only" to publish now, or finish ID verification to enable trades.');
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setCreatingListing(false);
     }
