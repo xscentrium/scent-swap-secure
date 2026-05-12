@@ -9,7 +9,7 @@ interface Notification {
   type: string;
   title: string;
   message: string;
-  data: Record<string, unknown> | null;
+  data: unknown;
   read: boolean;
   created_at: string;
 }
