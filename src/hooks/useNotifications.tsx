@@ -9,7 +9,7 @@ interface Notification {
   type: string;
   title: string;
   message: string;
-  data: any;
+  data: Record<string, unknown> | null;
   read: boolean;
   created_at: string;
 }
@@ -41,13 +41,14 @@ const showPushNotification = (title: string, body: string, onClick?: () => void)
 
 export const useNotifications = () => {
   const { profile } = useAuth();
+  const profileId = profile?.id;
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   // Fetch notifications
-  const fetchNotifications = async () => {
-    if (!profile?.id) return;
+  const fetchNotifications = useCallback(async () => {
+    if (!profileId) return;
 
     const { data, error } = await supabase
       .from('notifications')
@@ -63,7 +64,7 @@ export const useNotifications = () => {
     setNotifications(data || []);
     setUnreadCount(data?.filter((n) => !n.read).length || 0);
     setLoading(false);
-  };
+  }, [profileId]);
 
   // Mark notification as read
   const markAsRead = async (notificationId: string) => {
@@ -82,7 +83,7 @@ export const useNotifications = () => {
 
   // Mark all as read
   const markAllAsRead = async () => {
-    if (!profile?.id) return;
+    if (!profileId) return;
 
     const { error } = await supabase
       .from('notifications')
@@ -97,7 +98,7 @@ export const useNotifications = () => {
 
   // Set up realtime subscription
   useEffect(() => {
-    if (!profile?.id) {
+    if (!profileId) {
       setLoading(false);
       return;
     }
@@ -109,14 +110,14 @@ export const useNotifications = () => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
     try {
       channel = supabase
-        .channel(`notifications-${profile.id}`)
+        .channel(`notifications-${profileId}`)
         .on(
           'postgres_changes',
           {
             event: 'INSERT',
             schema: 'public',
             table: 'notifications',
-            filter: `user_id=eq.${profile.id}`,
+            filter: `user_id=eq.${profileId}`,
           },
           (payload) => {
             const newNotification = payload.new as Notification;
@@ -177,7 +178,7 @@ export const useNotifications = () => {
         supabase.removeChannel(channel);
       }
     };
-  }, [profile?.id]);
+  }, [profileId, fetchNotifications]);
 
   return {
     notifications,
