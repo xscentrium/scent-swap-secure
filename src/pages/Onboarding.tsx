@@ -111,11 +111,11 @@ const Onboarding = () => {
       toast.success("You're all set 🎉");
       navigate('/marketplace');
     } catch (e: any) {
-      const msg = e?.message || 'Failed to create listing';
+      const msg = e?.message || '';
       if (typeof msg === 'string' && msg.toLowerCase().includes('row-level security')) {
-        toast.error('Trade listings require ID verification. Switch "Listing type" to "Sale only" to publish now, or finish ID verification to enable trades.');
+        toast.error('Please upload your ID to list your first fragrance.');
       } else {
-        toast.error(msg);
+        toast.error(msg || 'Please upload your ID to list your first fragrance.');
       }
     } finally {
       setCreatingListing(false);
