@@ -12,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, Mail, Calendar, CheckCircle, Gift } from 'lucide-react';
+import { AlertCircle, Calendar, CheckCircle, Gift } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const AccountSetupDialog = () => {
@@ -21,43 +21,20 @@ export const AccountSetupDialog = () => {
   const [open, setOpen] = useState(false);
   const [birthday, setBirthday] = useState('');
   const [saving, setSaving] = useState(false);
-  const [resendingEmail, setResendingEmail] = useState(false);
-  const [emailVerified, setEmailVerified] = useState(false);
   const [birthdaySet, setBirthdaySet] = useState(false);
 
   useEffect(() => {
     if (!loading && user && profile) {
-      // Check if email is verified
-      const isEmailVerified = user.email_confirmed_at !== null;
-      setEmailVerified(isEmailVerified);
-      
       // Check if birthday is set
       const hasBirthday = !!(profile as any).birthday;
       setBirthdaySet(hasBirthday);
       
-      // Open dialog if either is missing
-      if (!isEmailVerified || !hasBirthday) {
+      // Open dialog only if birthday is missing. Email verification is not required to join.
+      if (!hasBirthday) {
         setOpen(true);
       }
     }
   }, [loading, user, profile]);
-
-  const handleResendVerification = async () => {
-    if (!user?.email) return;
-    
-    setResendingEmail(true);
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email: user.email,
-    });
-    setResendingEmail(false);
-
-    if (error) {
-      toast.error('Failed to resend verification email');
-    } else {
-      toast.success('Verification email sent!');
-    }
-  };
 
   const calculateAge = (birthDateStr: string) => {
     const birthDate = new Date(birthDateStr);
@@ -100,18 +77,15 @@ export const AccountSetupDialog = () => {
         toast.success('Birthday saved!');
       }
       
-      // Close dialog if both are complete
-      if (emailVerified) {
-        setOpen(false);
-        // Auto-redirect new signups to onboarding wizard
-        if (!(profile as any)?.id_verified) {
-          navigate('/onboarding');
-        }
+      setOpen(false);
+      // Auto-redirect new signups to onboarding wizard
+      if (!(profile as any)?.id_verified) {
+        navigate('/onboarding');
       }
     }
   };
 
-  const isComplete = emailVerified && birthdaySet;
+  const isComplete = birthdaySet;
 
   if (loading || !user || !profile) {
     return null;
@@ -140,37 +114,6 @@ export const AccountSetupDialog = () => {
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Email Verification */}
-          <div className={`p-4 rounded-lg border ${emailVerified ? 'bg-green-500/10 border-green-500/30' : 'bg-muted border-border'}`}>
-            <div className="flex items-start gap-3">
-              {emailVerified ? (
-                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
-              ) : (
-                <Mail className="w-5 h-5 text-muted-foreground mt-0.5" />
-              )}
-              <div className="flex-1">
-                <h4 className="font-medium">Verify Email Address</h4>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {emailVerified 
-                    ? 'Your email has been verified!'
-                    : `We sent a verification email to ${user.email}. Please check your inbox and click the link.`
-                  }
-                </p>
-                {!emailVerified && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-3"
-                    onClick={handleResendVerification}
-                    disabled={resendingEmail}
-                  >
-                    {resendingEmail ? 'Sending...' : 'Resend Verification Email'}
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-
           {/* Birthday */}
           <div className={`p-4 rounded-lg border ${birthdaySet ? 'bg-green-500/10 border-green-500/30' : 'bg-muted border-border'}`}>
             <div className="flex items-start gap-3">

@@ -149,7 +149,7 @@ const Auth = () => {
         toast.error(error.message);
       }
     } else {
-      toast.success('Account created! Please check your email to verify before signing in.');
+      toast.success('Account created! You can start exploring Xscentrium now.');
       setSignupEmail('');
       setSignupPassword('');
       setSignupUsername('');
