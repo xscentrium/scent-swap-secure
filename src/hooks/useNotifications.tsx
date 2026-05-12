@@ -9,7 +9,7 @@ interface Notification {
   type: string;
   title: string;
   message: string;
-  data: any;
+  data: unknown;
   read: boolean;
   created_at: string;
 }
@@ -41,13 +41,14 @@ const showPushNotification = (title: string, body: string, onClick?: () => void)
 
 export const useNotifications = () => {
   const { profile } = useAuth();
+  const profileId = profile?.id;
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   // Fetch notifications
-  const fetchNotifications = async () => {
-    if (!profile?.id) return;
+  const fetchNotifications = useCallback(async () => {
+    if (!profileId) return;
 
     const { data, error } = await supabase
       .from('notifications')
@@ -63,7 +64,7 @@ export const useNotifications = () => {
     setNotifications(data || []);
     setUnreadCount(data?.filter((n) => !n.read).length || 0);
     setLoading(false);
-  };
+  }, [profileId]);
 
   // Mark notification as read
   const markAsRead = async (notificationId: string) => {
@@ -82,7 +83,7 @@ export const useNotifications = () => {
 
   // Mark all as read
   const markAllAsRead = async () => {
-    if (!profile?.id) return;
+    if (!profileId) return;
 
     const { error } = await supabase
       .from('notifications')
@@ -97,79 +98,87 @@ export const useNotifications = () => {
 
   // Set up realtime subscription
   useEffect(() => {
-    if (!profile?.id) {
+    if (!profileId) {
       setLoading(false);
       return;
     }
 
     fetchNotifications();
 
-    // Subscribe to new notifications
-    const channel = supabase
-      .channel('notifications')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${profile.id}`,
-        },
-        (payload) => {
-          const newNotification = payload.new as Notification;
-          setNotifications((prev) => [newNotification, ...prev]);
-          setUnreadCount((prev) => prev + 1);
-          
-          // Show in-app toast
-          toast(newNotification.title, {
-            description: newNotification.message,
-          });
+    // Subscribe to new notifications. Use a user-scoped topic so reconnects after OAuth
+    // never reuse a channel that has already been subscribed.
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      channel = supabase
+        .channel(`notifications-${profileId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${profileId}`,
+          },
+          (payload) => {
+            const newNotification = payload.new as Notification;
+            setNotifications((prev) => [newNotification, ...prev]);
+            setUnreadCount((prev) => prev + 1);
+            
+            // Show in-app toast
+            toast(newNotification.title, {
+              description: newNotification.message,
+            });
 
-          // Show browser push notification based on type
-          if (newNotification.type === 'trade_match') {
-            showPushNotification(
-              '🎯 ' + newNotification.title,
-              newNotification.message,
-              () => { window.location.href = '/trade-matches'; }
-            );
-          } else if (newNotification.type === 'trade_message') {
-            showPushNotification(
-              '💬 ' + newNotification.title,
-              newNotification.message,
-              () => { window.location.href = '/messages'; }
-            );
-          } else if (newNotification.type === 'badge_earned') {
-            showPushNotification(
-              '🏆 ' + newNotification.title,
-              newNotification.message,
-              () => { window.location.href = '/profile'; }
-            );
-          } else if (newNotification.type === 'trade_proposal') {
-            showPushNotification(
-              '🤝 ' + newNotification.title,
-              newNotification.message,
-              () => { window.location.href = '/my-trades'; }
-            );
-          } else if (newNotification.type?.startsWith('escrow_')) {
-            const emoji = newNotification.type === 'escrow_disputed' ? '⚠️'
-              : newNotification.type === 'escrow_released' ? '✅'
-              : newNotification.type === 'escrow_refunded' ? '↩️' : '🔒';
-            showPushNotification(
-              `${emoji} ${newNotification.title}`,
-              newNotification.message,
-              () => { window.location.href = '/my-trades'; }
-            );
-          } else {
-            showPushNotification(newNotification.title, newNotification.message);
+            // Show browser push notification based on type
+            if (newNotification.type === 'trade_match') {
+              showPushNotification(
+                '🎯 ' + newNotification.title,
+                newNotification.message,
+                () => { window.location.href = '/trade-matches'; }
+              );
+            } else if (newNotification.type === 'trade_message') {
+              showPushNotification(
+                '💬 ' + newNotification.title,
+                newNotification.message,
+                () => { window.location.href = '/messages'; }
+              );
+            } else if (newNotification.type === 'badge_earned') {
+              showPushNotification(
+                '🏆 ' + newNotification.title,
+                newNotification.message,
+                () => { window.location.href = '/profile'; }
+              );
+            } else if (newNotification.type === 'trade_proposal') {
+              showPushNotification(
+                '🤝 ' + newNotification.title,
+                newNotification.message,
+                () => { window.location.href = '/my-trades'; }
+              );
+            } else if (newNotification.type?.startsWith('escrow_')) {
+              const emoji = newNotification.type === 'escrow_disputed' ? '⚠️'
+                : newNotification.type === 'escrow_released' ? '✅'
+                : newNotification.type === 'escrow_refunded' ? '↩️' : '🔒';
+              showPushNotification(
+                `${emoji} ${newNotification.title}`,
+                newNotification.message,
+                () => { window.location.href = '/my-trades'; }
+              );
+            } else {
+              showPushNotification(newNotification.title, newNotification.message);
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
+    } catch (error) {
+      console.error('Failed to subscribe to notifications:', error);
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
-  }, [profile?.id]);
+  }, [profileId, fetchNotifications]);
 
   return {
     notifications,
