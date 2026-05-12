@@ -12,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, Mail, Calendar, CheckCircle, Gift } from 'lucide-react';
+import { AlertCircle, Calendar, CheckCircle, Gift } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const AccountSetupDialog = () => {
@@ -21,43 +21,20 @@ export const AccountSetupDialog = () => {
   const [open, setOpen] = useState(false);
   const [birthday, setBirthday] = useState('');
   const [saving, setSaving] = useState(false);
-  const [resendingEmail, setResendingEmail] = useState(false);
-  const [emailVerified, setEmailVerified] = useState(false);
   const [birthdaySet, setBirthdaySet] = useState(false);
 
   useEffect(() => {
     if (!loading && user && profile) {
-      // Check if email is verified
-      const isEmailVerified = user.email_confirmed_at !== null;
-      setEmailVerified(isEmailVerified);
-      
       // Check if birthday is set
       const hasBirthday = !!(profile as any).birthday;
       setBirthdaySet(hasBirthday);
       
-      // Open dialog if either is missing
-      if (!isEmailVerified || !hasBirthday) {
+      // Open dialog only if birthday is missing. Email verification is not required to join.
+      if (!hasBirthday) {
         setOpen(true);
       }
     }
   }, [loading, user, profile]);
-
-  const handleResendVerification = async () => {
-    if (!user?.email) return;
-    
-    setResendingEmail(true);
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email: user.email,
-    });
-    setResendingEmail(false);
-
-    if (error) {
-      toast.error('Failed to resend verification email');
-    } else {
-      toast.success('Verification email sent!');
-    }
-  };
 
   const calculateAge = (birthDateStr: string) => {
     const birthDate = new Date(birthDateStr);
@@ -100,18 +77,15 @@ export const AccountSetupDialog = () => {
         toast.success('Birthday saved!');
       }
       
-      // Close dialog if both are complete
-      if (emailVerified) {
-        setOpen(false);
-        // Auto-redirect new signups to onboarding wizard
-        if (!(profile as any)?.id_verified) {
-          navigate('/onboarding');
-        }
+      setOpen(false);
+      // Auto-redirect new signups to onboarding wizard
+      if (!(profile as any)?.id_verified) {
+        navigate('/onboarding');
       }
     }
   };
 
-  const isComplete = emailVerified && birthdaySet;
+  const isComplete = birthdaySet;
 
   if (loading || !user || !profile) {
     return null;
