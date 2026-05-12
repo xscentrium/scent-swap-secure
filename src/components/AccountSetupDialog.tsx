@@ -114,37 +114,6 @@ export const AccountSetupDialog = () => {
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Email Verification */}
-          <div className={`p-4 rounded-lg border ${emailVerified ? 'bg-green-500/10 border-green-500/30' : 'bg-muted border-border'}`}>
-            <div className="flex items-start gap-3">
-              {emailVerified ? (
-                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
-              ) : (
-                <Mail className="w-5 h-5 text-muted-foreground mt-0.5" />
-              )}
-              <div className="flex-1">
-                <h4 className="font-medium">Verify Email Address</h4>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {emailVerified 
-                    ? 'Your email has been verified!'
-                    : `We sent a verification email to ${user.email}. Please check your inbox and click the link.`
-                  }
-                </p>
-                {!emailVerified && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-3"
-                    onClick={handleResendVerification}
-                    disabled={resendingEmail}
-                  >
-                    {resendingEmail ? 'Sending...' : 'Resend Verification Email'}
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-
           {/* Birthday */}
           <div className={`p-4 rounded-lg border ${birthdaySet ? 'bg-green-500/10 border-green-500/30' : 'bg-muted border-border'}`}>
             <div className="flex items-start gap-3">
