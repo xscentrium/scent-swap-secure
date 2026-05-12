@@ -255,12 +255,17 @@ const Onboarding = () => {
                       <Input type="number" min="0" value={listing.price} onChange={(e) => setListing({ ...listing, price: e.target.value })} />
                     </div>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
                     <Button variant="ghost" onClick={() => setStep(2)}><ArrowLeft className="w-4 h-4 mr-2" />Back</Button>
-                    <Button onClick={handleCreateListing} disabled={creatingListing} className="bg-primary text-primary-foreground shadow-luxury">
-                      {creatingListing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
-                      Publish & finish
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" onClick={() => navigate('/marketplace')} disabled={creatingListing}>
+                        Skip for now
+                      </Button>
+                      <Button onClick={handleCreateListing} disabled={creatingListing} className="bg-primary text-primary-foreground shadow-luxury">
+                        {creatingListing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
+                        Publish & finish
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
