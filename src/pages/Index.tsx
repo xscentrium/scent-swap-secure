@@ -52,6 +52,7 @@ const Index = () => {
       <NotificationPermissionBanner />
       <main>
         <Hero />
+        <TrustStrip />
         {profile && (
           <>
             <StatsDashboard />
