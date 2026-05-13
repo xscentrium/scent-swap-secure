@@ -14,6 +14,7 @@ const APPROVED_HOSTS = [
   'www.fragranceshop.com',
   'm.media-amazon.com',
   'images-na.ssl-images-amazon.com',
+  'images.hernas.com',
 ];
 
 // Anything stored in our own Supabase storage bucket counts as user-uploaded
