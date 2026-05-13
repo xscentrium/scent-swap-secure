@@ -11,7 +11,7 @@ const Privacy = () => {
         <div className="container mx-auto px-4 max-w-4xl">
           <div className="mb-8">
             <h1 className="text-4xl font-serif font-bold mb-2">Privacy Policy</h1>
-            <p className="text-muted-foreground">Last updated: January 2026</p>
+            <p className="text-muted-foreground">Last updated: May 13, 2026 · Questions? <a href="mailto:support@xscentrium.com" className="text-primary hover:underline">support@xscentrium.com</a></p>
           </div>
 
           <div className="space-y-6">
