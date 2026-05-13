@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
+import { SEO } from "@/components/SEO";
 import { AIRecommendations } from '@/components/AIRecommendations';
 import { FragranceLayering } from '@/components/FragranceLayering';
 import { FavoritesManager } from '@/components/FavoritesManager';
@@ -127,6 +128,7 @@ const Discover = () => {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
+      <SEO title="Discover Fragrances & Collectors | Xscentrium" description="Curated discovery: trending fragrances, AI recommendations, and collectors to follow on Xscentrium." path="/discover" />
       {/* Editorial backdrop */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-32 -left-32 w-[520px] h-[520px] rounded-full bg-[hsl(var(--gold)/0.08)] blur-3xl" />

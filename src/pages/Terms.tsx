@@ -1,11 +1,13 @@
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
+import { SEO } from "@/components/SEO";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 
 const Terms = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="Terms of Service | Xscentrium" description="The Xscentrium Terms of Service governing trading, escrow, and account use." path="/terms" />
       <Navigation />
       <main className="pt-20 pb-12">
         <div className="container mx-auto px-4 max-w-4xl">

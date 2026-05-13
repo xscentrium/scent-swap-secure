@@ -1,5 +1,6 @@
 import { Navigation } from "@/components/Navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SEO } from "@/components/SEO";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -299,6 +300,7 @@ const Leaderboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="Top Traders Leaderboard | Xscentrium" description="See the top fragrance traders, collectors and reviewers ranked across the Xscentrium community." path="/leaderboard" />
       <Navigation />
       <main className="pt-20 pb-12">
         <div className="container mx-auto px-4 max-w-2xl">

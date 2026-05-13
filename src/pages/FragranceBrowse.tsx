@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -87,6 +88,7 @@ export default function FragranceBrowse() {
 
   return (
     <div className="container max-w-6xl py-8 space-y-6">
+      <SEO title="Browse Fragrances by Notes & Accords | Xscentrium" description="Explore the Xscentrium catalog of fragrances. Search by name, brand, accord and notes." path="/browse" />
       <h1 className="text-3xl md:text-5xl font-serif">Browse fragrances</h1>
 
       <div className="flex gap-2">

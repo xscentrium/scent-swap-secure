@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { SEO } from "@/components/SEO";
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -652,6 +653,7 @@ const MarketplacePage = () => {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
+      <SEO title="Marketplace — Buy & Trade Niche Fragrances | Xscentrium" description="Browse verified listings of rare colognes, perfumes and oils. Filter by brand, price, accord and trade-only options." path="/marketplace" />
       {/* Editorial backdrop */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-40 -right-32 w-[560px] h-[560px] rounded-full bg-[hsl(var(--gold)/0.08)] blur-3xl" />
