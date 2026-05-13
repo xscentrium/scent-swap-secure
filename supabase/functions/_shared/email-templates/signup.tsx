@@ -1,18 +1,20 @@
 /// <reference types="npm:@types/react@18.3.1" />
 
 import * as React from 'npm:react@18.3.1'
-
 import {
   Body,
   Button,
   Container,
   Head,
   Heading,
+  Hr,
   Html,
   Link,
   Preview,
+  Section,
   Text,
 } from 'npm:@react-email/components@0.0.22'
+import { brand } from './_brand.ts'
 
 interface SignupEmailProps {
   siteName: string
@@ -21,37 +23,37 @@ interface SignupEmailProps {
   confirmationUrl: string
 }
 
-export const SignupEmail = ({
-  siteName,
-  siteUrl,
-  recipient,
-  confirmationUrl,
-}: SignupEmailProps) => (
+export const SignupEmail = ({ siteName, siteUrl, recipient, confirmationUrl }: SignupEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Confirm your email for {siteName}</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Heading style={h1}>Confirm your email</Heading>
-        <Text style={text}>
-          Thanks for signing up for{' '}
-          <Link href={siteUrl} style={link}>
-            <strong>{siteName}</strong>
-          </Link>
-          !
+    <Preview>Welcome to {siteName} — confirm your email to start trading</Preview>
+    <Body style={brand.main}>
+      <Container style={brand.container}>
+        <Section style={brand.brandRow}>
+          <Heading as="h2" style={brand.wordmark}>{siteName}</Heading>
+          <Text style={brand.tagline}>The art of scent, traded</Text>
+        </Section>
+
+        <Heading style={brand.h1}>Welcome to the collection</Heading>
+        <Text style={brand.text}>
+          Thanks for joining <Link href={siteUrl} style={brand.link}>{siteName}</Link>. Confirm your email
+          ({recipient}) to unlock the marketplace, start your collection, and trade with verified collectors.
         </Text>
-        <Text style={text}>
-          Please confirm your email address (
-          <Link href={`mailto:${recipient}`} style={link}>
-            {recipient}
-          </Link>
-          ) by clicking the button below:
-        </Text>
-        <Button style={button} href={confirmationUrl}>
-          Verify Email
+
+        <Button style={brand.button} href={confirmationUrl}>
+          Confirm email
         </Button>
-        <Text style={footer}>
-          If you didn't create an account, you can safely ignore this email.
+
+        <Hr style={brand.divider} />
+        <Text style={brand.footer}>
+          You're one step away. Once confirmed, complete your profile and ID verification to unlock trading
+          and our 50% escrow protection.
+        </Text>
+        <Text style={brand.footer}>
+          Didn't sign up? You can safely ignore this email.
+        </Text>
+        <Text style={brand.footerLegal}>
+          © {new Date().getFullYear()} {siteName} · Curated · Escrow Protected
         </Text>
       </Container>
     </Body>
@@ -59,28 +61,3 @@ export const SignupEmail = ({
 )
 
 export default SignupEmail
-
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
-const link = { color: 'inherit', textDecoration: 'underline' }
-const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
-  fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
-  textDecoration: 'none',
-}
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
