@@ -29,30 +29,51 @@ export function FragranceBuyLinks({ name, brand }: { name: string; brand: string
 
   if (loading) return null;
 
+  // Auto-generated retail-partner search links. Swap the URL builder with an
+  // affiliate redirect (e.g. Sovrn / FlexOffers) once an account is approved.
+  const query = encodeURIComponent(`${brand} ${name}`.trim());
+  const partners = [
+    {
+      id: "jomashop",
+      label: "Buy on Jomashop",
+      url: `https://www.jomashop.com/catalogsearch/result/?q=${query}`,
+    },
+    {
+      id: "fragrancenet",
+      label: "Buy on FragranceNet",
+      url: `https://www.fragrancenet.com/search?q=${query}`,
+    },
+  ];
+
   return (
     <Card className="p-6">
       <div className="flex items-center gap-2 mb-4">
         <ShoppingBag className="h-4 w-4 text-primary" />
         <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Where to buy</p>
       </div>
-      {links.length ? (
-        <div className="grid sm:grid-cols-2 gap-3">
-          {links.map((l) => (
-            <a key={l.id} href={l.affiliate_url} target="_blank" rel="noopener noreferrer sponsored">
-              <Button variant="outline" className="w-full justify-between h-auto py-3">
-                <span className="text-sm font-medium truncate">
-                  {l.description || new URL(l.affiliate_url).hostname.replace("www.", "")}
-                </span>
-                <ExternalLink className="h-4 w-4 ml-2 shrink-0" />
-              </Button>
-            </a>
-          ))}
-        </div>
-      ) : (
-        <p className="text-sm text-muted-foreground">
-          No retail partners yet for this fragrance. Check back soon.
-        </p>
-      )}
+      <div className="grid sm:grid-cols-2 gap-3">
+        {links.map((l) => (
+          <a key={l.id} href={l.affiliate_url} target="_blank" rel="noopener noreferrer sponsored">
+            <Button variant="outline" className="w-full justify-between h-auto py-3">
+              <span className="text-sm font-medium truncate">
+                {l.description || new URL(l.affiliate_url).hostname.replace("www.", "")}
+              </span>
+              <ExternalLink className="h-4 w-4 ml-2 shrink-0" />
+            </Button>
+          </a>
+        ))}
+        {partners.map((p) => (
+          <a key={p.id} href={p.url} target="_blank" rel="noopener noreferrer sponsored">
+            <Button variant="outline" className="w-full justify-between h-auto py-3">
+              <span className="text-sm font-medium truncate">{p.label}</span>
+              <ExternalLink className="h-4 w-4 ml-2 shrink-0" />
+            </Button>
+          </a>
+        ))}
+      </div>
+      <p className="mt-4 text-[11px] uppercase tracking-[0.2em] text-muted-foreground/70">
+        Retail partner links — Xscentrium may earn a commission.
+      </p>
     </Card>
   );
 }
