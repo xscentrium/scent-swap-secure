@@ -1,22 +1,19 @@
 project_id = "neuxsthayhuzavuyuouw"
 
-[functions.fragrance-search]
-verify_jwt = false
-
-[functions.fragrance-details]
-verify_jwt = false
-
-[functions.fragrance-market-value]
-verify_jwt = false
-
-[functions.ai-recommendations]
-verify_jwt = false
-
-[functions.ai-layering]
-verify_jwt = false
-
-[functions.search-volume-alert]
-verify_jwt = false
-
-[functions.verify-listing-images]
-verify_jwt = false
+[functions]
+  [functions.ai-layering]
+    verify_jwt = false
+  [functions.ai-recommendations]
+    verify_jwt = false
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.fragrance-details]
+    verify_jwt = false
+  [functions.fragrance-market-value]
+    verify_jwt = false
+  [functions.fragrance-search]
+    verify_jwt = false
+  [functions.search-volume-alert]
+    verify_jwt = false
+  [functions.verify-listing-images]
+    verify_jwt = false
