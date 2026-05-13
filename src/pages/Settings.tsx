@@ -1081,6 +1081,9 @@ const Settings = () => {
                           </div>
                         </div>
                       )}
+                      <div className="rounded-lg border border-primary/30 bg-primary/10 p-3 text-sm">
+                        ⏱️ <strong>Reviewed within 24 hours.</strong> You'll receive a notification once your ID has been approved or if anything's missing.
+                      </div>
                       <div className="space-y-2">
                         <Label>{idVerification.status === 'rejected' ? 'Resubmit Government ID' : 'Upload Government ID'}</Label>
                         <p className="text-sm text-muted-foreground mb-3">
