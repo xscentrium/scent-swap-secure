@@ -67,8 +67,20 @@ export default function ForumThread() {
 
   if (!thread) return <div className="container py-8">Loading…</div>;
 
+  const threadTitle = `${thread.title} | Xscentrium Forum`;
+  const threadDesc = (thread.body || `Community discussion on Xscentrium: ${thread.title}`).slice(0, 160);
+  const forumLd = {
+    "@context": "https://schema.org",
+    "@type": "DiscussionForumPosting",
+    headline: thread.title,
+    text: thread.body || undefined,
+    datePublished: thread.created_at,
+    author: thread.profiles?.display_name || thread.profiles?.username || "Xscentrium member",
+  };
+
   return (
     <div className="container max-w-3xl py-8 space-y-4">
+      <SEO title={threadTitle} description={threadDesc} path={`/forum/thread/${thread.id}`} type="article" jsonLd={forumLd} />
       <Card className="p-6">
         <div className="flex items-start gap-4">
           <div className="flex flex-col items-center">

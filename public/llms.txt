@@ -1,0 +1,33 @@
+# Xscentrium
+
+> A members-only marketplace for collectors to trade and sell rare colognes, perfumes, and oils — verified, escrow-backed, and curated by enthusiasts.
+
+Xscentrium is a fragrance trading platform with ID-verified users, 50% escrow holds on trades, an AI-powered fragrance database, social profiles with collections and wishlists, a community forum, and an influencer hub.
+
+## Pages
+
+- [Home](/): Marketplace overview, featured listings, and trust signals.
+- [Marketplace](/marketplace): Browse, search, filter, and sort all active listings (sale, trade, or both).
+- [Discover](/discover): Curated discovery feed of fragrances and people.
+- [Discover Users](/discover/users): Find and follow other collectors.
+- [Browse Fragrances](/browse): Catalog of fragrances with notes, accords, and ratings.
+- [Compare Fragrances](/compare): Side-by-side comparison of up to 4 fragrances.
+- [Scent Quiz](/scent-quiz): Personality-driven fragrance recommendation quiz.
+- [Leaderboard](/leaderboard): Global trader rankings and milestones.
+- [Forum](/forum): Community discussions about fragrances, brands, and trading.
+- [News](/news): Aggregated fragrance industry news.
+- [Influencer Hub](/influencers): Verified fragrance influencer pages and affiliate links.
+- [Year in Review](/year-in-review): Personal fragrance usage recap.
+
+## Account
+
+- [Sign in / Sign up](/auth): Email, Google OAuth, with optional 2FA.
+- [Settings](/settings): Profile, notifications, privacy, and security.
+- [My Trades](/my-trades): Active and completed trades.
+- [Trade Matches](/trade-matches): Suggested matches based on your wishlist and collection.
+
+## Resources
+
+- [Contact](/contact): Support and inquiries.
+- [Terms](/terms): Terms of service.
+- [Privacy](/privacy): Privacy policy.

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Navigation } from '@/components/Navigation';
+import { SEO } from "@/components/SEO";
 import { Footer } from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -123,6 +124,7 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="Contact Support | Xscentrium" description="Reach the Xscentrium team for support, partnerships, or media inquiries." path="/contact" />
       <Navigation />
       <main className="pt-20 pb-12">
         <div className="container mx-auto px-4 max-w-6xl">

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { SEO } from "@/components/SEO";
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable/index';
@@ -275,6 +276,7 @@ const Auth = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
+      <SEO title="Sign in or Sign up | Xscentrium" description="Create your Xscentrium account to trade rare fragrances securely with ID verification and escrow." path="/auth" />
         <div className="flex items-center justify-center gap-2 mb-8">
           <Sparkles className="w-8 h-8 text-primary" />
           <span className="text-2xl font-serif font-bold">Xscentrium</span>

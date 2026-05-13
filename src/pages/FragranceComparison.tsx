@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { SEO } from "@/components/SEO";
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Navigation } from '@/components/Navigation';
@@ -107,6 +108,7 @@ const FragranceComparison = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="Compare Fragrances Side-by-Side | Xscentrium" description="Compare up to four fragrances side-by-side: notes, accords, longevity, sillage and price." path="/compare" />
       <Navigation />
       <main className="pt-20 pb-12">
         <div className="container mx-auto px-4 max-w-7xl">

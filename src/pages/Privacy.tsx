@@ -1,11 +1,13 @@
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
+import { SEO } from "@/components/SEO";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 
 const Privacy = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="Privacy Policy | Xscentrium" description="How Xscentrium collects, uses and protects your personal information and trading data." path="/privacy" />
       <Navigation />
       <main className="pt-20 pb-12">
         <div className="container mx-auto px-4 max-w-4xl">

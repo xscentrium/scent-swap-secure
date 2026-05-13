@@ -1,5 +1,6 @@
 import { Navigation } from "@/components/Navigation";
 import { Hero } from "@/components/Hero";
+import { SEO } from "@/components/SEO";
 import { TrustStrip } from "@/components/TrustStrip";
 import { HowItWorks } from "@/components/HowItWorks";
 import { Marketplace } from "@/components/Marketplace";
@@ -50,6 +51,7 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       <NotificationPermissionBanner />
+      <SEO title="Xscentrium — Trade Rare Fragrances Securely" description="A members-only marketplace for collectors. Trade rare colognes, perfumes & oils — ID-verified, escrow-backed, curated." path="/" />
       <main>
         <Hero />
         <TrustStrip />

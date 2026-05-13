@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { SEO } from "@/components/SEO";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -16,6 +17,7 @@ export default function News() {
 
   return (
     <div className="container max-w-5xl py-8">
+      <SEO title="Fragrance News & Releases | Xscentrium" description="Latest fragrance industry news — new releases, brand updates and AI-curated weekly highlights." path="/news" jsonLd={{"@context":"https://schema.org","@type":"CollectionPage","name":"Fragrance News","url":"https://xscentrium.com/news"}} />
       <h1 className="text-3xl md:text-5xl font-serif mb-2">News</h1>
       <p className="text-muted-foreground mb-6">Latest from the fragrance world — releases, brand news and weekly AI-curated highlights.</p>
       {loading && <p className="text-sm text-muted-foreground">Loading…</p>}

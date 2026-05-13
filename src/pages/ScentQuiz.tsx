@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { SEO } from "@/components/SEO";
 import { useAuth } from '@/hooks/useAuth';
 import { Navigation } from '@/components/Navigation';
 import { ScentProfileQuiz } from '@/components/ScentProfileQuiz';
@@ -69,6 +70,7 @@ const ScentQuiz = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="Scent Profile Quiz | Xscentrium" description="Take the Xscentrium scent profile quiz and get personalized fragrance recommendations." path="/scent-quiz" />
       <Navigation />
       <main className="pt-20 pb-12">
         <div className="container mx-auto px-4">

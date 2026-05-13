@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { SEO } from "@/components/SEO";
 import { Navigation } from '@/components/Navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -89,6 +90,7 @@ const InfluencerHub = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="Fragrance Influencer Hub | Xscentrium" description="Verified fragrance influencers, social embeds and curated affiliate picks on Xscentrium." path="/influencers" />
       <Navigation />
       <main className="pt-20 pb-12">
         <div className="container mx-auto px-4">
