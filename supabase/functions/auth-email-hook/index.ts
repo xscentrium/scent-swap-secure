@@ -36,7 +36,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "scent-swap-safe"
+const SITE_NAME = "Xscentrium"
 const SENDER_DOMAIN = "notify.xscentrium.com"
 const ROOT_DOMAIN = "xscentrium.com"
 const FROM_DOMAIN = "xscentrium.com" // Domain shown in From address (may be root or sender subdomain)
