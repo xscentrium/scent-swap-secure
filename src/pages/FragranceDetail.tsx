@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { AccordsBar } from "@/components/AccordsBar";
 import { RatingBars } from "@/components/RatingBars";
@@ -101,8 +102,26 @@ export default function FragranceDetail() {
   const description = frag.description || ai?.description;
   const perfumer = frag.perfumer || ai?.perfumer;
 
+  const fragTitle = `${frag.brand} ${frag.name} — Notes, Reviews & Where to Buy | Xscentrium`;
+  const fragDesc = (ai?.description || frag.description || `Discover ${frag.brand} ${frag.name}: notes, accords, longevity and community reviews on Xscentrium.`).slice(0, 160);
+  const productLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: `${frag.brand} ${frag.name}`,
+    brand: { "@type": "Brand", name: frag.brand },
+    description: fragDesc,
+    image: frag.image_url || undefined,
+    aggregateRating: ai?.averageRating ? {
+      "@type": "AggregateRating",
+      ratingValue: ai.averageRating,
+      bestRating: 5,
+      ratingCount: 1,
+    } : undefined,
+  };
+
   return (
     <div className="min-h-screen pt-16">
+      <SEO title={fragTitle} description={fragDesc} path={`/fragrance/${id}`} type="product" image={frag.image_url || undefined} jsonLd={productLd} />
       {/* HERO */}
       <div className="relative overflow-hidden border-b">
         <div
