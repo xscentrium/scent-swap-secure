@@ -1001,7 +1001,14 @@ const MarketplacePage = () => {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.5, delay: Math.min(idx * 0.04, 0.4), ease: [0.22, 1, 0.36, 1] }}
                         >
-                          <Card className="group relative overflow-hidden rounded-2xl border border-border/40 bg-card/80 hover:border-primary/30 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-22px_hsl(35_38%_48%/0.35)] transition-all duration-500">
+                          <Card
+                            className="group relative overflow-hidden rounded-2xl border border-border/40 bg-card/80 hover:border-primary/30 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-22px_hsl(35_38%_48%/0.35)] transition-all duration-500 cursor-pointer"
+                            onClick={() => {
+                              const next = new URLSearchParams(searchParams);
+                              next.set('listing', listing.id);
+                              setSearchParams(next, { replace: false });
+                            }}
+                          >
                             <div className="aspect-[4/5] bg-gradient-to-b from-muted/40 to-muted/10 relative overflow-hidden">
                               <ListingImage
                                 url={listing.image_url}
