@@ -17,7 +17,9 @@ import { FavoriteButton } from '@/components/FavoriteButton';
 import { AccordsBar } from '@/components/AccordsBar';
 import { RatingBars } from '@/components/RatingBars';
 import { useEffect } from 'react';
-import { Star, Sun, Moon, Snowflake, Leaf, Flower2, CloudSun, Clock, Wind } from 'lucide-react';
+import { Star, Sun, Moon, Snowflake, Leaf, Flower2, CloudSun, Clock, Wind, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 type FragranceDetails = {
   name: string;
@@ -110,12 +112,22 @@ export const FragranceDetailsModal = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle className="font-serif text-xl">{name}</DialogTitle>
-              <p className="text-muted-foreground">{brand}</p>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <DialogTitle className="font-serif text-xl truncate">{name}</DialogTitle>
+              <p className="text-muted-foreground truncate">{brand}</p>
             </div>
-            <FavoriteButton name={name} brand={brand} imageUrl={imageUrl || undefined} size="default" variant="outline" />
+            <div className="flex items-center gap-2 shrink-0">
+              <FavoriteButton name={name} brand={brand} imageUrl={imageUrl || undefined} size="default" variant="outline" />
+              {catalogId && (
+                <Button asChild size="sm" variant="default" onClick={() => onOpenChange(false)}>
+                  <Link to={`/fragrance/${catalogId}`}>
+                    <ExternalLink className="w-4 h-4 mr-1.5" />
+                    Full page
+                  </Link>
+                </Button>
+              )}
+            </div>
           </div>
         </DialogHeader>
 

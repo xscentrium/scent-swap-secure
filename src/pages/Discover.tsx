@@ -214,19 +214,19 @@ const Discover = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="flex gap-2 pt-1 border-t border-border/40">
+                        <div className="flex gap-1.5 pt-1 border-t border-border/40">
                           <button
                             type="button"
                             onClick={() => setActiveFragrance({ name: f.name, brand: f.brand, imageUrl: f.image_url })}
-                            className="flex-1 text-xs py-1.5 px-2 rounded-sm bg-muted hover:bg-muted/70 transition font-medium"
+                            className="flex-1 min-w-0 text-[11px] sm:text-xs py-1.5 px-1.5 rounded-sm bg-muted hover:bg-muted/70 transition font-medium whitespace-nowrap"
                           >
                             Quick view
                           </button>
                           <Link
                             to={`/fragrance/${f.id}`}
-                            className="flex-1 text-xs py-1.5 px-2 rounded-sm bg-primary/10 hover:bg-primary/20 text-primary transition font-medium text-center"
+                            className="flex-1 min-w-0 text-[11px] sm:text-xs py-1.5 px-1.5 rounded-sm bg-primary/10 hover:bg-primary/20 text-primary transition font-medium text-center whitespace-nowrap"
                           >
-                            Full view →
+                            Full page →
                           </Link>
                         </div>
                       </Card>
