@@ -52,6 +52,7 @@ import ForumNewThread from "./pages/ForumNewThread";
 import ForumThread from "./pages/ForumThread";
 import FragranceDetail from "./pages/FragranceDetail";
 import FragranceBrowse from "./pages/FragranceBrowse";
+import Performance from "./pages/Performance";
 
 const queryClient = new QueryClient();
 
