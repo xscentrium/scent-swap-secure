@@ -347,7 +347,7 @@ export const ListingQuickView = ({
                 className="sm:col-span-2"
                 onClick={() => {
                   onOpenChange(false);
-                  navigate(`/marketplace?listing=${listing.id}`);
+                  navigate(`/listing/${listing.id}`);
                 }}
               >
                 <ExternalLink className="w-4 h-4 mr-2" />
