@@ -395,7 +395,12 @@ const Discover = () => {
                 {catalogResults && catalogResults.length > 0 ? (
                   <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
                     {catalogResults.map((f: any) => (
-                      <Link key={f.id} to={`/fragrance/${f.id}`}>
+                      <button
+                        key={f.id}
+                        type="button"
+                        onClick={() => setActiveFragrance({ name: f.name, brand: f.brand, imageUrl: f.image_url })}
+                        className="text-left"
+                      >
                         <Card className="p-4 hover:border-foreground transition flex gap-3">
                           <div className="w-14 h-14 rounded-sm bg-muted overflow-hidden shrink-0">
                             {f.image_url && (
@@ -423,7 +428,7 @@ const Discover = () => {
                             </div>
                           </div>
                         </Card>
-                      </Link>
+                      </button>
                     ))}
                   </div>
                 ) : (
