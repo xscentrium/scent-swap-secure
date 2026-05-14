@@ -7,26 +7,44 @@ export type LiveFragranceResult = {
   gender?: string | null;
 };
 
-export const searchLiveFragrances = async (query: string, limit = 50, offset = 0): Promise<LiveFragranceResult[]> => {
+const TTL_MS = 10 * 60 * 1000; // 10 minutes
+const pageCache = new Map<string, { ts: number; data: LiveFragranceResult[] }>();
+const inflight = new Map<string, Promise<LiveFragranceResult[]>>();
+
+const cacheKey = (q: string, limit: number, offset: number) =>
+  `${q.trim().toLowerCase()}|${limit}|${offset}`;
+
+export const searchLiveFragrances = async (
+  query: string,
+  limit = 50,
+  offset = 0,
+): Promise<LiveFragranceResult[]> => {
   const q = query.trim();
   if (q.length < 2) return [];
 
-  const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const key = cacheKey(q, limit, offset);
+  const cached = pageCache.get(key);
+  if (cached && Date.now() - cached.ts < TTL_MS) return cached.data;
+  const pending = inflight.get(key);
+  if (pending) return pending;
+
+  const apiKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   const baseUrl = import.meta.env.VITE_SUPABASE_URL;
   const url = `${baseUrl}/functions/v1/fragrance-search-live?q=${encodeURIComponent(q)}&limit=${limit}&offset=${offset}`;
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${key}`,
-      apikey: key,
-    },
-  });
 
-  if (!response.ok) {
-    throw new Error(`Live fragrance search failed: ${response.status}`);
-  }
+  const promise = (async () => {
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${apiKey}`, apikey: apiKey },
+    });
+    if (!response.ok) throw new Error(`Live fragrance search failed: ${response.status}`);
+    const json = await response.json();
+    const data = (json.results ?? []) as LiveFragranceResult[];
+    pageCache.set(key, { ts: Date.now(), data });
+    return data;
+  })().finally(() => inflight.delete(key));
 
-  const json = await response.json();
-  return (json.results ?? []) as LiveFragranceResult[];
+  inflight.set(key, promise);
+  return promise;
 };
 
 export const searchLiveFragrancesPaged = async (
@@ -40,6 +58,11 @@ export const searchLiveFragrancesPaged = async (
     ),
   );
   return results.flat();
+};
+
+export const clearFragranceSearchCache = () => {
+  pageCache.clear();
+  inflight.clear();
 };
 
 export const mergeFragranceResults = <T extends { id?: string; brand: string; name: string }>(
