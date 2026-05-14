@@ -60,12 +60,19 @@ export const FragranceSearch = ({
 
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('fragrance-search', {
-        body: { query },
-      });
+      // Fast path: query the local catalog directly (no edge-function cold start)
+      const safe = query.trim().replace(/[%,()]/g, '');
+      const { data, error } = await supabase
+        .from('fragrances')
+        .select('name, brand, image_url')
+        .eq('approved', true)
+        .or(`name.ilike.%${safe}%,brand.ilike.%${safe}%`)
+        .limit(12);
 
       if (error) throw error;
-      setSuggestions(data.suggestions || []);
+      setSuggestions(
+        (data ?? []).map((d: any) => ({ name: d.name, brand: d.brand, imageUrl: d.image_url ?? undefined }))
+      );
       setShowSuggestions(true);
       setActiveIndex(-1);
     } catch (error) {
@@ -78,14 +85,14 @@ export const FragranceSearch = ({
 
   const handleNameChange = (value: string) => {
     onNameChange(value);
-    
+
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
-    
+
     debounceRef.current = setTimeout(() => {
       searchFragrances(value);
-    }, 300);
+    }, 200);
   };
 
   const handleSelect = (suggestion: FragranceSuggestion) => {
