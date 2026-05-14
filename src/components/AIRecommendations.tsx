@@ -8,9 +8,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sparkles, Search, Calendar, Sun, Snowflake, Leaf, Flower2, Heart, DollarSign, ImageIcon } from 'lucide-react';
+import { Sparkles, Calendar, Sun, Snowflake, Leaf, Flower2, DollarSign, ImageIcon, ShoppingCart, ArrowLeftRight } from 'lucide-react';
 import { FavoriteButton } from '@/components/FavoriteButton';
 import { cn } from '@/lib/utils';
+import { Link } from 'react-router-dom';
 
 type Recommendation = {
   name: string;
@@ -29,6 +30,9 @@ type Recommendation = {
 interface AIRecommendationsProps {
   collection?: { name: string; brand: string }[];
   wishlist?: { name: string; brand: string }[];
+  initialType?: 'occasion' | 'collection' | 'wishlist' | 'general';
+  initialFilters?: Partial<{ occasion: string; season: string; notes: string; style: string; budget: string }>;
+  autoFetch?: boolean;
 }
 
 const FragranceImage = ({ imageUrl, name, brand }: { imageUrl?: string | null; name: string; brand: string }) => {
@@ -68,16 +72,16 @@ const FragranceImage = ({ imageUrl, name, brand }: { imageUrl?: string | null; n
   );
 };
 
-export const AIRecommendations = ({ collection, wishlist }: AIRecommendationsProps) => {
+export const AIRecommendations = ({ collection, wishlist, initialType = 'general', initialFilters, autoFetch = false }: AIRecommendationsProps) => {
   const [filters, setFilters] = useState({
-    occasion: '',
-    season: '',
-    notes: '',
-    style: '',
-    budget: '',
+    occasion: initialFilters?.occasion ?? '',
+    season: initialFilters?.season ?? '',
+    notes: initialFilters?.notes ?? '',
+    style: initialFilters?.style ?? '',
+    budget: initialFilters?.budget ?? '',
   });
-  const [activeType, setActiveType] = useState<'occasion' | 'collection' | 'wishlist' | 'general'>('general');
-  const [shouldFetch, setShouldFetch] = useState(false);
+  const [activeType, setActiveType] = useState<'occasion' | 'collection' | 'wishlist' | 'general'>(initialType);
+  const [shouldFetch, setShouldFetch] = useState(autoFetch);
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['ai-recommendations', activeType, filters, collection, wishlist],
@@ -306,6 +310,20 @@ export const AIRecommendations = ({ collection, wishlist }: AIRecommendationsPro
                     )}
                     {rec.longevity && <span>Longevity: {rec.longevity}</span>}
                     {rec.sillage && <span>Sillage: {rec.sillage}</span>}
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button asChild size="sm" variant="default">
+                      <Link to={`/marketplace?q=${encodeURIComponent(`${rec.brand} ${rec.name}`)}&type=sale`}>
+                        <ShoppingCart className="w-3.5 h-3.5 mr-1.5" />
+                        Buy listings
+                      </Link>
+                    </Button>
+                    <Button asChild size="sm" variant="outline">
+                      <Link to={`/marketplace?q=${encodeURIComponent(`${rec.brand} ${rec.name}`)}&type=trade`}>
+                        <ArrowLeftRight className="w-3.5 h-3.5 mr-1.5" />
+                        Trade offers
+                      </Link>
+                    </Button>
                   </div>
                 </div>
               </div>
