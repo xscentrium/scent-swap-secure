@@ -7,13 +7,13 @@ export type LiveFragranceResult = {
   gender?: string | null;
 };
 
-export const searchLiveFragrances = async (query: string, limit = 50): Promise<LiveFragranceResult[]> => {
+export const searchLiveFragrances = async (query: string, limit = 50, offset = 0): Promise<LiveFragranceResult[]> => {
   const q = query.trim();
   if (q.length < 2) return [];
 
   const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   const baseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const url = `${baseUrl}/functions/v1/fragrance-search-live?q=${encodeURIComponent(q)}&limit=${limit}`;
+  const url = `${baseUrl}/functions/v1/fragrance-search-live?q=${encodeURIComponent(q)}&limit=${limit}&offset=${offset}`;
   const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${key}`,
@@ -27,6 +27,19 @@ export const searchLiveFragrances = async (query: string, limit = 50): Promise<L
 
   const json = await response.json();
   return (json.results ?? []) as LiveFragranceResult[];
+};
+
+export const searchLiveFragrancesPaged = async (
+  query: string,
+  pages = 4,
+  pageSize = 50,
+): Promise<LiveFragranceResult[]> => {
+  const results = await Promise.all(
+    Array.from({ length: pages }, (_, i) =>
+      searchLiveFragrances(query, pageSize, i * pageSize).catch(() => [] as LiveFragranceResult[]),
+    ),
+  );
+  return results.flat();
 };
 
 export const mergeFragranceResults = <T extends { id?: string; brand: string; name: string }>(
