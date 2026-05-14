@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { mergeFragranceResults, searchLiveFragrances } from '@/lib/fragranceLiveSearch';
+import { mergeFragranceResults, searchLiveFragrances, searchLiveFragrancesPaged } from '@/lib/fragranceLiveSearch';
 
 interface FragranceSuggestion {
   name: string;
