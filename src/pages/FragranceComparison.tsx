@@ -128,7 +128,7 @@ const FragranceComparison = () => {
 
           {/* Add Fragrance */}
           {items.length < 4 && (
-            <Card className="mb-8">
+            <Card className="mb-8 relative z-[100]">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <Plus className="w-4 h-4" />

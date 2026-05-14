@@ -291,7 +291,7 @@ const Discover = () => {
 
               <motion.div variants={item} className="mt-9 flex flex-wrap gap-3">
                 <Button asChild size="lg" className="rounded-none px-7 h-12 tracking-wide">
-                  <Link to="/quiz">
+                  <Link to="/scent-quiz">
                     <Wand2 className="w-4 h-4 mr-2" />
                     Take the Scent Quiz
                   </Link>

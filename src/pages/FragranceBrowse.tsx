@@ -159,12 +159,25 @@ export default function FragranceBrowse() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {results.map((f: any) => (
           <Card key={f.id} className="p-4 hover:border-primary transition flex flex-col gap-3">
-            <div>
-              <p className="text-xs text-muted-foreground">{f.brand}</p>
-              <h3 className="font-semibold">{f.name}</h3>
-              <div className="flex gap-2 mt-2 flex-wrap">
-                {f.year && <Badge variant="secondary">{f.year}</Badge>}
-                {f.strength && <Badge variant="outline">{f.strength}%</Badge>}
+            <div className="flex gap-3">
+              {f.image_url ? (
+                <img
+                  src={f.image_url}
+                  alt={`${f.brand} ${f.name}`}
+                  loading="lazy"
+                  className="w-14 h-14 rounded-md object-cover bg-muted shrink-0 border border-border/40"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+              ) : (
+                <div className="w-14 h-14 rounded-md bg-muted shrink-0" />
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-muted-foreground truncate">{f.brand}</p>
+                <h3 className="font-semibold leading-snug line-clamp-2">{f.name}</h3>
+                <div className="flex gap-2 mt-2 flex-wrap">
+                  {f.year && <Badge variant="secondary">{f.year}</Badge>}
+                  {f.strength && <Badge variant="outline">{f.strength}%</Badge>}
+                </div>
               </div>
             </div>
             <div className="flex gap-1.5 pt-2 border-t border-border/40 mt-auto">

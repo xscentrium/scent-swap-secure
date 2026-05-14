@@ -119,14 +119,12 @@ export const FragranceDetailsModal = ({
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <FavoriteButton name={name} brand={brand} imageUrl={imageUrl || undefined} size="default" variant="outline" />
-              {catalogId && (
-                <Button asChild size="sm" variant="default" onClick={() => onOpenChange(false)}>
-                  <Link to={`/fragrance/${catalogId}`}>
-                    <ExternalLink className="w-4 h-4 mr-1.5" />
-                    Full page
-                  </Link>
-                </Button>
-              )}
+              <Button asChild size="sm" variant="default" onClick={() => onOpenChange(false)}>
+                <Link to={catalogId ? `/fragrance/${catalogId}` : `/browse?by=note&q=${encodeURIComponent(name)}`}>
+                  <ExternalLink className="w-4 h-4 mr-1.5" />
+                  Full page
+                </Link>
+              </Button>
             </div>
           </div>
         </DialogHeader>
