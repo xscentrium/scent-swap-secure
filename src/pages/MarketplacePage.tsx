@@ -285,6 +285,19 @@ const MarketplacePage = () => {
   const allListings = listings ?? [];
   const displayable = useMemo(() => allListings.filter((l) => isListingDisplayable(l as any)), [allListings]);
   const baseVisible = hideUnverified ? displayable : allListings;
+
+  // Quick view modal driven by ?listing=ID
+  const quickViewId = searchParams.get('listing');
+  const quickViewListing = useMemo(
+    () => allListings.find((l: any) => l.id === quickViewId) ?? null,
+    [allListings, quickViewId]
+  );
+  const closeQuickView = useCallback(() => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('listing');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
   const visibleListings = useMemo(
     () => baseVisible.filter((l) =>
       matchesSize(l.size)
