@@ -97,6 +97,7 @@ export const FragranceSearch = ({
   const loadBrandFragrances = async (brand: string) => {
     if (brand.trim().length < 2) return;
     setIsLoading(true);
+    setActiveBrand(brand.trim());
     try {
       const safeBrand = brand.trim().replace(/[%,()]/g, '');
       const [{ data, error }, live] = await Promise.all([
@@ -106,7 +107,7 @@ export const FragranceSearch = ({
           .eq('approved', true)
           .ilike('brand', `%${safeBrand}%`)
           .limit(500),
-        searchLiveFragrancesPaged(safeBrand, 6, 50).catch(() => []),
+        searchLiveFragrancesPaged(safeBrand, INITIAL_PAGES, PAGE_SIZE).catch(() => []),
       ]);
       if (error) throw error;
       const local = (data ?? []).map((d: any) => ({ name: d.name, brand: d.brand, imageUrl: d.image_url ?? undefined }));
@@ -114,12 +115,31 @@ export const FragranceSearch = ({
         .filter((d) => d.brand.toLowerCase().includes(safeBrand.toLowerCase()))
         .map((d) => ({ name: d.name, brand: d.brand, imageUrl: d.image_url ?? undefined }));
       setNameSuggestions(mergeFragranceResults(local, remote));
+      setNextPage(INITIAL_PAGES);
+      setHasMore(live.length >= INITIAL_PAGES * PAGE_SIZE);
       setShowName(true);
       setActiveIndex(-1);
     } catch (e) {
       console.error('Brand fragrance search error:', e);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadMoreBrandFragrances = async () => {
+    if (!activeBrand || isLoadingMore || !hasMore) return;
+    setIsLoadingMore(true);
+    try {
+      const safeBrand = activeBrand.replace(/[%,()]/g, '');
+      const more = await searchLiveFragrances(safeBrand, PAGE_SIZE, nextPage * PAGE_SIZE).catch(() => []);
+      const filtered = more
+        .filter((d) => d.brand.toLowerCase().includes(safeBrand.toLowerCase()))
+        .map((d) => ({ name: d.name, brand: d.brand, imageUrl: d.image_url ?? undefined }));
+      setNameSuggestions((prev) => mergeFragranceResults(prev, filtered));
+      setNextPage((p) => p + 1);
+      setHasMore(more.length >= PAGE_SIZE);
+    } finally {
+      setIsLoadingMore(false);
     }
   };
 
