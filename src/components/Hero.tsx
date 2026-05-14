@@ -191,30 +191,36 @@ export const Hero = () => {
                   transition={{ duration: 0.7, ease: "easeOut" }}
                   className="absolute top-0 right-0 w-[78%] h-[88%] rounded-3xl overflow-hidden shadow-2xl border border-border/40 bg-card"
                 >
-                  <img
-                    src={current.image_url ?? ""}
-                    alt={`${current.brand} ${current.name}`}
-                    className="w-full h-full object-cover"
-                    loading="eager"
-                    decoding="async"
-                    fetchPriority="high"
-                    width={800}
-                    height={1000}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-6">
-                    <p className="text-[10px] tracking-[0.25em] uppercase text-primary mb-2 font-medium">
-                      Featured
-                    </p>
-                    <h3 className="font-serif text-2xl text-foreground leading-tight mb-1">
-                      {current.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">{current.brand}</p>
-                  </div>
-                  <div className="absolute top-4 right-4 flex items-center gap-1 px-3 py-1 rounded-full bg-background/80 backdrop-blur-md border border-border/40">
-                    <Star className="w-3 h-3 fill-primary text-primary" />
-                    <span className="text-[11px] font-medium">Editor's pick</span>
-                  </div>
+                  <Link
+                    to={`/marketplace?listing=${current.id}`}
+                    className="block w-full h-full group"
+                    aria-label={`View ${current.brand} ${current.name}`}
+                  >
+                    <img
+                      src={current.image_url ?? ""}
+                      alt={`${current.brand} ${current.name}`}
+                      className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700"
+                      loading="eager"
+                      decoding="async"
+                      fetchPriority="high"
+                      width={800}
+                      height={1000}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/20 to-transparent pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 right-0 p-6 pointer-events-none">
+                      <p className="text-[10px] tracking-[0.25em] uppercase text-primary mb-2 font-medium">
+                        Featured
+                      </p>
+                      <h3 className="font-serif text-2xl text-foreground leading-tight mb-1">
+                        {current.name}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">{current.brand}</p>
+                    </div>
+                    <div className="absolute top-4 right-4 flex items-center gap-1 px-3 py-1 rounded-full bg-background/80 backdrop-blur-md border border-border/40 pointer-events-none">
+                      <Star className="w-3 h-3 fill-primary text-primary" />
+                      <span className="text-[11px] font-medium">Editor's pick</span>
+                    </div>
+                  </Link>
                 </motion.div>
               )}
 
