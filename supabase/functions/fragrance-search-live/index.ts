@@ -28,6 +28,7 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const q = (url.searchParams.get("q") ?? "").trim();
     const limit = Math.min(Number(url.searchParams.get("limit") ?? 20), 50);
+    const offset = Math.max(Number(url.searchParams.get("offset") ?? 0), 0);
     if (!q) {
       return new Response(JSON.stringify({ results: [] }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
