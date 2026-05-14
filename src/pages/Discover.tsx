@@ -526,6 +526,14 @@ const Discover = () => {
           </motion.div>
         </div>
       </main>
+      <FragranceDetailsModal
+        open={!!activeFragrance}
+        onOpenChange={(v) => !v && setActiveFragrance(null)}
+        name={activeFragrance?.name ?? ''}
+        brand={activeFragrance?.brand ?? ''}
+        imageUrl={activeFragrance?.imageUrl ?? null}
+        onSelectSimilar={(name, brand) => setActiveFragrance({ name, brand })}
+      />
     </div>
   );
 };
