@@ -1017,7 +1017,7 @@ const MarketplacePage = () => {
                                 className="object-contain p-6 transition-transform duration-700 ease-out group-hover:scale-[1.04]"
                               />
 
-                              <div className="absolute top-3 left-3 flex flex-col gap-2">
+                              <div className="absolute top-3 left-3 flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
                                 <FavoriteButton
                                   name={listing.name}
                                   brand={listing.brand}
