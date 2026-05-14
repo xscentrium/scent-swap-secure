@@ -297,15 +297,36 @@ const Profile = () => {
                   <span className="font-bold">{listings?.length ?? 0}</span>
                   <span className="text-muted-foreground ml-1">Listings</span>
                 </div>
-                <div>
-                  <span className="font-bold">{followersCount ?? 0}</span>
-                  <span className="text-muted-foreground ml-1">Followers</span>
-                </div>
-                <div>
-                  <span className="font-bold">{followingCount ?? 0}</span>
-                  <span className="text-muted-foreground ml-1">Following</span>
-                </div>
+                {(isOwnProfile || profileData.show_followers !== false) && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setFollowDialog("followers")}
+                      className="hover:text-primary transition-colors"
+                    >
+                      <span className="font-bold">{followersCount ?? 0}</span>
+                      <span className="text-muted-foreground ml-1">Followers</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFollowDialog("following")}
+                      className="hover:text-primary transition-colors"
+                    >
+                      <span className="font-bold">{followingCount ?? 0}</span>
+                      <span className="text-muted-foreground ml-1">Following</span>
+                    </button>
+                  </>
+                )}
               </div>
+
+              {profileData.id && (
+                <FollowListDialog
+                  open={followDialog !== null}
+                  onOpenChange={(v) => !v && setFollowDialog(null)}
+                  profileId={profileData.id}
+                  mode={followDialog ?? "followers"}
+                />
+              )}
 
               {/* Social Links */}
               <div className="flex gap-3 mt-4">
