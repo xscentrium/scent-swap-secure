@@ -184,7 +184,7 @@ const Discover = () => {
                   </Badge>
                 </div>
                 {catalogResults && catalogResults.length > 0 ? (
-                  <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {catalogResults.map((f: any) => (
                       <Card key={f.id} className="p-4 hover:border-foreground transition flex flex-col gap-3">
                         <div className="flex gap-3">
@@ -192,15 +192,16 @@ const Discover = () => {
                             {f.image_url && (
                               <img
                                 src={f.image_url}
-                                alt={f.name}
+                                alt={`${f.brand} ${f.name} bottle`}
                                 className="w-full h-full object-cover"
+                                loading="lazy"
                               />
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="text-xs text-muted-foreground truncate">{f.brand}</p>
                             <p className="font-medium truncate">{f.name}</p>
-                            <div className="flex gap-1 mt-1">
+                            <div className="flex gap-1 mt-1 flex-wrap">
                               {f.year && (
                                 <Badge variant="secondary" className="text-[10px] py-0">
                                   {f.year}
@@ -214,17 +215,19 @@ const Discover = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="flex gap-1.5 pt-1 border-t border-border/40">
+                        <div className="flex gap-1.5 pt-2 border-t border-border/40 mt-auto">
                           <button
                             type="button"
                             onClick={() => setActiveFragrance({ name: f.name, brand: f.brand, imageUrl: f.image_url })}
-                            className="flex-1 min-w-0 text-[11px] sm:text-xs py-1.5 px-1.5 rounded-sm bg-muted hover:bg-muted/70 transition font-medium whitespace-nowrap"
+                            aria-label={`Quick view of ${f.brand} ${f.name}`}
+                            className="flex-1 min-w-0 min-h-11 text-[11px] sm:text-xs px-1.5 rounded-sm bg-muted hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition font-medium whitespace-nowrap"
                           >
                             Quick view
                           </button>
                           <Link
                             to={`/fragrance/${f.id}`}
-                            className="flex-1 min-w-0 text-[11px] sm:text-xs py-1.5 px-1.5 rounded-sm bg-primary/10 hover:bg-primary/20 text-primary transition font-medium text-center whitespace-nowrap"
+                            aria-label={`Open full page for ${f.brand} ${f.name}`}
+                            className="flex-1 min-w-0 min-h-11 inline-flex items-center justify-center text-[11px] sm:text-xs px-1.5 rounded-sm bg-primary/10 hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-primary transition font-medium whitespace-nowrap"
                           >
                             Full page →
                           </Link>
