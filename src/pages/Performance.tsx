@@ -4,6 +4,8 @@ import { StatsDashboard } from "@/components/StatsDashboard";
 import { StatsCharts } from "@/components/StatsCharts";
 import { CollectionValueDashboard } from "@/components/CollectionValueDashboard";
 import { UsagePatterns } from "@/components/UsagePatterns";
+import { YearInReview } from "@/components/YearInReview";
+import Leaderboard from "@/pages/Leaderboard";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
 
@@ -42,6 +44,16 @@ const Performance = () => {
                 <UsagePatterns />
               </div>
             </div>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-serif font-semibold mb-4">Year in Review</h2>
+            <YearInReview />
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-serif font-semibold mb-4">Leaderboard</h2>
+            <Leaderboard embedded />
           </section>
         </div>
       </main>
