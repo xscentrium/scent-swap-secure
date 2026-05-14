@@ -157,7 +157,12 @@ export default function FragranceBrowse() {
 
       <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
         {results.map((f: any) => (
-          <Link key={f.id} to={`/fragrance/${f.id}`}>
+          <button
+            key={f.id}
+            type="button"
+            onClick={() => setActive({ name: f.name, brand: f.brand, imageUrl: f.image_url ?? null })}
+            className="text-left"
+          >
             <Card className="p-4 hover:border-primary transition">
               <p className="text-xs text-muted-foreground">{f.brand}</p>
               <h3 className="font-semibold">{f.name}</h3>
@@ -166,12 +171,21 @@ export default function FragranceBrowse() {
                 {f.strength && <Badge variant="outline">{f.strength}%</Badge>}
               </div>
             </Card>
-          </Link>
+          </button>
         ))}
         {!loading && (tab === "note" ? debouncedNote : selectedAccords.length > 0) && results.length === 0 && (
           <p className="text-sm text-muted-foreground col-span-full">No fragrances match.</p>
         )}
       </div>
+
+      <FragranceDetailsModal
+        open={!!active}
+        onOpenChange={(v) => !v && setActive(null)}
+        name={active?.name ?? ""}
+        brand={active?.brand ?? ""}
+        imageUrl={active?.imageUrl ?? null}
+        onSelectSimilar={(name, brand) => setActive({ name, brand })}
+      />
     </div>
   );
 }
