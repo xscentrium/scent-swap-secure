@@ -28,6 +28,7 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const q = (url.searchParams.get("q") ?? "").trim();
     const limit = Math.min(Number(url.searchParams.get("limit") ?? 20), 50);
+    const offset = Math.max(Number(url.searchParams.get("offset") ?? 0), 0);
     if (!q) {
       return new Response(JSON.stringify({ results: [] }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -44,7 +45,7 @@ Deno.serve(async (req) => {
         "x-rapidapi-key": key,
       },
       body: JSON.stringify({
-        queries: [{ indexUid: "fragrances", q, limit, offset: 0 }],
+        queries: [{ indexUid: "fragrances", q, limit, offset }],
       }),
     });
     if (!r.ok) throw new Error(`RapidAPI ${r.status}: ${await r.text()}`);

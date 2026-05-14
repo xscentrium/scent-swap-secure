@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { mergeFragranceResults, searchLiveFragrances } from '@/lib/fragranceLiveSearch';
+import { mergeFragranceResults, searchLiveFragrances, searchLiveFragrancesPaged } from '@/lib/fragranceLiveSearch';
 
 interface FragranceSuggestion {
   name: string;
@@ -99,13 +99,15 @@ export const FragranceSearch = ({
           .select('name, brand, image_url')
           .eq('approved', true)
           .ilike('brand', `%${safeBrand}%`)
-          .limit(80),
-        searchLiveFragrances(safeBrand, 80).catch(() => []),
+          .limit(500),
+        searchLiveFragrancesPaged(safeBrand, 6, 50).catch(() => []),
       ]);
       if (error) throw error;
       const local = (data ?? []).map((d: any) => ({ name: d.name, brand: d.brand, imageUrl: d.image_url ?? undefined }));
-      const remote = live.map((d) => ({ name: d.name, brand: d.brand, imageUrl: d.image_url ?? undefined }));
-      setNameSuggestions(mergeFragranceResults(local, remote).slice(0, 60));
+      const remote = live
+        .filter((d) => d.brand.toLowerCase().includes(safeBrand.toLowerCase()))
+        .map((d) => ({ name: d.name, brand: d.brand, imageUrl: d.image_url ?? undefined }));
+      setNameSuggestions(mergeFragranceResults(local, remote));
       setShowName(true);
       setActiveIndex(-1);
     } catch (e) {
@@ -180,7 +182,7 @@ export const FragranceSearch = ({
               value={nameValue}
               onChange={(e) => handleNameChange(e.target.value)}
               onKeyDown={handleKeyDown}
-              onFocus={() => nameSuggestions.length > 0 ? setShowName(true) : loadBrandFragrances(brandValue)}
+              onFocus={() => { if (nameSuggestions.length > 0) setShowName(true); else if (brandValue.trim().length >= 2) loadBrandFragrances(brandValue); }}
               placeholder="Start typing to search..."
               className="pl-9"
               required={required}
