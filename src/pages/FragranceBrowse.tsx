@@ -158,21 +158,31 @@ export default function FragranceBrowse() {
 
       <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
         {results.map((f: any) => (
-          <button
-            key={f.id}
-            type="button"
-            onClick={() => setActive({ name: f.name, brand: f.brand, imageUrl: f.image_url ?? null })}
-            className="text-left"
-          >
-            <Card className="p-4 hover:border-primary transition">
+          <Card key={f.id} className="p-4 hover:border-primary transition flex flex-col gap-3">
+            <div>
               <p className="text-xs text-muted-foreground">{f.brand}</p>
               <h3 className="font-semibold">{f.name}</h3>
               <div className="flex gap-2 mt-2">
                 {f.year && <Badge variant="secondary">{f.year}</Badge>}
                 {f.strength && <Badge variant="outline">{f.strength}%</Badge>}
               </div>
-            </Card>
-          </button>
+            </div>
+            <div className="flex gap-2 pt-2 border-t border-border/40 mt-auto">
+              <button
+                type="button"
+                onClick={() => setActive({ name: f.name, brand: f.brand, imageUrl: f.image_url ?? null })}
+                className="flex-1 text-xs py-1.5 px-2 rounded-sm bg-muted hover:bg-muted/70 transition font-medium"
+              >
+                Quick view
+              </button>
+              <Link
+                to={`/fragrance/${f.id}`}
+                className="flex-1 text-xs py-1.5 px-2 rounded-sm bg-primary/10 hover:bg-primary/20 text-primary transition font-medium text-center"
+              >
+                Full view →
+              </Link>
+            </div>
+          </Card>
         ))}
         {!loading && (tab === "note" ? debouncedNote : selectedAccords.length > 0) && results.length === 0 && (
           <p className="text-sm text-muted-foreground col-span-full">No fragrances match.</p>
