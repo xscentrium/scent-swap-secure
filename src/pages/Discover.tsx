@@ -25,6 +25,7 @@ const Discover = () => {
   const { profile } = useAuth();
   const [params] = useSearchParams();
   const search = params.get('search')?.trim() ?? '';
+  const [activeFragrance, setActiveFragrance] = useState<{ name: string; brand: string; imageUrl?: string | null } | null>(null);
 
   const { data: catalogResults } = useQuery({
     queryKey: ['discover-catalog-search', search],
