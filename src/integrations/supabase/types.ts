@@ -2664,6 +2664,7 @@ export type Database = {
           instagram_verified: boolean | null
           is_influencer: boolean | null
           referral_code: string | null
+          show_followers: boolean | null
           tiktok_url: string | null
           tiktok_verified: boolean | null
           trade_matches_enabled: boolean | null
@@ -2687,6 +2688,7 @@ export type Database = {
           instagram_verified?: boolean | null
           is_influencer?: boolean | null
           referral_code?: string | null
+          show_followers?: boolean | null
           tiktok_url?: string | null
           tiktok_verified?: boolean | null
           trade_matches_enabled?: boolean | null
@@ -2710,6 +2712,7 @@ export type Database = {
           instagram_verified?: boolean | null
           is_influencer?: boolean | null
           referral_code?: string | null
+          show_followers?: boolean | null
           tiktok_url?: string | null
           tiktok_verified?: boolean | null
           trade_matches_enabled?: boolean | null
