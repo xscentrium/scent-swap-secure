@@ -99,13 +99,15 @@ export const FragranceSearch = ({
           .select('name, brand, image_url')
           .eq('approved', true)
           .ilike('brand', `%${safeBrand}%`)
-          .limit(80),
-        searchLiveFragrances(safeBrand, 80).catch(() => []),
+          .limit(500),
+        searchLiveFragrancesPaged(safeBrand, 6, 50).catch(() => []),
       ]);
       if (error) throw error;
       const local = (data ?? []).map((d: any) => ({ name: d.name, brand: d.brand, imageUrl: d.image_url ?? undefined }));
-      const remote = live.map((d) => ({ name: d.name, brand: d.brand, imageUrl: d.image_url ?? undefined }));
-      setNameSuggestions(mergeFragranceResults(local, remote).slice(0, 60));
+      const remote = live
+        .filter((d) => d.brand.toLowerCase().includes(safeBrand.toLowerCase()))
+        .map((d) => ({ name: d.name, brand: d.brand, imageUrl: d.image_url ?? undefined }));
+      setNameSuggestions(mergeFragranceResults(local, remote));
       setShowName(true);
       setActiveIndex(-1);
     } catch (e) {
