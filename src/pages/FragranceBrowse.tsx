@@ -37,6 +37,7 @@ export default function FragranceBrowse() {
   );
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [active, setActive] = useState<{ name: string; brand: string; imageUrl?: string | null } | null>(null);
   const debouncedNote = useDebounce(noteQ, 300);
 
   // Persist filters in URL
