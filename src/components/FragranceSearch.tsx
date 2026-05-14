@@ -38,10 +38,16 @@ export const FragranceSearch = ({
   const [nameSuggestions, setNameSuggestions] = useState<FragranceSuggestion[]>([]);
   const [brandSuggestions, setBrandSuggestions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isBrandLoading, setIsBrandLoading] = useState(false);
   const [showName, setShowName] = useState(false);
   const [showBrand, setShowBrand] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [activeBrand, setActiveBrand] = useState<string>('');
+  const [nextPage, setNextPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const PAGE_SIZE = 50;
+  const INITIAL_PAGES = 4;
   const nameDebounce = useRef<ReturnType<typeof setTimeout>>();
   const brandDebounce = useRef<ReturnType<typeof setTimeout>>();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -91,6 +97,7 @@ export const FragranceSearch = ({
   const loadBrandFragrances = async (brand: string) => {
     if (brand.trim().length < 2) return;
     setIsLoading(true);
+    setActiveBrand(brand.trim());
     try {
       const safeBrand = brand.trim().replace(/[%,()]/g, '');
       const [{ data, error }, live] = await Promise.all([
@@ -100,7 +107,7 @@ export const FragranceSearch = ({
           .eq('approved', true)
           .ilike('brand', `%${safeBrand}%`)
           .limit(500),
-        searchLiveFragrancesPaged(safeBrand, 6, 50).catch(() => []),
+        searchLiveFragrancesPaged(safeBrand, INITIAL_PAGES, PAGE_SIZE).catch(() => []),
       ]);
       if (error) throw error;
       const local = (data ?? []).map((d: any) => ({ name: d.name, brand: d.brand, imageUrl: d.image_url ?? undefined }));
@@ -108,12 +115,31 @@ export const FragranceSearch = ({
         .filter((d) => d.brand.toLowerCase().includes(safeBrand.toLowerCase()))
         .map((d) => ({ name: d.name, brand: d.brand, imageUrl: d.image_url ?? undefined }));
       setNameSuggestions(mergeFragranceResults(local, remote));
+      setNextPage(INITIAL_PAGES);
+      setHasMore(live.length >= INITIAL_PAGES * PAGE_SIZE);
       setShowName(true);
       setActiveIndex(-1);
     } catch (e) {
       console.error('Brand fragrance search error:', e);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadMoreBrandFragrances = async () => {
+    if (!activeBrand || isLoadingMore || !hasMore) return;
+    setIsLoadingMore(true);
+    try {
+      const safeBrand = activeBrand.replace(/[%,()]/g, '');
+      const more = await searchLiveFragrances(safeBrand, PAGE_SIZE, nextPage * PAGE_SIZE).catch(() => []);
+      const filtered = more
+        .filter((d) => d.brand.toLowerCase().includes(safeBrand.toLowerCase()))
+        .map((d) => ({ name: d.name, brand: d.brand, imageUrl: d.image_url ?? undefined }));
+      setNameSuggestions((prev) => mergeFragranceResults(prev, filtered));
+      setNextPage((p) => p + 1);
+      setHasMore(more.length >= PAGE_SIZE);
+    } finally {
+      setIsLoadingMore(false);
     }
   };
 
@@ -222,6 +248,17 @@ export const FragranceSearch = ({
                   </div>
                 </button>
               ))}
+              {activeBrand && hasMore && (
+                <button
+                  type="button"
+                  onClick={loadMoreBrandFragrances}
+                  disabled={isLoadingMore}
+                  className="w-full px-3 py-2 text-center text-sm font-medium border-t hover:bg-accent transition-colors flex items-center justify-center gap-2"
+                >
+                  {isLoadingMore && <Loader2 className="w-3 h-3 animate-spin" />}
+                  {isLoadingMore ? 'Loading…' : `Load more (${nameSuggestions.length} loaded)`}
+                </button>
+              )}
             </div>
           )}
         </div>
