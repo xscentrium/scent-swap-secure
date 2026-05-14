@@ -128,7 +128,19 @@ const Discover = () => {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      <SEO title="Discover Fragrances & Collectors | Xscentrium" description="Curated discovery: trending fragrances, AI recommendations, and collectors to follow on Xscentrium." path="/discover" />
+      <SEO
+        title="Discover Fragrances & Collectors | Xscentrium"
+        description="Curated discovery: trending fragrances, AI recommendations, and collectors to follow on Xscentrium."
+        path="/discover"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "Discover Fragrances & Collectors",
+          url: "https://xscentrium.com/discover",
+          description: "Curated discovery: trending fragrances, AI recommendations, and collectors to follow on Xscentrium.",
+          isPartOf: { "@type": "WebSite", name: "Xscentrium", url: "https://xscentrium.com/" },
+        }}
+      />
       {/* Editorial backdrop */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-32 -left-32 w-[520px] h-[520px] rounded-full bg-[hsl(var(--gold)/0.08)] blur-3xl" />

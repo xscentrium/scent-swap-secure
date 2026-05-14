@@ -35,7 +35,19 @@ export default function Forum() {
 
   return (
     <div className="container max-w-6xl py-8">
-      <SEO title="Community Forum — Fragrance Talk | Xscentrium" description="Discuss niche perfumery, batch codes, trades and reviews with verified collectors on the Xscentrium forum." path="/forum" />
+      <SEO
+        title="Community Forum — Fragrance Talk | Xscentrium"
+        description="Discuss niche perfumery, batch codes, trades and reviews with verified collectors on the Xscentrium forum."
+        path="/forum"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "DiscussionForumPosting",
+          headline: "Xscentrium Community Forum",
+          url: "https://xscentrium.com/forum",
+          description: "Community discussions on niche perfumery, batch codes, trades and reviews.",
+          author: { "@type": "Organization", name: "Xscentrium" },
+        }}
+      />
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl md:text-5xl font-serif">Forum</h1>

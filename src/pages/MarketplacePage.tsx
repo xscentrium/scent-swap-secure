@@ -653,7 +653,28 @@ const MarketplacePage = () => {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      <SEO title="Marketplace — Buy & Trade Niche Fragrances | Xscentrium" description="Browse verified listings of rare colognes, perfumes and oils. Filter by brand, price, accord and trade-only options." path="/marketplace" />
+      <SEO
+        title="Marketplace — Buy & Trade Niche Fragrances | Xscentrium"
+        description="Browse verified listings of rare colognes, perfumes and oils. Filter by brand, price, accord and trade-only options."
+        path="/marketplace"
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            name: "Xscentrium Marketplace",
+            url: "https://xscentrium.com/marketplace",
+            description: "Verified listings of rare colognes, perfumes and oils with escrow protection.",
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Home", item: "https://xscentrium.com/" },
+              { "@type": "ListItem", position: 2, name: "Marketplace", item: "https://xscentrium.com/marketplace" },
+            ],
+          },
+        ]}
+      />
       {/* Editorial backdrop */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-40 -right-32 w-[560px] h-[560px] rounded-full bg-[hsl(var(--gold)/0.08)] blur-3xl" />
