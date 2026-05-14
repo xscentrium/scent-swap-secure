@@ -26,9 +26,7 @@ const primaryLinks = [
 const moreLinks = [
   { to: "/compare", label: "Compare" },
   { to: "/discover/users", label: "Find Users" },
-  { to: "/leaderboard", label: "Leaderboard" },
   { to: "/performance", label: "Performance" },
-  { to: "/year-in-review", label: "Year in Review" },
   { to: "/influencers", label: "Influencers" },
 ];
 
