@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { SEO } from "@/components/SEO";
@@ -6,6 +7,7 @@ import { FragranceLayering } from '@/components/FragranceLayering';
 import { FavoritesManager } from '@/components/FavoritesManager';
 import { SocialFeed } from '@/components/SocialFeed';
 import { TrendingFragrances } from '@/components/TrendingFragrances';
+import { FragranceDetailsModal } from '@/components/FragranceDetailsModal';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -23,6 +25,7 @@ const Discover = () => {
   const { profile } = useAuth();
   const [params] = useSearchParams();
   const search = params.get('search')?.trim() ?? '';
+  const [activeFragrance, setActiveFragrance] = useState<{ name: string; brand: string; imageUrl?: string | null } | null>(null);
 
   const { data: catalogResults } = useQuery({
     queryKey: ['discover-catalog-search', search],
@@ -392,7 +395,12 @@ const Discover = () => {
                 {catalogResults && catalogResults.length > 0 ? (
                   <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
                     {catalogResults.map((f: any) => (
-                      <Link key={f.id} to={`/fragrance/${f.id}`}>
+                      <button
+                        key={f.id}
+                        type="button"
+                        onClick={() => setActiveFragrance({ name: f.name, brand: f.brand, imageUrl: f.image_url })}
+                        className="text-left"
+                      >
                         <Card className="p-4 hover:border-foreground transition flex gap-3">
                           <div className="w-14 h-14 rounded-sm bg-muted overflow-hidden shrink-0">
                             {f.image_url && (
@@ -420,7 +428,7 @@ const Discover = () => {
                             </div>
                           </div>
                         </Card>
-                      </Link>
+                      </button>
                     ))}
                   </div>
                 ) : (
@@ -518,6 +526,14 @@ const Discover = () => {
           </motion.div>
         </div>
       </main>
+      <FragranceDetailsModal
+        open={!!activeFragrance}
+        onOpenChange={(v) => !v && setActiveFragrance(null)}
+        name={activeFragrance?.name ?? ''}
+        brand={activeFragrance?.brand ?? ''}
+        imageUrl={activeFragrance?.imageUrl ?? null}
+        onSelectSimilar={(name, brand) => setActiveFragrance({ name, brand })}
+      />
     </div>
   );
 };

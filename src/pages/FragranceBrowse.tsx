@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useDebounce } from "@/hooks/useDebounce";
+import { FragranceDetailsModal } from "@/components/FragranceDetailsModal";
 
 const ACCORD_GROUPS = [
   { label: "Woody", accord: "woody", color: "#6B4423" },
@@ -36,6 +37,7 @@ export default function FragranceBrowse() {
   );
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [active, setActive] = useState<{ name: string; brand: string; imageUrl?: string | null } | null>(null);
   const debouncedNote = useDebounce(noteQ, 300);
 
   // Persist filters in URL
@@ -156,7 +158,12 @@ export default function FragranceBrowse() {
 
       <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
         {results.map((f: any) => (
-          <Link key={f.id} to={`/fragrance/${f.id}`}>
+          <button
+            key={f.id}
+            type="button"
+            onClick={() => setActive({ name: f.name, brand: f.brand, imageUrl: f.image_url ?? null })}
+            className="text-left"
+          >
             <Card className="p-4 hover:border-primary transition">
               <p className="text-xs text-muted-foreground">{f.brand}</p>
               <h3 className="font-semibold">{f.name}</h3>
@@ -165,12 +172,21 @@ export default function FragranceBrowse() {
                 {f.strength && <Badge variant="outline">{f.strength}%</Badge>}
               </div>
             </Card>
-          </Link>
+          </button>
         ))}
         {!loading && (tab === "note" ? debouncedNote : selectedAccords.length > 0) && results.length === 0 && (
           <p className="text-sm text-muted-foreground col-span-full">No fragrances match.</p>
         )}
       </div>
+
+      <FragranceDetailsModal
+        open={!!active}
+        onOpenChange={(v) => !v && setActive(null)}
+        name={active?.name ?? ""}
+        brand={active?.brand ?? ""}
+        imageUrl={active?.imageUrl ?? null}
+        onSelectSimilar={(name, brand) => setActive({ name, brand })}
+      />
     </div>
   );
 }
