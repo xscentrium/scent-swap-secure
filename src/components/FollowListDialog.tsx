@@ -50,7 +50,7 @@ export function FollowListDialog({ open, onOpenChange, profileId, mode }: Props)
             data.map((p: any) => (
               <Link
                 key={p.id}
-                to={`/u/${p.username}`}
+                to={`/profile/${p.username}`}
                 onClick={() => onOpenChange(false)}
                 className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition"
               >
