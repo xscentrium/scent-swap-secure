@@ -156,13 +156,13 @@ export default function FragranceBrowse() {
         </p>
       )}
 
-      <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {results.map((f: any) => (
           <Card key={f.id} className="p-4 hover:border-primary transition flex flex-col gap-3">
             <div>
               <p className="text-xs text-muted-foreground">{f.brand}</p>
               <h3 className="font-semibold">{f.name}</h3>
-              <div className="flex gap-2 mt-2">
+              <div className="flex gap-2 mt-2 flex-wrap">
                 {f.year && <Badge variant="secondary">{f.year}</Badge>}
                 {f.strength && <Badge variant="outline">{f.strength}%</Badge>}
               </div>
@@ -171,13 +171,15 @@ export default function FragranceBrowse() {
               <button
                 type="button"
                 onClick={() => setActive({ name: f.name, brand: f.brand, imageUrl: f.image_url ?? null })}
-                className="flex-1 min-w-0 text-[11px] sm:text-xs py-1.5 px-1.5 rounded-sm bg-muted hover:bg-muted/70 transition font-medium whitespace-nowrap"
+                aria-label={`Quick view of ${f.brand} ${f.name}`}
+                className="flex-1 min-w-0 min-h-11 text-[11px] sm:text-xs px-1.5 rounded-sm bg-muted hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition font-medium whitespace-nowrap"
               >
                 Quick view
               </button>
               <Link
                 to={`/fragrance/${f.id}`}
-                className="flex-1 min-w-0 text-[11px] sm:text-xs py-1.5 px-1.5 rounded-sm bg-primary/10 hover:bg-primary/20 text-primary transition font-medium text-center whitespace-nowrap"
+                aria-label={`Open full page for ${f.brand} ${f.name}`}
+                className="flex-1 min-w-0 min-h-11 inline-flex items-center justify-center text-[11px] sm:text-xs px-1.5 rounded-sm bg-primary/10 hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-primary transition font-medium whitespace-nowrap"
               >
                 Full page →
               </Link>
