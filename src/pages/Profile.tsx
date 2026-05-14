@@ -48,6 +48,7 @@ type ProfileData = {
   twitter_verified: boolean;
   facebook_verified: boolean;
   tiktok_verified: boolean;
+  show_followers: boolean;
   created_at: string;
 };
 
