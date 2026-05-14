@@ -182,7 +182,7 @@ export const FragranceSearch = ({
               value={nameValue}
               onChange={(e) => handleNameChange(e.target.value)}
               onKeyDown={handleKeyDown}
-              onFocus={() => nameSuggestions.length > 0 ? setShowName(true) : loadBrandFragrances(brandValue)}
+              onFocus={() => { if (nameSuggestions.length > 0) setShowName(true); else if (brandValue.trim().length >= 2) loadBrandFragrances(brandValue); }}
               placeholder="Start typing to search..."
               className="pl-9"
               required={required}
