@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useDebounce } from "@/hooks/useDebounce";
 import { FragranceDetailsModal } from "@/components/FragranceDetailsModal";
+import { mergeFragranceResults, searchLiveFragrances } from "@/lib/fragranceLiveSearch";
 
 const ACCORD_GROUPS = [
   { label: "Woody", accord: "woody", color: "#6B4423" },
@@ -53,33 +54,38 @@ export default function FragranceBrowse() {
     if (tab !== "note") return;
     if (!debouncedNote) { setResults([]); return; }
     setLoading(true);
-    supabase.rpc("search_fragrances_by_note", { note_q: debouncedNote, lim: 80 })
-      .then(({ data }) => { setResults(data ?? []); setLoading(false); });
+    (async () => {
+      try {
+        const [{ data }, live] = await Promise.all([
+          supabase.rpc("search_fragrances_by_note", { note_q: debouncedNote, lim: 80 }),
+          searchLiveFragrances(debouncedNote, 60).catch(() => []),
+        ]);
+        setResults(mergeFragranceResults(data ?? [], live));
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, [tab, debouncedNote]);
 
-  // Live multi-accord filter (intersect results across all selected accords)
+  // Live multi-accord filter using both local catalog and live fragrance API.
   useEffect(() => {
     if (tab !== "accord") return;
     if (selectedAccords.length === 0) { setResults([]); return; }
     setLoading(true);
     (async () => {
-      const lists = await Promise.all(
-        selectedAccords.map(a =>
-          supabase.rpc("search_fragrances_by_accord", { accord_q: a, lim: 200 }).then(r => r.data ?? [])
-        )
-      );
-      // intersect by id
-      const idCount = new Map<string, { row: any; count: number }>();
-      lists.flat().forEach((row: any) => {
-        const ex = idCount.get(row.id);
-        if (ex) ex.count += 1;
-        else idCount.set(row.id, { row, count: 1 });
-      });
-      const intersected = Array.from(idCount.values())
-        .filter(x => x.count === selectedAccords.length)
-        .map(x => x.row);
-      setResults(intersected);
-      setLoading(false);
+      try {
+        const [localLists, liveLists] = await Promise.all([
+          Promise.all(
+            selectedAccords.map(a =>
+              supabase.rpc("search_fragrances_by_accord", { accord_q: a, lim: 200 }).then(r => r.data ?? [])
+            )
+          ),
+          Promise.all(selectedAccords.map(a => searchLiveFragrances(a, 50).catch(() => []))),
+        ]);
+        setResults(mergeFragranceResults(localLists.flat(), liveLists.flat()).slice(0, 200));
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [tab, selectedAccords]);
 
@@ -121,7 +127,7 @@ export default function FragranceBrowse() {
       {tab === "accord" && (
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Pick one or more accord groups — results update live and require all selected.
+            Pick one or more accord groups — results update live from the fragrance database.
           </p>
           <div className="flex flex-wrap gap-2">
             {ACCORD_GROUPS.map(a => {
@@ -200,7 +206,7 @@ export default function FragranceBrowse() {
           </Card>
         ))}
         {!loading && (tab === "note" ? debouncedNote : selectedAccords.length > 0) && results.length === 0 && (
-          <p className="text-sm text-muted-foreground col-span-full">No fragrances match.</p>
+          <p className="text-sm text-muted-foreground col-span-full">Still searching the live fragrance database. Try a broader note or accord.</p>
         )}
       </div>
 
