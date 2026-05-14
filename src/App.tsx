@@ -53,6 +53,7 @@ import ForumThread from "./pages/ForumThread";
 import FragranceDetail from "./pages/FragranceDetail";
 import FragranceBrowse from "./pages/FragranceBrowse";
 import Performance from "./pages/Performance";
+import ListingDetail from "./pages/ListingDetail";
 
 const queryClient = new QueryClient();
 
@@ -114,6 +115,7 @@ const AnimatedRoutes = () => {
         <Route path="/forum/new" element={<PageTransition><ForumNewThread /></PageTransition>} />
         <Route path="/forum/thread/:id" element={<PageTransition><ForumThread /></PageTransition>} />
         <Route path="/fragrance/:id" element={<PageTransition><FragranceDetail /></PageTransition>} />
+        <Route path="/listing/:id" element={<PageTransition><ListingDetail /></PageTransition>} />
         <Route path="/browse" element={<PageTransition><FragranceBrowse /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>

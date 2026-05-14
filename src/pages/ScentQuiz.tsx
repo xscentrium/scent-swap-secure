@@ -4,6 +4,7 @@ import { SEO } from "@/components/SEO";
 import { useAuth } from '@/hooks/useAuth';
 import { Navigation } from '@/components/Navigation';
 import { ScentProfileQuiz } from '@/components/ScentProfileQuiz';
+import { AIRecommendations } from '@/components/AIRecommendations';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Sparkles, CheckCircle } from 'lucide-react';
@@ -12,6 +13,7 @@ const ScentQuiz = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [completed, setCompleted] = useState(false);
+  const [quizAnswers, setQuizAnswers] = useState<Record<string, string | string[]>>({});
 
   // Check if user has existing preferences (scent_preferences column may exist)
   const hasExistingPreferences = false; // Will be updated when profile types are regenerated
@@ -39,7 +41,7 @@ const ScentQuiz = () => {
       <div className="min-h-screen bg-background">
         <Navigation />
         <main className="pt-20 pb-12">
-          <div className="container mx-auto px-4 max-w-2xl">
+          <div className="container mx-auto px-4 max-w-4xl">
             <Card className="text-center">
               <CardHeader>
                 <div className="mx-auto w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mb-4">
@@ -52,16 +54,25 @@ const ScentQuiz = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <Button onClick={() => navigate('/discover')}>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Get Recommendations
-                  </Button>
                   <Button variant="outline" onClick={() => setCompleted(false)}>
                     Retake Quiz
                   </Button>
                 </div>
               </CardContent>
             </Card>
+            <div className="mt-6 text-left">
+              <AIRecommendations
+                initialType="occasion"
+                autoFetch
+                initialFilters={{
+                  notes: Array.isArray(quizAnswers.notes) ? quizAnswers.notes.join(', ') : '',
+                  style: Array.isArray(quizAnswers.families) ? quizAnswers.families[0] : String(quizAnswers.families ?? ''),
+                  season: Array.isArray(quizAnswers.seasons) ? quizAnswers.seasons[0] : String(quizAnswers.seasons ?? ''),
+                  occasion: Array.isArray(quizAnswers.occasions) ? quizAnswers.occasions[0] : String(quizAnswers.occasions ?? ''),
+                  budget: String(quizAnswers.budget ?? ''),
+                }}
+              />
+            </div>
           </div>
         </main>
       </div>
@@ -81,7 +92,7 @@ const ScentQuiz = () => {
               Answer a few questions to help us understand your fragrance preferences and get personalized recommendations.
             </p>
           </div>
-          <ScentProfileQuiz onComplete={() => setCompleted(true)} />
+          <ScentProfileQuiz onComplete={(answers) => { setQuizAnswers(answers); setCompleted(true); }} />
         </div>
       </main>
     </div>

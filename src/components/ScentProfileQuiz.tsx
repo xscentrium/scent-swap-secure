@@ -97,7 +97,7 @@ const quizSteps: QuizStep[] = [
   },
 ];
 
-export const ScentProfileQuiz = ({ onComplete }: { onComplete?: () => void }) => {
+export const ScentProfileQuiz = ({ onComplete }: { onComplete?: (preferences: Record<string, string | string[]>) => void }) => {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = useState(0);
@@ -117,7 +117,7 @@ export const ScentProfileQuiz = ({ onComplete }: { onComplete?: () => void }) =>
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       toast.success('Your scent profile has been saved!');
-      onComplete?.();
+      onComplete?.(answers);
     },
     onError: () => {
       toast.error('Failed to save preferences');

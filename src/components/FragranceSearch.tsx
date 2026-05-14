@@ -4,6 +4,7 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { mergeFragranceResults, searchLiveFragrances } from '@/lib/fragranceLiveSearch';
 
 interface FragranceSuggestion {
   name: string;
@@ -57,7 +58,7 @@ export const FragranceSearch = ({
   }, []);
 
   const searchByName = async (query: string) => {
-    if (query.length < 2) { setNameSuggestions([]); return; }
+    if (query.length < 2 && brandValue.trim().length < 2) { setNameSuggestions([]); return; }
     setIsLoading(true);
     try {
       const safe = query.trim().replace(/[%,()]/g, '');
@@ -67,14 +68,48 @@ export const FragranceSearch = ({
         .eq('approved', true)
         .ilike('name', `%${safe}%`);
       if (brandValue.trim()) q = q.ilike('brand', `%${brandValue.trim().replace(/[%,()]/g, '')}%`);
-      const { data, error } = await q.limit(12);
+      const [{ data, error }, live] = await Promise.all([
+        q.limit(50),
+        searchLiveFragrances(`${brandValue.trim()} ${safe}`.trim(), 50).catch(() => []),
+      ]);
       if (error) throw error;
-      setNameSuggestions((data ?? []).map((d: any) => ({ name: d.name, brand: d.brand, imageUrl: d.image_url ?? undefined })));
+      const local = (data ?? []).map((d: any) => ({ name: d.name, brand: d.brand, imageUrl: d.image_url ?? undefined }));
+      const remote = live
+        .filter((d) => !brandValue.trim() || d.brand.toLowerCase().includes(brandValue.trim().toLowerCase()))
+        .map((d) => ({ name: d.name, brand: d.brand, imageUrl: d.image_url ?? undefined }));
+      setNameSuggestions(mergeFragranceResults(local, remote).slice(0, 30));
       setShowName(true);
       setActiveIndex(-1);
     } catch (e) {
       console.error('Name search error:', e);
       setNameSuggestions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadBrandFragrances = async (brand: string) => {
+    if (brand.trim().length < 2) return;
+    setIsLoading(true);
+    try {
+      const safeBrand = brand.trim().replace(/[%,()]/g, '');
+      const [{ data, error }, live] = await Promise.all([
+        supabase
+          .from('fragrances')
+          .select('name, brand, image_url')
+          .eq('approved', true)
+          .ilike('brand', `%${safeBrand}%`)
+          .limit(80),
+        searchLiveFragrances(safeBrand, 80).catch(() => []),
+      ]);
+      if (error) throw error;
+      const local = (data ?? []).map((d: any) => ({ name: d.name, brand: d.brand, imageUrl: d.image_url ?? undefined }));
+      const remote = live.map((d) => ({ name: d.name, brand: d.brand, imageUrl: d.image_url ?? undefined }));
+      setNameSuggestions(mergeFragranceResults(local, remote).slice(0, 60));
+      setShowName(true);
+      setActiveIndex(-1);
+    } catch (e) {
+      console.error('Brand fragrance search error:', e);
     } finally {
       setIsLoading(false);
     }
@@ -92,7 +127,11 @@ export const FragranceSearch = ({
         .ilike('brand', `${safe}%`)
         .limit(50);
       if (error) throw error;
-      const unique = Array.from(new Set((data ?? []).map((d: any) => d.brand))).slice(0, 12);
+      const live = await searchLiveFragrances(safe, 50).catch(() => []);
+      const unique = Array.from(new Set([
+        ...(data ?? []).map((d: any) => d.brand),
+        ...live.map((d) => d.brand),
+      ].filter((b) => b.toLowerCase().includes(safe.toLowerCase())))).slice(0, 20);
       setBrandSuggestions(unique);
       setShowBrand(true);
     } catch (e) {
@@ -141,7 +180,7 @@ export const FragranceSearch = ({
               value={nameValue}
               onChange={(e) => handleNameChange(e.target.value)}
               onKeyDown={handleKeyDown}
-              onFocus={() => nameSuggestions.length > 0 && setShowName(true)}
+              onFocus={() => nameSuggestions.length > 0 ? setShowName(true) : loadBrandFragrances(brandValue)}
               placeholder="Start typing to search..."
               className="pl-9"
               required={required}
@@ -210,7 +249,7 @@ export const FragranceSearch = ({
                   key={b}
                   type="button"
                   className="w-full px-3 py-2 text-left hover:bg-accent transition-colors text-sm"
-                  onClick={() => { onBrandChange(b); setShowBrand(false); }}
+                  onClick={() => { onBrandChange(b); setShowBrand(false); loadBrandFragrances(b); }}
                 >
                   {b}
                 </button>

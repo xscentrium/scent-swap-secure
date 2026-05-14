@@ -24,7 +24,8 @@ import {
   Flower2,
   ShoppingCart,
   ArrowLeftRight,
-  User
+  User,
+  ExternalLink
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BatchCodeStatus } from '@/components/BatchCodeStatus';
@@ -340,10 +341,20 @@ export const ListingQuickView = ({
             <Separator />
 
             {/* Action Buttons */}
-            <div className="flex gap-3 pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              <Button
+                variant="secondary"
+                className="sm:col-span-2"
+                onClick={() => {
+                  onOpenChange(false);
+                  navigate(`/listing/${listing.id}`);
+                }}
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Full page
+              </Button>
               {listing.listing_type !== 'trade' && listing.price && (
                 <Button 
-                  className="flex-1" 
                   onClick={() => {
                     onOpenChange(false);
                     navigate(`/marketplace?listing=${listing.id}`);
@@ -356,7 +367,6 @@ export const ListingQuickView = ({
               {listing.listing_type !== 'sale' && (
                 <Button 
                   variant={listing.listing_type === 'trade' ? 'default' : 'outline'}
-                  className="flex-1"
                   onClick={() => {
                     onOpenChange(false);
                     navigate(`/marketplace?listing=${listing.id}`);
