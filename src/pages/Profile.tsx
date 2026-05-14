@@ -67,6 +67,7 @@ const Profile = () => {
   const { user, profile: currentUserProfile } = useAuth();
   const [isFollowing, setIsFollowing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [followDialog, setFollowDialog] = useState<null | "followers" | "following">(null);
 
   const isOwnProfile = currentUserProfile?.username === username;
 
