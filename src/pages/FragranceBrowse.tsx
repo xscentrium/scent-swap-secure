@@ -141,9 +141,18 @@ export default function FragranceBrowse() {
         </div>
       )}
 
-      <div className="text-sm text-muted-foreground">
-        {loading ? "Searching…" : `${results.length} fragrance${results.length === 1 ? "" : "s"}`}
-      </div>
+      {(tab === "note" ? !!debouncedNote : selectedAccords.length > 0) && (
+        <div className="text-sm text-muted-foreground">
+          {loading ? "Searching…" : `${results.length} fragrance${results.length === 1 ? "" : "s"}`}
+        </div>
+      )}
+      {!loading && (tab === "note" ? !debouncedNote : selectedAccords.length === 0) && (
+        <p className="text-sm text-muted-foreground">
+          {tab === "note"
+            ? 'Start typing a note above (e.g. "bergamot", "oud", "vanilla") to browse our catalog of 35,000+ fragrances.'
+            : "Pick one or more accord groups above to start browsing."}
+        </p>
+      )}
 
       <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
         {results.map((f: any) => (

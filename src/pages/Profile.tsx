@@ -29,6 +29,7 @@ import { FollowButton } from '@/components/FollowButton';
 import { UserActions } from '@/components/UserActions';
 import { CreatorNotifyButton } from '@/components/CreatorNotifyButton';
 import { ProfileEscrowHistory } from '@/components/ProfileEscrowHistory';
+import { FollowListDialog } from '@/components/FollowListDialog';
 
 type ProfileData = {
   id: string;
@@ -47,6 +48,7 @@ type ProfileData = {
   twitter_verified: boolean;
   facebook_verified: boolean;
   tiktok_verified: boolean;
+  show_followers: boolean;
   created_at: string;
 };
 
@@ -65,6 +67,7 @@ const Profile = () => {
   const { user, profile: currentUserProfile } = useAuth();
   const [isFollowing, setIsFollowing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [followDialog, setFollowDialog] = useState<null | "followers" | "following">(null);
 
   const isOwnProfile = currentUserProfile?.username === username;
 
@@ -294,15 +297,36 @@ const Profile = () => {
                   <span className="font-bold">{listings?.length ?? 0}</span>
                   <span className="text-muted-foreground ml-1">Listings</span>
                 </div>
-                <div>
-                  <span className="font-bold">{followersCount ?? 0}</span>
-                  <span className="text-muted-foreground ml-1">Followers</span>
-                </div>
-                <div>
-                  <span className="font-bold">{followingCount ?? 0}</span>
-                  <span className="text-muted-foreground ml-1">Following</span>
-                </div>
+                {(isOwnProfile || profileData.show_followers !== false) && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setFollowDialog("followers")}
+                      className="hover:text-primary transition-colors"
+                    >
+                      <span className="font-bold">{followersCount ?? 0}</span>
+                      <span className="text-muted-foreground ml-1">Followers</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFollowDialog("following")}
+                      className="hover:text-primary transition-colors"
+                    >
+                      <span className="font-bold">{followingCount ?? 0}</span>
+                      <span className="text-muted-foreground ml-1">Following</span>
+                    </button>
+                  </>
+                )}
               </div>
+
+              {profileData.id && (
+                <FollowListDialog
+                  open={followDialog !== null}
+                  onOpenChange={(v) => !v && setFollowDialog(null)}
+                  profileId={profileData.id}
+                  mode={followDialog ?? "followers"}
+                />
+              )}
 
               {/* Social Links */}
               <div className="flex gap-3 mt-4">

@@ -1181,7 +1181,38 @@ const Settings = () => {
               </Card>
             </TabsContent>
 
-            <TabsContent value="privacy">
+            <TabsContent value="privacy" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Profile visibility</CardTitle>
+                  <CardDescription>Control what other members can see about you.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <Label htmlFor="show-followers" className="text-base">Show followers & following</Label>
+                      <p className="text-sm text-muted-foreground">
+                        When off, the followers and following counts on your profile are hidden from other users.
+                      </p>
+                    </div>
+                    <Switch
+                      id="show-followers"
+                      checked={(profile as any).show_followers ?? true}
+                      onCheckedChange={async (checked) => {
+                        const { error } = await supabase
+                          .from('profiles')
+                          .update({ show_followers: checked } as any)
+                          .eq('id', profile.id);
+                        if (error) toast.error('Failed to update setting');
+                        else {
+                          (profile as any).show_followers = checked;
+                          toast.success(checked ? 'Followers visible' : 'Followers hidden');
+                        }
+                      }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
               <BlockedUsersManager />
             </TabsContent>
 
