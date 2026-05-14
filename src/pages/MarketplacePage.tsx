@@ -1102,13 +1102,13 @@ const MarketplacePage = () => {
                                 )}
                               </div>
                               {listing.listing_type !== 'sale' ? (
-                                <Button size="sm" variant="outline" className="rounded-full border-border/60" asChild>
+                                <Button size="sm" variant="outline" className="rounded-full border-border/60" asChild onClick={(e) => e.stopPropagation()}>
                                   <Link to={`/trade/${listing.id}`}>
                                     {listing.listing_type === 'trade' ? 'Propose Trade' : 'Trade'}
                                   </Link>
                                 </Button>
                               ) : (
-                                <Button size="sm" className="rounded-full">
+                                <Button size="sm" className="rounded-full" onClick={(e) => e.stopPropagation()}>
                                   Buy Now
                                 </Button>
                               )}
@@ -1138,6 +1138,12 @@ const MarketplacePage = () => {
           </div>
         </div>
       </main>
+
+      <ListingQuickView
+        open={!!quickViewListing}
+        onOpenChange={(o) => { if (!o) closeQuickView(); }}
+        listing={quickViewListing as any}
+      />
     </div>
   );
 };
