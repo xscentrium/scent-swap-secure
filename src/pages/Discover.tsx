@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { SEO } from "@/components/SEO";
@@ -6,6 +7,7 @@ import { FragranceLayering } from '@/components/FragranceLayering';
 import { FavoritesManager } from '@/components/FavoritesManager';
 import { SocialFeed } from '@/components/SocialFeed';
 import { TrendingFragrances } from '@/components/TrendingFragrances';
+import { FragranceDetailsModal } from '@/components/FragranceDetailsModal';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
