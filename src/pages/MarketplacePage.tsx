@@ -148,6 +148,9 @@ const MarketplacePage = () => {
     if (notesFilter.length) params.set('notes', notesFilter.join(','));
     if (vibesFilter.length) params.set('vibes', vibesFilter.join(','));
     if (genderFilter !== 'all') params.set('gender', genderFilter);
+    // Preserve quick-view param across filter changes
+    const currentListing = searchParams.get('listing');
+    if (currentListing) params.set('listing', currentListing);
     setSearchParams(params, { replace: true });
   }, [debouncedSearch, listingTypeFilter, conditionFilter, sortBy, debouncedPriceRange, hideUnverified, verifiedSellerOnly, brandFilter, sizeFilter, viewMode, strengthFilter, notesFilter, vibesFilter, genderFilter, setSearchParams]);
 
