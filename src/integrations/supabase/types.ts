@@ -1582,6 +1582,7 @@ export type Database = {
           referral_code: string | null
           referred_by: string | null
           scent_preferences: Json | null
+          show_followers: boolean
           tiktok_url: string | null
           tiktok_verified: boolean | null
           trade_matches_enabled: boolean | null
@@ -1614,6 +1615,7 @@ export type Database = {
           referral_code?: string | null
           referred_by?: string | null
           scent_preferences?: Json | null
+          show_followers?: boolean
           tiktok_url?: string | null
           tiktok_verified?: boolean | null
           trade_matches_enabled?: boolean | null
@@ -1646,6 +1648,7 @@ export type Database = {
           referral_code?: string | null
           referred_by?: string | null
           scent_preferences?: Json | null
+          show_followers?: boolean
           tiktok_url?: string | null
           tiktok_verified?: boolean | null
           trade_matches_enabled?: boolean | null
