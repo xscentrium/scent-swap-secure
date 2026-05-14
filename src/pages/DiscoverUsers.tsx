@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SEO } from "@/components/SEO";
 import { 
   Compass, 
   Users, 
@@ -266,6 +267,11 @@ const DiscoverUsers = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Discover Collectors & Influencers | Xscentrium"
+        description="Find verified fragrance collectors and influencers to follow. Connect with traders who share your taste in colognes, perfumes and oils."
+        path="/discover/users"
+      />
       <Navigation />
       <main className="pt-20 pb-12">
         <div className="container mx-auto px-4 max-w-2xl">
