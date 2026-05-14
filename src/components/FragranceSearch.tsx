@@ -248,6 +248,17 @@ export const FragranceSearch = ({
                   </div>
                 </button>
               ))}
+              {activeBrand && hasMore && (
+                <button
+                  type="button"
+                  onClick={loadMoreBrandFragrances}
+                  disabled={isLoadingMore}
+                  className="w-full px-3 py-2 text-center text-sm font-medium border-t hover:bg-accent transition-colors flex items-center justify-center gap-2"
+                >
+                  {isLoadingMore && <Loader2 className="w-3 h-3 animate-spin" />}
+                  {isLoadingMore ? 'Loading…' : `Load more (${nameSuggestions.length} loaded)`}
+                </button>
+              )}
             </div>
           )}
         </div>
