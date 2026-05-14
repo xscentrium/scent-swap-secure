@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowRight, ShieldCheck, Star } from "lucide-react";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { ListingImage, isListingDisplayable } from "@/components/ListingImage";
+import { ListingQuickView } from "@/components/ListingQuickView";
 import { cn } from "@/lib/utils";
 
 type ListingType = "all" | "sale" | "trade" | "both";
@@ -27,6 +28,7 @@ export const Marketplace = () => {
   const [type, setType] = useState<ListingType>("all");
   const [brand, setBrand] = useState<string>("all");
   const [sort, setSort] = useState<Sort>("newest");
+  const [quickViewListing, setQuickViewListing] = useState<any>(null);
 
   const { data: listings, isLoading } = useQuery({
     queryKey: ["marketplace-section-listings"],
@@ -192,7 +194,7 @@ export const Marketplace = () => {
                     key={listing.id}
                     className="overflow-hidden hover:shadow-luxury transition-smooth group animate-in fade-in duration-500 cursor-pointer"
                     style={{ animationDelay: `${index * 60}ms` }}
-                    onClick={() => navigate(`/marketplace?listing=${listing.id}`)}
+                    onClick={() => setQuickViewListing(listing)}
                   >
                     <div className="relative aspect-square overflow-hidden bg-muted">
                       <ListingImage
@@ -288,6 +290,12 @@ export const Marketplace = () => {
           </Button>
         </div>
       </div>
+
+      <ListingQuickView
+        open={!!quickViewListing}
+        onOpenChange={(open) => { if (!open) setQuickViewListing(null); }}
+        listing={quickViewListing}
+      />
     </section>
   );
 };

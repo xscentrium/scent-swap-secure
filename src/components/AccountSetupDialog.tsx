@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -11,28 +10,23 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { AlertCircle, Calendar, CheckCircle, Gift } from 'lucide-react';
+import { Calendar, Gift } from 'lucide-react';
 import { toast } from 'sonner';
+
+const DISMISS_KEY = 'xs:account-setup-dismissed';
 
 export const AccountSetupDialog = () => {
   const { user, profile, loading } = useAuth();
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [birthday, setBirthday] = useState('');
   const [saving, setSaving] = useState(false);
-  const [birthdaySet, setBirthdaySet] = useState(false);
 
   useEffect(() => {
-    if (!loading && user && profile) {
-      // Check if birthday is set
-      const hasBirthday = !!(profile as any).birthday;
-      setBirthdaySet(hasBirthday);
-      
-      // Open dialog only if birthday is missing. Email verification is not required to join.
-      if (!hasBirthday) {
-        setOpen(true);
-      }
+    if (loading || !user || !profile) return;
+    const hasBirthday = !!(profile as any).birthday;
+    const dismissed = localStorage.getItem(DISMISS_KEY) === '1';
+    if (!hasBirthday && !dismissed) {
+      setOpen(true);
     }
   }, [loading, user, profile]);
 
@@ -52,8 +46,6 @@ export const AccountSetupDialog = () => {
       toast.error('Please enter your birthday');
       return;
     }
-
-    // Validate age (must be at least 13)
     const age = calculateAge(birthday);
     if (age < 13) {
       toast.error('You must be at least 13 years old to use this platform');
@@ -69,99 +61,67 @@ export const AccountSetupDialog = () => {
 
     if (error) {
       toast.error('Failed to save birthday');
-    } else {
-      setBirthdaySet(true);
-      if (age < 16) {
-        toast.success('Birthday saved! Note: Users under 16 need a guardian account to trade.');
-      } else {
-        toast.success('Birthday saved!');
-      }
-      
-      setOpen(false);
-      // Auto-redirect new signups to onboarding wizard
-      if (!(profile as any)?.id_verified) {
-        navigate('/onboarding');
-      }
+      return;
     }
+
+    if (age < 16) {
+      toast.success('Birthday saved! Note: Users under 16 need a guardian account to trade.');
+    } else {
+      toast.success('Birthday saved — your $5 birthday credit is set!');
+    }
+    localStorage.removeItem(DISMISS_KEY);
+    setOpen(false);
   };
 
-  const isComplete = birthdaySet;
+  const handleSkip = () => {
+    localStorage.setItem(DISMISS_KEY, '1');
+    setOpen(false);
+  };
 
-  if (loading || !user || !profile) {
-    return null;
-  }
+  if (loading || !user || !profile) return null;
 
   return (
-    <Dialog open={open} onOpenChange={(val) => {
-      // Only allow closing if setup is complete
-      if (!isComplete && val === false) {
-        toast.error('Please complete account setup to use all features');
-        return;
-      }
-      setOpen(val);
-    }}>
-      <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => {
-        if (!isComplete) e.preventDefault();
-      }}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) handleSkip(); else setOpen(v); }}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-primary" />
-            Complete Your Account Setup
+            <Gift className="w-5 h-5 text-primary" />
+            Get a $5 birthday credit
           </DialogTitle>
           <DialogDescription>
-            Please complete these steps to unlock all platform features
+            Add your birthday to unlock a $5 credit on your special day. Totally optional — you can skip this and add it later in Settings.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
-          {/* Birthday */}
-          <div className={`p-4 rounded-lg border ${birthdaySet ? 'bg-green-500/10 border-green-500/30' : 'bg-muted border-border'}`}>
+        <div className="space-y-4 py-2">
+          <div className="p-4 rounded-lg border bg-muted">
             <div className="flex items-start gap-3">
-              {birthdaySet ? (
-                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
-              ) : (
-                <Calendar className="w-5 h-5 text-muted-foreground mt-0.5" />
-              )}
-              <div className="flex-1">
-                <h4 className="font-medium">Set Your Birthday</h4>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {birthdaySet 
-                    ? 'Your birthday has been saved!'
-                    : 'Required for account verification. You must be 13+ to join. Users under 16 need a guardian to trade.'
-                  }
-                </p>
-                
-                {!birthdaySet && (
-                  <div className="mt-3 space-y-3">
-                    <div className="flex items-center gap-2 p-2 bg-primary/10 rounded text-sm">
-                      <Gift className="w-4 h-4 text-primary" />
-                      <span>Get a <strong>$5 credit</strong> on your birthday (verified from your ID)!</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <Input
-                        type="date"
-                        value={birthday}
-                        onChange={(e) => setBirthday(e.target.value)}
-                        max={new Date(new Date().setFullYear(new Date().getFullYear() - 13)).toISOString().split('T')[0]}
-                      />
-                      <Button onClick={handleSaveBirthday} disabled={saving}>
-                        {saving ? 'Saving...' : 'Save'}
-                      </Button>
-                    </div>
-                  </div>
-                )}
+              <Calendar className="w-5 h-5 text-muted-foreground mt-0.5" />
+              <div className="flex-1 space-y-3">
+                <div>
+                  <h4 className="font-medium">Your birthday</h4>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Used only to send your annual credit. You must be 13+ to join.
+                  </p>
+                </div>
+                <Input
+                  type="date"
+                  value={birthday}
+                  onChange={(e) => setBirthday(e.target.value)}
+                  max={new Date(new Date().setFullYear(new Date().getFullYear() - 13)).toISOString().split('T')[0]}
+                />
               </div>
             </div>
           </div>
 
-          {isComplete && (
-            <Button className="w-full" onClick={() => {
-              setOpen(false);
-              if (!(profile as any)?.id_verified) navigate('/onboarding');
-            }}>
-              {(profile as any)?.id_verified ? 'Continue to Platform' : 'Continue to Onboarding'}
+          <div className="flex gap-2">
+            <Button variant="ghost" className="flex-1" onClick={handleSkip}>
+              Skip for now
             </Button>
-          )}
+            <Button className="flex-1" onClick={handleSaveBirthday} disabled={saving || !birthday}>
+              {saving ? 'Saving…' : 'Save & claim $5'}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

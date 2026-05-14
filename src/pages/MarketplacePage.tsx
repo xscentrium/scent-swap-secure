@@ -21,6 +21,7 @@ import { ListingImage, isListingDisplayable, verificationLabel, type DBVerificat
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { motion } from 'framer-motion';
+import { ListingQuickView } from '@/components/ListingQuickView';
 
 const PRICE_MIN = 0;
 const PRICE_MAX = 1000;
@@ -147,6 +148,9 @@ const MarketplacePage = () => {
     if (notesFilter.length) params.set('notes', notesFilter.join(','));
     if (vibesFilter.length) params.set('vibes', vibesFilter.join(','));
     if (genderFilter !== 'all') params.set('gender', genderFilter);
+    // Preserve quick-view param across filter changes
+    const currentListing = searchParams.get('listing');
+    if (currentListing) params.set('listing', currentListing);
     setSearchParams(params, { replace: true });
   }, [debouncedSearch, listingTypeFilter, conditionFilter, sortBy, debouncedPriceRange, hideUnverified, verifiedSellerOnly, brandFilter, sizeFilter, viewMode, strengthFilter, notesFilter, vibesFilter, genderFilter, setSearchParams]);
 
@@ -284,6 +288,19 @@ const MarketplacePage = () => {
   const allListings = listings ?? [];
   const displayable = useMemo(() => allListings.filter((l) => isListingDisplayable(l as any)), [allListings]);
   const baseVisible = hideUnverified ? displayable : allListings;
+
+  // Quick view modal driven by ?listing=ID
+  const quickViewId = searchParams.get('listing');
+  const quickViewListing = useMemo(
+    () => allListings.find((l: any) => l.id === quickViewId) ?? null,
+    [allListings, quickViewId]
+  );
+  const closeQuickView = useCallback(() => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('listing');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
   const visibleListings = useMemo(
     () => baseVisible.filter((l) =>
       matchesSize(l.size)
@@ -984,7 +1001,14 @@ const MarketplacePage = () => {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.5, delay: Math.min(idx * 0.04, 0.4), ease: [0.22, 1, 0.36, 1] }}
                         >
-                          <Card className="group relative overflow-hidden rounded-2xl border border-border/40 bg-card/80 hover:border-primary/30 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-22px_hsl(35_38%_48%/0.35)] transition-all duration-500">
+                          <Card
+                            className="group relative overflow-hidden rounded-2xl border border-border/40 bg-card/80 hover:border-primary/30 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-22px_hsl(35_38%_48%/0.35)] transition-all duration-500 cursor-pointer"
+                            onClick={() => {
+                              const next = new URLSearchParams(searchParams);
+                              next.set('listing', listing.id);
+                              setSearchParams(next, { replace: false });
+                            }}
+                          >
                             <div className="aspect-[4/5] bg-gradient-to-b from-muted/40 to-muted/10 relative overflow-hidden">
                               <ListingImage
                                 url={listing.image_url}
@@ -993,7 +1017,7 @@ const MarketplacePage = () => {
                                 className="object-contain p-6 transition-transform duration-700 ease-out group-hover:scale-[1.04]"
                               />
 
-                              <div className="absolute top-3 left-3 flex flex-col gap-2">
+                              <div className="absolute top-3 left-3 flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
                                 <FavoriteButton
                                   name={listing.name}
                                   brand={listing.brand}
@@ -1078,13 +1102,13 @@ const MarketplacePage = () => {
                                 )}
                               </div>
                               {listing.listing_type !== 'sale' ? (
-                                <Button size="sm" variant="outline" className="rounded-full border-border/60" asChild>
+                                <Button size="sm" variant="outline" className="rounded-full border-border/60" asChild onClick={(e) => e.stopPropagation()}>
                                   <Link to={`/trade/${listing.id}`}>
                                     {listing.listing_type === 'trade' ? 'Propose Trade' : 'Trade'}
                                   </Link>
                                 </Button>
                               ) : (
-                                <Button size="sm" className="rounded-full">
+                                <Button size="sm" className="rounded-full" onClick={(e) => e.stopPropagation()}>
                                   Buy Now
                                 </Button>
                               )}
@@ -1114,6 +1138,12 @@ const MarketplacePage = () => {
           </div>
         </div>
       </main>
+
+      <ListingQuickView
+        open={!!quickViewListing}
+        onOpenChange={(o) => { if (!o) closeQuickView(); }}
+        listing={quickViewListing as any}
+      />
     </div>
   );
 };
