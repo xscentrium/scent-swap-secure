@@ -9,6 +9,7 @@ import { ArrowUp, ArrowDown, Pin, Lock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { SEO } from "@/components/SEO";
 
 export default function ForumThread() {
   const { id } = useParams<{ id: string }>();
