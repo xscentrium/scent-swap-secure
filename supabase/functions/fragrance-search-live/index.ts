@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
         "x-rapidapi-key": key,
       },
       body: JSON.stringify({
-        queries: [{ indexUid: "fragrances", q, limit, offset: 0 }],
+        queries: [{ indexUid: "fragrances", q, limit, offset }],
       }),
     });
     if (!r.ok) throw new Error(`RapidAPI ${r.status}: ${await r.text()}`);
