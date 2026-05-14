@@ -29,6 +29,7 @@ import { FollowButton } from '@/components/FollowButton';
 import { UserActions } from '@/components/UserActions';
 import { CreatorNotifyButton } from '@/components/CreatorNotifyButton';
 import { ProfileEscrowHistory } from '@/components/ProfileEscrowHistory';
+import { FollowListDialog } from '@/components/FollowListDialog';
 
 type ProfileData = {
   id: string;
