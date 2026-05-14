@@ -21,6 +21,7 @@ import { ListingImage, isListingDisplayable, verificationLabel, type DBVerificat
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { motion } from 'framer-motion';
+import { ListingQuickView } from '@/components/ListingQuickView';
 
 const PRICE_MIN = 0;
 const PRICE_MAX = 1000;
