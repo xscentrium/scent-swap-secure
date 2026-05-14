@@ -17,7 +17,9 @@ import { FavoriteButton } from '@/components/FavoriteButton';
 import { AccordsBar } from '@/components/AccordsBar';
 import { RatingBars } from '@/components/RatingBars';
 import { useEffect } from 'react';
-import { Star, Sun, Moon, Snowflake, Leaf, Flower2, CloudSun, Clock, Wind } from 'lucide-react';
+import { Star, Sun, Moon, Snowflake, Leaf, Flower2, CloudSun, Clock, Wind, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 type FragranceDetails = {
   name: string;
