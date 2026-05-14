@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import { AuthProvider } from "@/hooks/useAuth";
 import { AccountSetupDialog } from "@/components/AccountSetupDialog";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -56,7 +57,19 @@ const queryClient = new QueryClient();
 
 const AnimatedRoutes = () => {
   const location = useLocation();
-  
+
+  // Send a GA4 page_view on every SPA route change
+  useEffect(() => {
+    const gtag = (window as any).gtag;
+    if (typeof gtag === "function") {
+      gtag("event", "page_view", {
+        page_path: location.pathname + location.search,
+        page_location: window.location.href,
+        page_title: document.title,
+      });
+    }
+  }, [location.pathname, location.search]);
+
   return (
     <Layout>
       <AnimatePresence mode="wait">
