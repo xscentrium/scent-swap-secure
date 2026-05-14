@@ -167,6 +167,74 @@ const Discover = () => {
             </Link>
           </Button>
 
+          {search && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-12"
+            >
+              <Card className="p-6 border-foreground/20">
+                <div className="flex items-center gap-3 mb-5">
+                  <SearchIcon className="w-4 h-4" />
+                  <h2 className="font-serif text-2xl">
+                    Results for <span className="italic">"{search}"</span>
+                  </h2>
+                  <Badge variant="outline" className="ml-auto">
+                    {catalogResults?.length ?? 0}
+                  </Badge>
+                </div>
+                {catalogResults && catalogResults.length > 0 ? (
+                  <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    {catalogResults.map((f: any) => (
+                      <button
+                        key={f.id}
+                        type="button"
+                        onClick={() => setActiveFragrance({ name: f.name, brand: f.brand, imageUrl: f.image_url })}
+                        className="text-left"
+                      >
+                        <Card className="p-4 hover:border-foreground transition flex gap-3">
+                          <div className="w-14 h-14 rounded-sm bg-muted overflow-hidden shrink-0">
+                            {f.image_url && (
+                              <img
+                                src={f.image_url}
+                                alt={f.name}
+                                className="w-full h-full object-cover"
+                              />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs text-muted-foreground truncate">{f.brand}</p>
+                            <p className="font-medium truncate">{f.name}</p>
+                            <div className="flex gap-1 mt-1">
+                              {f.year && (
+                                <Badge variant="secondary" className="text-[10px] py-0">
+                                  {f.year}
+                                </Badge>
+                              )}
+                              {f.gender && (
+                                <Badge variant="outline" className="text-[10px] py-0">
+                                  {f.gender}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </Card>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No fragrances found in the catalog yet. Try the{' '}
+                    <Link className="underline" to="/browse">
+                      Browse
+                    </Link>{' '}
+                    page.
+                  </p>
+                )}
+              </Card>
+            </motion.div>
+          )}
+
           {/* HERO — editorial split */}
           <motion.section
             variants={container}
