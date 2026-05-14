@@ -224,33 +224,36 @@ export const Hero = () => {
                 </motion.div>
               )}
 
-              {/* Secondary thumbnail stack — rotates through full pool, offset from current */}
+              {/* Secondary thumbnail stack — links straight to that listing */}
               <div className="absolute bottom-0 left-0 w-[42%] space-y-3">
                 {[1, 2].map((offset, i) => {
                   const s = slides[(index + offset) % slides.length];
                   if (!s) return null;
                   return (
-                    <motion.button
+                    <motion.div
                       key={`hero-thumb-${offset}-${s.id}`}
-                      onClick={() => setIndex(slides.findIndex(x => x.id === s.id))}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.6, delay: 0.05 + i * 0.08 }}
                       whileHover={{ y: -4 }}
-                      className="block w-full aspect-[4/3] rounded-xl overflow-hidden border border-border/40 bg-card shadow-xl hover:border-primary/60 transition-colors group relative"
                     >
-                      <img
-                        src={s.image_url ?? ""}
-                        alt={`${s.brand} ${s.name}`}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                        loading="lazy"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-background/85 to-transparent" />
-                      <div className="absolute bottom-0 left-0 right-0 p-3 text-left">
-                        <p className="font-serif text-sm text-foreground truncate">{s.name}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{s.brand}</p>
-                      </div>
-                    </motion.button>
+                      <Link
+                        to={`/marketplace?listing=${s.id}`}
+                        className="block w-full aspect-[4/3] rounded-xl overflow-hidden border border-border/40 bg-card shadow-xl hover:border-primary/60 transition-colors group relative"
+                      >
+                        <img
+                          src={s.image_url ?? ""}
+                          alt={`${s.brand} ${s.name}`}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-background/85 to-transparent" />
+                        <div className="absolute bottom-0 left-0 right-0 p-3 text-left">
+                          <p className="font-serif text-sm text-foreground truncate">{s.name}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{s.brand}</p>
+                        </div>
+                      </Link>
+                    </motion.div>
                   );
                 })}
               </div>
