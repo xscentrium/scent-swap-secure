@@ -124,7 +124,27 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <SEO title="Contact Support | Xscentrium" description="Reach the Xscentrium team for support, partnerships, or media inquiries." path="/contact" />
+      <SEO
+        title="Contact Support | Xscentrium"
+        description="Reach the Xscentrium team for support, partnerships, or media inquiries."
+        path="/contact"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "ContactPage",
+          name: "Contact Xscentrium",
+          url: "https://xscentrium.com/contact",
+          mainEntity: {
+            "@type": "Organization",
+            name: "Xscentrium",
+            url: "https://xscentrium.com/",
+            contactPoint: {
+              "@type": "ContactPoint",
+              contactType: "customer support",
+              availableLanguage: "English",
+            },
+          },
+        }}
+      />
       <Navigation />
       <main className="pt-20 pb-12">
         <div className="container mx-auto px-4 max-w-6xl">

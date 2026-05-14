@@ -88,7 +88,18 @@ export default function FragranceBrowse() {
 
   return (
     <div className="container max-w-6xl py-8 space-y-6">
-      <SEO title="Browse Fragrances by Notes & Accords | Xscentrium" description="Explore the Xscentrium catalog of fragrances. Search by name, brand, accord and notes." path="/browse" />
+      <SEO
+        title="Browse Fragrances by Notes & Accords | Xscentrium"
+        description="Explore the Xscentrium catalog of fragrances. Search by name, brand, accord and notes."
+        path="/browse"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "Browse Fragrances",
+          url: "https://xscentrium.com/browse",
+          description: "Explore the Xscentrium catalog of fragrances by name, brand, accord and notes.",
+        }}
+      />
       <h1 className="text-3xl md:text-5xl font-serif">Browse fragrances</h1>
 
       <div className="flex gap-2">

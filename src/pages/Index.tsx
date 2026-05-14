@@ -51,7 +51,32 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       <NotificationPermissionBanner />
-      <SEO title="Xscentrium — Trade Rare Fragrances Securely" description="A members-only marketplace for collectors. Trade rare colognes, perfumes & oils — ID-verified, escrow-backed, curated." path="/" />
+      <SEO
+        title="Xscentrium — Trade Rare Fragrances Securely"
+        description="A members-only marketplace for collectors. Trade rare colognes, perfumes & oils — ID-verified, escrow-backed, curated."
+        path="/"
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "Xscentrium",
+            url: "https://xscentrium.com/",
+            potentialAction: {
+              "@type": "SearchAction",
+              target: "https://xscentrium.com/marketplace?q={search_term_string}",
+              "query-input": "required name=search_term_string",
+            },
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "Xscentrium",
+            url: "https://xscentrium.com/",
+            logo: "https://xscentrium.com/favicon.png",
+            sameAs: ["https://twitter.com/Xscentrium"],
+          },
+        ]}
+      />
       <main>
         <Hero />
         <TrustStrip />
