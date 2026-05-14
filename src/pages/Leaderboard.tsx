@@ -26,7 +26,7 @@ interface UserRank {
   percentile: number;
 }
 
-const Leaderboard = () => {
+const Leaderboard = ({ embedded = false }: { embedded?: boolean }) => {
   const { profile } = useAuth();
 
   // Top traders (get all for ranking)
@@ -298,19 +298,17 @@ const Leaderboard = () => {
     );
   };
 
-  return (
-    <div className="min-h-screen bg-background">
-      <SEO title="Top Traders Leaderboard | Xscentrium" description="See the top fragrance traders, collectors and reviewers ranked across the Xscentrium community." path="/leaderboard" />
-      <Navigation />
-      <main className="pt-20 pb-12">
-        <div className="container mx-auto px-4 max-w-2xl">
-          <div className="text-center mb-8">
+  const content = (
+    <div className={embedded ? "max-w-2xl" : "container mx-auto px-4 max-w-2xl"}>
+          {!embedded && (
+            <div className="text-center mb-8">
             <Trophy className="w-12 h-12 text-primary mx-auto mb-4" />
             <h1 className="text-3xl font-serif font-bold mb-2">Leaderboard</h1>
             <p className="text-muted-foreground">
               Top performers in our fragrance community
             </p>
           </div>
+          )}
 
           <Tabs defaultValue="traders" className="w-full">
             <TabsList className="w-full grid grid-cols-3 mb-6">
@@ -407,6 +405,16 @@ const Leaderboard = () => {
             </TabsContent>
           </Tabs>
         </div>
+  );
+
+  if (embedded) return content;
+
+  return (
+    <div className="min-h-screen bg-background">
+      <SEO title="Top Traders Leaderboard | Xscentrium" description="See the top fragrance traders, collectors and reviewers ranked across the Xscentrium community." path="/leaderboard" />
+      <Navigation />
+      <main className="pt-20 pb-12">
+        {content}
       </main>
     </div>
   );
