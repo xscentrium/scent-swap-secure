@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { SEO } from "@/components/SEO";
 import { Link } from 'react-router-dom';
@@ -41,10 +41,63 @@ type ComparisonItem = {
   isLoading: boolean;
 };
 
+const STORAGE_KEY = 'xscentrium:compare:items:v1';
+
 const FragranceComparison = () => {
   const [items, setItems] = useState<ComparisonItem[]>([]);
   const [searchName, setSearchName] = useState('');
   const [searchBrand, setSearchBrand] = useState('');
+  const hasHydrated = useRef(false);
+
+  // Load persisted selection and refetch details
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const saved: { name: string; brand: string }[] = JSON.parse(raw);
+        if (Array.isArray(saved) && saved.length > 0) {
+          const initial = saved.slice(0, 4).map((s) => ({ name: s.name, brand: s.brand, isLoading: true }));
+          setItems(initial);
+          initial.forEach(async (it) => {
+            try {
+              const { data, error } = await supabase.functions.invoke('fragrance-details', {
+                body: { name: it.name, brand: it.brand },
+              });
+              if (error) throw error;
+              setItems((prev) =>
+                prev.map((p) =>
+                  p.name === it.name && p.brand === it.brand
+                    ? { ...p, details: data?.details, isLoading: false }
+                    : p,
+                ),
+              );
+            } catch {
+              setItems((prev) =>
+                prev.map((p) =>
+                  p.name === it.name && p.brand === it.brand ? { ...p, isLoading: false } : p,
+                ),
+              );
+            }
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load saved comparison', e);
+    } finally {
+      hasHydrated.current = true;
+    }
+  }, []);
+
+  // Persist selection (name + brand only)
+  useEffect(() => {
+    if (!hasHydrated.current) return;
+    try {
+      const minimal = items.map((i) => ({ name: i.name, brand: i.brand }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(minimal));
+    } catch {
+      // ignore quota errors
+    }
+  }, [items]);
 
   const addFragrance = async (name: string, brand: string) => {
     if (items.length >= 4) {
@@ -169,12 +222,14 @@ const FragranceComparison = () => {
               {items.map((item, index) => (
                 <Card key={`${item.name}-${item.brand}`} className="relative">
                   <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-2 right-2 h-6 w-6 z-10"
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 right-2 z-10 h-7 px-2 gap-1"
                     onClick={() => removeFragrance(index)}
+                    aria-label={`Remove ${item.brand} ${item.name} from comparison`}
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-3.5 h-3.5" />
+                    Remove
                   </Button>
 
                   <CardContent className="p-4 pt-8">

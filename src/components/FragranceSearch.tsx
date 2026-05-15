@@ -28,6 +28,40 @@ interface FragranceSearchProps {
 const normKey = (brand: string, name: string) =>
   `${brand.trim().toLowerCase().replace(/\s+/g, ' ')}|${name.trim().toLowerCase().replace(/\s+/g, ' ')}`;
 
+const brandMatchScore = (brand: string, query: string) => {
+  if (!query) return 0;
+  const b = brand.trim().toLowerCase();
+  const q = query.trim().toLowerCase();
+  if (b === q) return 4;
+  if (b.startsWith(q)) return 3;
+  if (b.split(/\s+/).includes(q)) return 2;
+  if (b.includes(q)) return 1;
+  return 0;
+};
+
+const sortByRelevance = (
+  items: FragranceSuggestion[],
+  brandQuery: string,
+  nameQuery: string,
+) => {
+  const nq = nameQuery.trim().toLowerCase();
+  return items
+    .map((item, idx) => {
+      const bScore = brandMatchScore(item.brand, brandQuery);
+      const n = item.name.trim().toLowerCase();
+      let nScore = 0;
+      if (nq) {
+        if (n === nq) nScore = 4;
+        else if (n.startsWith(nq)) nScore = 3;
+        else if (n.includes(nq)) nScore = 1;
+      }
+      // Preserve original API relevance ordering as the tiebreaker
+      return { item, score: bScore * 10 + nScore, idx };
+    })
+    .sort((a, b) => b.score - a.score || a.idx - b.idx)
+    .map((x) => x.item);
+};
+
 export const FragranceSearch = ({
   onSelect,
   nameValue,
@@ -98,7 +132,7 @@ export const FragranceSearch = ({
       const remote = live
         .filter((d) => !brandValue.trim() || d.brand.toLowerCase().includes(brandValue.trim().toLowerCase()))
         .map((d) => ({ name: d.name, brand: d.brand, imageUrl: d.image_url ?? undefined }));
-      setNameSuggestions(dedupe(mergeFragranceResults(local, remote)).slice(0, 30));
+      setNameSuggestions(sortByRelevance(dedupe(mergeFragranceResults(local, remote)), brandValue, query).slice(0, 30));
       setShowName(true);
       setActiveIndex(-1);
     } catch (e) {
@@ -129,7 +163,7 @@ export const FragranceSearch = ({
       const remote = live
         .filter((d) => d.brand.toLowerCase().includes(safeBrand.toLowerCase()))
         .map((d) => ({ name: d.name, brand: d.brand, imageUrl: d.image_url ?? undefined }));
-      setNameSuggestions(dedupe(mergeFragranceResults(local, remote)));
+      setNameSuggestions(sortByRelevance(dedupe(mergeFragranceResults(local, remote)), brand, nameValue));
       setNextPage(INITIAL_PAGES);
       setHasMore(live.length >= INITIAL_PAGES * PAGE_SIZE);
       setShowName(true);
@@ -150,7 +184,7 @@ export const FragranceSearch = ({
       const filtered = more
         .filter((d) => d.brand.toLowerCase().includes(safeBrand.toLowerCase()))
         .map((d) => ({ name: d.name, brand: d.brand, imageUrl: d.image_url ?? undefined }));
-      setNameSuggestions((prev) => dedupe(mergeFragranceResults(prev, filtered)));
+      setNameSuggestions((prev) => sortByRelevance(dedupe(mergeFragranceResults(prev, filtered)), activeBrand, nameValue));
       setNextPage((p) => p + 1);
       setHasMore(more.length >= PAGE_SIZE);
     } finally {
