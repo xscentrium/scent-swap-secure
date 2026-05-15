@@ -41,10 +41,63 @@ type ComparisonItem = {
   isLoading: boolean;
 };
 
+const STORAGE_KEY = 'xscentrium:compare:items:v1';
+
 const FragranceComparison = () => {
   const [items, setItems] = useState<ComparisonItem[]>([]);
   const [searchName, setSearchName] = useState('');
   const [searchBrand, setSearchBrand] = useState('');
+  const hasHydrated = useRef(false);
+
+  // Load persisted selection and refetch details
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const saved: { name: string; brand: string }[] = JSON.parse(raw);
+        if (Array.isArray(saved) && saved.length > 0) {
+          const initial = saved.slice(0, 4).map((s) => ({ name: s.name, brand: s.brand, isLoading: true }));
+          setItems(initial);
+          initial.forEach(async (it) => {
+            try {
+              const { data, error } = await supabase.functions.invoke('fragrance-details', {
+                body: { name: it.name, brand: it.brand },
+              });
+              if (error) throw error;
+              setItems((prev) =>
+                prev.map((p) =>
+                  p.name === it.name && p.brand === it.brand
+                    ? { ...p, details: data?.details, isLoading: false }
+                    : p,
+                ),
+              );
+            } catch {
+              setItems((prev) =>
+                prev.map((p) =>
+                  p.name === it.name && p.brand === it.brand ? { ...p, isLoading: false } : p,
+                ),
+              );
+            }
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load saved comparison', e);
+    } finally {
+      hasHydrated.current = true;
+    }
+  }, []);
+
+  // Persist selection (name + brand only)
+  useEffect(() => {
+    if (!hasHydrated.current) return;
+    try {
+      const minimal = items.map((i) => ({ name: i.name, brand: i.brand }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(minimal));
+    } catch {
+      // ignore quota errors
+    }
+  }, [items]);
 
   const addFragrance = async (name: string, brand: string) => {
     if (items.length >= 4) {
