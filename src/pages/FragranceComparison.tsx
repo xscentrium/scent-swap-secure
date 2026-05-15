@@ -116,7 +116,6 @@ const FragranceComparison = () => {
         announceError(`Failed to load details for ${brand} — ${name}.`);
         toast.error('Failed to load fragrance details', {
           description: `Could not load ${brand} — ${name}.`,
-          role: 'alert',
           duration: 8000,
           action: {
             label: 'Retry',
@@ -166,7 +165,6 @@ const FragranceComparison = () => {
       announceError('Comparison is full. Maximum of 4 fragrances.');
       toast.error('Comparison is full', {
         description: 'You can compare up to 4 fragrances at a time. Remove one to add another.',
-        role: 'alert',
       });
       return;
     }
@@ -176,7 +174,6 @@ const FragranceComparison = () => {
       announceError(`${brand} ${name} is already in the comparison.`);
       toast.warning('Already in comparison', {
         description: `${brand} — ${name} is already on your compare list.`,
-        role: 'alert',
       });
       return;
     }
