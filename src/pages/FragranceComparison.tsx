@@ -162,6 +162,10 @@ const FragranceComparison = () => {
           : item
       ));
     } catch (e) {
+      announceError(`Failed to load details for ${brand} — ${name}.`);
+      toast.error('Failed to load fragrance details', {
+        description: `Could not load ${brand} — ${name}. Please try again.`,
+      });
       setItems(prev => prev.map(item => 
         item.name === name && item.brand === brand 
           ? { ...item, isLoading: false }
