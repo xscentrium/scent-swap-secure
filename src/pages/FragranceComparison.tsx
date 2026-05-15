@@ -144,6 +144,13 @@ const FragranceComparison = () => {
     setItems(prev => prev.filter((_, i) => i !== index));
   };
 
+  const clearAll = () => {
+    if (items.length === 0) return;
+    setItems([]);
+    try { localStorage.removeItem(STORAGE_KEY); } catch {}
+    toast.success('Comparison cleared');
+  };
+
   const renderRatingBar = (value: number, max: number = 5) => {
     return (
       <div className="flex gap-0.5">
