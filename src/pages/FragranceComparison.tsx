@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { SEO } from "@/components/SEO";
 import { Link } from 'react-router-dom';
