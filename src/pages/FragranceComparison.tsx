@@ -39,6 +39,7 @@ type ComparisonItem = {
   brand: string;
   details?: FragranceDetails | null;
   isLoading: boolean;
+  error?: boolean;
 };
 
 const STORAGE_KEY = 'xscentrium:compare:items:v1';
