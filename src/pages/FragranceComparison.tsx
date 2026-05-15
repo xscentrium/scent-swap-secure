@@ -290,7 +290,16 @@ const FragranceComparison = () => {
               'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'
             }`}>
               {items.map((item, index) => (
-                <Card key={`${item.name}-${item.brand}`} className="relative">
+                <Card
+                  key={`${item.name}-${item.brand}`}
+                  className="relative"
+                  aria-busy={item.isLoading}
+                  aria-label={
+                    item.isLoading
+                      ? `Loading details for ${item.brand} ${item.name}`
+                      : `${item.brand} ${item.name} comparison card`
+                  }
+                >
                   <Button
                     variant="destructive"
                     size="sm"
@@ -304,7 +313,8 @@ const FragranceComparison = () => {
 
                   <CardContent className="p-4 pt-8">
                     {item.isLoading ? (
-                      <div className="space-y-4">
+                      <div className="space-y-4" role="status" aria-live="polite">
+                        <span className="sr-only">Loading {item.brand} {item.name} details…</span>
                         <Skeleton className="h-24 w-24 mx-auto rounded-lg" />
                         <Skeleton className="h-5 w-3/4 mx-auto" />
                         <Skeleton className="h-4 w-1/2 mx-auto" />
