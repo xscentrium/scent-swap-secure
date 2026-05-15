@@ -22,7 +22,11 @@ interface FragranceSearchProps {
   brandId?: string;
   required?: boolean;
   disabled?: boolean;
+  excludeItems?: { name: string; brand: string }[];
 }
+
+const normKey = (brand: string, name: string) =>
+  `${brand.trim().toLowerCase().replace(/\s+/g, ' ')}|${name.trim().toLowerCase().replace(/\s+/g, ' ')}`;
 
 export const FragranceSearch = ({
   onSelect,
