@@ -239,7 +239,7 @@ export const FragranceSearch = ({
             <div className="absolute z-[200] w-full mt-1 bg-popover border rounded-md shadow-lg max-h-72 overflow-auto">
               {nameSuggestions.map((suggestion, index) => (
                 <button
-                  key={`${suggestion.name}-${suggestion.brand}`}
+                  key={normKey(suggestion.brand, suggestion.name)}
                   type="button"
                   className={cn(
                     "w-full px-3 py-2 text-left hover:bg-accent transition-colors flex items-center gap-3",
