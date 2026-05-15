@@ -88,6 +88,45 @@ const FragranceComparison = () => {
     requestAnimationFrame(() => setAssertiveMessage(msg));
   };
 
+  // Reusable details fetcher used by initial load, add, and Retry
+  const fetchDetailsFor = async (name: string, brand: string, opts?: { announceErrors?: boolean }) => {
+    setItems((prev) =>
+      prev.map((p) => (p.name === name && p.brand === brand ? { ...p, isLoading: true, error: false } : p)),
+    );
+    try {
+      const { data, error } = await supabase.functions.invoke('fragrance-details', {
+        body: { name, brand },
+      });
+      if (error) throw error;
+      setItems((prev) =>
+        prev.map((p) =>
+          p.name === name && p.brand === brand
+            ? { ...p, details: data?.details, isLoading: false, error: false }
+            : p,
+        ),
+      );
+    } catch (err) {
+      console.warn('Failed to load fragrance details', err);
+      setItems((prev) =>
+        prev.map((p) =>
+          p.name === name && p.brand === brand ? { ...p, isLoading: false, error: true } : p,
+        ),
+      );
+      if (opts?.announceErrors !== false) {
+        announceError(`Failed to load details for ${brand} — ${name}.`);
+        toast.error('Failed to load fragrance details', {
+          description: `Could not load ${brand} — ${name}.`,
+          role: 'alert',
+          duration: 8000,
+          action: {
+            label: 'Retry',
+            onClick: () => fetchDetailsFor(name, brand),
+          },
+        });
+      }
+    }
+  };
+
   // Load persisted selection and refetch details
   useEffect(() => {
     try {
@@ -95,34 +134,12 @@ const FragranceComparison = () => {
       if (raw) {
         const saved: { name: string; brand: string }[] = JSON.parse(raw);
         if (Array.isArray(saved) && saved.length > 0) {
-          const initial = saved.slice(0, 4).map((s) => ({ name: s.name, brand: s.brand, isLoading: true }));
+          const initial = saved
+            .slice(0, 4)
+            .map((s) => ({ name: s.name, brand: s.brand, isLoading: true, error: false }));
           setItems(initial);
-          initial.forEach(async (it) => {
-            try {
-              const { data, error } = await supabase.functions.invoke('fragrance-details', {
-                body: { name: it.name, brand: it.brand },
-              });
-              if (error) throw error;
-              setItems((prev) =>
-                prev.map((p) =>
-                  p.name === it.name && p.brand === it.brand
-                    ? { ...p, details: data?.details, isLoading: false }
-                    : p,
-                ),
-              );
-            } catch (err) {
-              console.warn('Failed to load persisted fragrance details', err);
-              const errMsg = `Failed to load details for ${it.brand} — ${it.name}.`;
-              announceError(errMsg);
-              toast.error('Failed to load fragrance details', {
-                description: `Could not load ${it.brand} — ${it.name}. You can remove it or try again later.`,
-              });
-              setItems((prev) =>
-                prev.map((p) =>
-                  p.name === it.name && p.brand === it.brand ? { ...p, isLoading: false } : p,
-                ),
-              );
-            }
+          initial.forEach((it) => {
+            void fetchDetailsFor(it.name, it.brand);
           });
         }
       }
@@ -146,67 +163,57 @@ const FragranceComparison = () => {
 
   const addFragrance = async (name: string, brand: string) => {
     if (items.length >= 4) {
+      announceError('Comparison is full. Maximum of 4 fragrances.');
       toast.error('Comparison is full', {
         description: 'You can compare up to 4 fragrances at a time. Remove one to add another.',
+        role: 'alert',
       });
       return;
     }
 
     const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
-    if (items.some(item => norm(item.name) === norm(name) && norm(item.brand) === norm(brand))) {
+    if (items.some((item) => norm(item.name) === norm(name) && norm(item.brand) === norm(brand))) {
+      announceError(`${brand} ${name} is already in the comparison.`);
       toast.warning('Already in comparison', {
         description: `${brand} — ${name} is already on your compare list.`,
+        role: 'alert',
       });
       return;
     }
 
-    setItems(prev => [...prev, { name, brand, isLoading: true }]);
+    setItems((prev) => [...prev, { name, brand, isLoading: true, error: false }]);
     setSearchName('');
     setSearchBrand('');
+    announce(`Added ${brand} ${name} to comparison. Loading details.`);
 
-    try {
-      const { data, error } = await supabase.functions.invoke('fragrance-details', {
-        body: { name, brand },
-      });
-
-      if (error) throw error;
-
-      setItems(prev => prev.map(item => 
-        item.name === name && item.brand === brand 
-          ? { ...item, details: data?.details, isLoading: false }
-          : item
-      ));
-    } catch (e) {
-      announceError(`Failed to load details for ${brand} — ${name}.`);
-      toast.error('Failed to load fragrance details', {
-        description: `Could not load ${brand} — ${name}. Please try again.`,
-      });
-      setItems(prev => prev.map(item => 
-        item.name === name && item.brand === brand 
-          ? { ...item, isLoading: false }
-          : item
-      ));
-    }
+    await fetchDetailsFor(name, brand);
   };
 
   const removeFragrance = (index: number) => {
     const removed = items[index];
     if (!removed) return;
-    setItems(prev => prev.filter((_, i) => i !== index));
+    setItems((prev) => prev.filter((_, i) => i !== index));
+    announce(`Removed ${removed.brand} ${removed.name} from comparison. Undo available.`);
     toast('Fragrance removed', {
       description: `${removed.brand} — ${removed.name}`,
+      duration: 12000,
       action: {
         label: 'Undo',
         onClick: () => {
-          setItems(prev => {
+          setItems((prev) => {
             if (prev.length >= 4) return prev;
             const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
-            if (prev.some(p => norm(p.name) === norm(removed.name) && norm(p.brand) === norm(removed.brand))) {
+            if (
+              prev.some(
+                (p) => norm(p.name) === norm(removed.name) && norm(p.brand) === norm(removed.brand),
+              )
+            ) {
               return prev;
             }
             const next = [...prev];
             const insertAt = Math.min(index, next.length);
             next.splice(insertAt, 0, removed);
+            announce(`Restored ${removed.brand} ${removed.name} to comparison.`);
             return next;
           });
         },
@@ -216,9 +223,22 @@ const FragranceComparison = () => {
 
   const clearAll = () => {
     if (items.length === 0) return;
+    const cleared = items;
     setItems([]);
-    try { localStorage.removeItem(STORAGE_KEY); } catch {}
-    toast.success('Comparison cleared');
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {}
+    announce(`Cleared all ${cleared.length} ${cleared.length === 1 ? 'fragrance' : 'fragrances'} from comparison. Undo available.`);
+    toast.success('Comparison cleared', {
+      duration: 12000,
+      action: {
+        label: 'Undo',
+        onClick: () => {
+          setItems(cleared);
+          announce(`Restored ${cleared.length} ${cleared.length === 1 ? 'fragrance' : 'fragrances'}.`);
+        },
+      },
+    });
   };
 
   const renderRatingBar = (value: number, max: number = 5) => {
