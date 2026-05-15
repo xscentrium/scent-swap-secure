@@ -51,22 +51,36 @@ const FragranceComparison = () => {
   const [liveMessage, setLiveMessage] = useState('');
   const [assertiveMessage, setAssertiveMessage] = useState('');
   const hasHydrated = useRef(false);
+  const prevLoadingCountRef = useRef(0);
+  const prevItemCountRef = useRef(0);
 
-  // Announce loading/skeleton state changes to screen readers
+  // Announce loading/skeleton/ready state changes to screen readers
   useEffect(() => {
     const loadingCount = items.filter((i) => i.isLoading).length;
+    const total = items.length;
+
     if (loadingCount > 0) {
       setLiveMessage(
-        `Loading details for ${loadingCount} ${loadingCount === 1 ? 'fragrance' : 'fragrances'}. Placeholder cards shown.`,
+        `Loading details for ${loadingCount} of ${total} ${total === 1 ? 'fragrance' : 'fragrances'}. Placeholder cards shown.`,
       );
-    } else if (items.length > 0) {
+    } else if (total > 0 && prevLoadingCountRef.current > 0) {
+      // Transitioned from loading -> all loaded
       setLiveMessage(
-        `Comparison ready with ${items.length} ${items.length === 1 ? 'fragrance' : 'fragrances'}.`,
+        `Comparison ready. All ${total} ${total === 1 ? 'fragrance is' : 'fragrances are'} loaded.`,
       );
-    } else {
-      setLiveMessage('');
+    } else if (total === 0 && prevItemCountRef.current > 0) {
+      setLiveMessage('Comparison is empty.');
     }
+
+    prevLoadingCountRef.current = loadingCount;
+    prevItemCountRef.current = total;
   }, [items]);
+
+  // Polite, throttled announcer for actions (add/remove/undo/clear)
+  const announce = (msg: string) => {
+    setLiveMessage('');
+    requestAnimationFrame(() => setLiveMessage(msg));
+  };
 
   const announceError = (msg: string) => {
     setAssertiveMessage('');
