@@ -187,11 +187,19 @@ const FragranceComparison = () => {
             </Link>
           </Button>
 
-          <div className="mb-8">
-            <h1 className="text-3xl font-serif font-bold mb-2">Compare Fragrances</h1>
-            <p className="text-muted-foreground">
-              Compare up to 4 fragrances side by side to find your perfect scent
-            </p>
+          <div className="mb-8 flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-serif font-bold mb-2">Compare Fragrances</h1>
+              <p className="text-muted-foreground">
+                Compare up to 4 fragrances side by side to find your perfect scent
+              </p>
+            </div>
+            {items.length > 0 && (
+              <Button variant="outline" size="sm" onClick={clearAll} className="gap-1 shrink-0">
+                <X className="w-4 h-4" />
+                Clear all
+              </Button>
+            )}
           </div>
 
           {/* Add Fragrance */}
