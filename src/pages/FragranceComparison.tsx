@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, X, Plus, Star, Clock, Wind, Sun, Moon, Snowflake, Leaf, Flower2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 type FragranceDetails = {
   name: string;
@@ -47,10 +48,17 @@ const FragranceComparison = () => {
 
   const addFragrance = async (name: string, brand: string) => {
     if (items.length >= 4) {
+      toast.error('Comparison is full', {
+        description: 'You can compare up to 4 fragrances at a time. Remove one to add another.',
+      });
       return;
     }
-    
-    if (items.some(item => item.name === name && item.brand === brand)) {
+
+    const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
+    if (items.some(item => norm(item.name) === norm(name) && norm(item.brand) === norm(brand))) {
+      toast.warning('Already in comparison', {
+        description: `${brand} — ${name} is already on your compare list.`,
+      });
       return;
     }
 
