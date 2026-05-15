@@ -234,6 +234,13 @@ const FragranceComparison = () => {
       <SEO title="Compare Fragrances Side-by-Side | Xscentrium" description="Compare up to four fragrances side-by-side: notes, accords, longevity, sillage and price." path="/compare" />
       <Navigation />
       <main className="pt-20 pb-12">
+        {/* Screen-reader-only live regions for state changes */}
+        <div className="sr-only" aria-live="polite" aria-atomic="true" role="status">
+          {liveMessage}
+        </div>
+        <div className="sr-only" aria-live="assertive" aria-atomic="true" role="alert">
+          {assertiveMessage}
+        </div>
         <div className="container mx-auto px-4 max-w-7xl">
           <Button variant="ghost" className="mb-4" asChild>
             <Link to="/marketplace">
