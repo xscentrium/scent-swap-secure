@@ -142,6 +142,7 @@ const FragranceComparison = () => {
                   onNameChange={setSearchName}
                   onBrandChange={setSearchBrand}
                   onSelect={(f) => addFragrance(f.name, f.brand)}
+                  excludeItems={items.map((i) => ({ name: i.name, brand: i.brand }))}
                   nameId="compare-name"
                   brandId="compare-brand"
                 />

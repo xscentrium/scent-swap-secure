@@ -65,12 +65,17 @@ export const clearFragranceSearchCache = () => {
   inflight.clear();
 };
 
+const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
+
 export const mergeFragranceResults = <T extends { id?: string; brand: string; name: string }>(
   ...groups: T[][]
 ) => {
   const seen = new Set<string>();
   return groups.flat().filter((item) => {
-    const key = item.id || `${item.brand.toLowerCase()}|${item.name.toLowerCase()}`;
+    if (!item || !item.brand || !item.name) return false;
+    // Always dedupe by normalized brand|name so the same fragrance from
+    // different sources (local DB vs live API) collapses into one entry.
+    const key = `${norm(item.brand)}|${norm(item.name)}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;

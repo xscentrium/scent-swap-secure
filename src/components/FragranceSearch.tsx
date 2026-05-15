@@ -22,7 +22,11 @@ interface FragranceSearchProps {
   brandId?: string;
   required?: boolean;
   disabled?: boolean;
+  excludeItems?: { name: string; brand: string }[];
 }
+
+const normKey = (brand: string, name: string) =>
+  `${brand.trim().toLowerCase().replace(/\s+/g, ' ')}|${name.trim().toLowerCase().replace(/\s+/g, ' ')}`;
 
 export const FragranceSearch = ({
   onSelect,
@@ -34,7 +38,18 @@ export const FragranceSearch = ({
   brandId = 'brand',
   required = false,
   disabled = false,
+  excludeItems = [],
 }: FragranceSearchProps) => {
+  const excludeSet = new Set(excludeItems.map((i) => normKey(i.brand, i.name)));
+  const dedupe = (arr: FragranceSuggestion[]) => {
+    const seen = new Set<string>();
+    return arr.filter((s) => {
+      const k = normKey(s.brand, s.name);
+      if (seen.has(k) || excludeSet.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+  };
   const [nameSuggestions, setNameSuggestions] = useState<FragranceSuggestion[]>([]);
   const [brandSuggestions, setBrandSuggestions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -83,7 +98,7 @@ export const FragranceSearch = ({
       const remote = live
         .filter((d) => !brandValue.trim() || d.brand.toLowerCase().includes(brandValue.trim().toLowerCase()))
         .map((d) => ({ name: d.name, brand: d.brand, imageUrl: d.image_url ?? undefined }));
-      setNameSuggestions(mergeFragranceResults(local, remote).slice(0, 30));
+      setNameSuggestions(dedupe(mergeFragranceResults(local, remote)).slice(0, 30));
       setShowName(true);
       setActiveIndex(-1);
     } catch (e) {
@@ -114,7 +129,7 @@ export const FragranceSearch = ({
       const remote = live
         .filter((d) => d.brand.toLowerCase().includes(safeBrand.toLowerCase()))
         .map((d) => ({ name: d.name, brand: d.brand, imageUrl: d.image_url ?? undefined }));
-      setNameSuggestions(mergeFragranceResults(local, remote));
+      setNameSuggestions(dedupe(mergeFragranceResults(local, remote)));
       setNextPage(INITIAL_PAGES);
       setHasMore(live.length >= INITIAL_PAGES * PAGE_SIZE);
       setShowName(true);
@@ -135,7 +150,7 @@ export const FragranceSearch = ({
       const filtered = more
         .filter((d) => d.brand.toLowerCase().includes(safeBrand.toLowerCase()))
         .map((d) => ({ name: d.name, brand: d.brand, imageUrl: d.image_url ?? undefined }));
-      setNameSuggestions((prev) => mergeFragranceResults(prev, filtered));
+      setNameSuggestions((prev) => dedupe(mergeFragranceResults(prev, filtered)));
       setNextPage((p) => p + 1);
       setHasMore(more.length >= PAGE_SIZE);
     } finally {
@@ -224,7 +239,7 @@ export const FragranceSearch = ({
             <div className="absolute z-[200] w-full mt-1 bg-popover border rounded-md shadow-lg max-h-72 overflow-auto">
               {nameSuggestions.map((suggestion, index) => (
                 <button
-                  key={`${suggestion.name}-${suggestion.brand}`}
+                  key={normKey(suggestion.brand, suggestion.name)}
                   type="button"
                   className={cn(
                     "w-full px-3 py-2 text-left hover:bg-accent transition-colors flex items-center gap-3",
