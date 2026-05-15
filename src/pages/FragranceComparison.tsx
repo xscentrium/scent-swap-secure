@@ -326,7 +326,6 @@ const FragranceComparison = () => {
                       </div>
                     ) : item.details ? (
                       <div className="space-y-4">
-                        {/* Image & Name */}
                         <div className="text-center">
                           <div className="w-24 h-24 mx-auto rounded-lg overflow-hidden bg-muted mb-3">
                             <img
