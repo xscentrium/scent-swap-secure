@@ -129,7 +129,7 @@ export const FragranceSearch = ({
       const remote = live
         .filter((d) => d.brand.toLowerCase().includes(safeBrand.toLowerCase()))
         .map((d) => ({ name: d.name, brand: d.brand, imageUrl: d.image_url ?? undefined }));
-      setNameSuggestions(mergeFragranceResults(local, remote));
+      setNameSuggestions(dedupe(mergeFragranceResults(local, remote)));
       setNextPage(INITIAL_PAGES);
       setHasMore(live.length >= INITIAL_PAGES * PAGE_SIZE);
       setShowName(true);
