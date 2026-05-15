@@ -97,6 +97,8 @@ const FragranceComparison = () => {
               );
             } catch (err) {
               console.warn('Failed to load persisted fragrance details', err);
+              const errMsg = `Failed to load details for ${it.brand} — ${it.name}.`;
+              announceError(errMsg);
               toast.error('Failed to load fragrance details', {
                 description: `Could not load ${it.brand} — ${it.name}. You can remove it or try again later.`,
               });
