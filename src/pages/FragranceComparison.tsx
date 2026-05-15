@@ -222,12 +222,14 @@ const FragranceComparison = () => {
               {items.map((item, index) => (
                 <Card key={`${item.name}-${item.brand}`} className="relative">
                   <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-2 right-2 h-6 w-6 z-10"
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 right-2 z-10 h-7 px-2 gap-1"
                     onClick={() => removeFragrance(index)}
+                    aria-label={`Remove ${item.brand} ${item.name} from comparison`}
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-3.5 h-3.5" />
+                    Remove
                   </Button>
 
                   <CardContent className="p-4 pt-8">
