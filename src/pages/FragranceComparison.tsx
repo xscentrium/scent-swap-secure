@@ -47,7 +47,31 @@ const FragranceComparison = () => {
   const [items, setItems] = useState<ComparisonItem[]>([]);
   const [searchName, setSearchName] = useState('');
   const [searchBrand, setSearchBrand] = useState('');
+  const [liveMessage, setLiveMessage] = useState('');
+  const [assertiveMessage, setAssertiveMessage] = useState('');
   const hasHydrated = useRef(false);
+
+  // Announce loading/skeleton state changes to screen readers
+  useEffect(() => {
+    const loadingCount = items.filter((i) => i.isLoading).length;
+    if (loadingCount > 0) {
+      setLiveMessage(
+        `Loading details for ${loadingCount} ${loadingCount === 1 ? 'fragrance' : 'fragrances'}. Placeholder cards shown.`,
+      );
+    } else if (items.length > 0) {
+      setLiveMessage(
+        `Comparison ready with ${items.length} ${items.length === 1 ? 'fragrance' : 'fragrances'}.`,
+      );
+    } else {
+      setLiveMessage('');
+    }
+  }, [items]);
+
+  const announceError = (msg: string) => {
+    setAssertiveMessage('');
+    // force re-announce even for repeated messages
+    requestAnimationFrame(() => setAssertiveMessage(msg));
+  };
 
   // Load persisted selection and refetch details
   useEffect(() => {
