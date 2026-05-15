@@ -145,7 +145,28 @@ const FragranceComparison = () => {
   };
 
   const removeFragrance = (index: number) => {
+    const removed = items[index];
+    if (!removed) return;
     setItems(prev => prev.filter((_, i) => i !== index));
+    toast('Fragrance removed', {
+      description: `${removed.brand} — ${removed.name}`,
+      action: {
+        label: 'Undo',
+        onClick: () => {
+          setItems(prev => {
+            if (prev.length >= 4) return prev;
+            const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
+            if (prev.some(p => norm(p.name) === norm(removed.name) && norm(p.brand) === norm(removed.brand))) {
+              return prev;
+            }
+            const next = [...prev];
+            const insertAt = Math.min(index, next.length);
+            next.splice(insertAt, 0, removed);
+            return next;
+          });
+        },
+      },
+    });
   };
 
   const clearAll = () => {
