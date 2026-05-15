@@ -71,7 +71,11 @@ const FragranceComparison = () => {
                     : p,
                 ),
               );
-            } catch {
+            } catch (err) {
+              console.warn('Failed to load persisted fragrance details', err);
+              toast.error('Failed to load fragrance details', {
+                description: `Could not load ${it.brand} — ${it.name}. You can remove it or try again later.`,
+              });
               setItems((prev) =>
                 prev.map((p) =>
                   p.name === it.name && p.brand === it.brand ? { ...p, isLoading: false } : p,
