@@ -71,7 +71,11 @@ const FragranceComparison = () => {
                     : p,
                 ),
               );
-            } catch {
+            } catch (err) {
+              console.warn('Failed to load persisted fragrance details', err);
+              toast.error('Failed to load fragrance details', {
+                description: `Could not load ${it.brand} — ${it.name}. You can remove it or try again later.`,
+              });
               setItems((prev) =>
                 prev.map((p) =>
                   p.name === it.name && p.brand === it.brand ? { ...p, isLoading: false } : p,
@@ -141,7 +145,28 @@ const FragranceComparison = () => {
   };
 
   const removeFragrance = (index: number) => {
+    const removed = items[index];
+    if (!removed) return;
     setItems(prev => prev.filter((_, i) => i !== index));
+    toast('Fragrance removed', {
+      description: `${removed.brand} — ${removed.name}`,
+      action: {
+        label: 'Undo',
+        onClick: () => {
+          setItems(prev => {
+            if (prev.length >= 4) return prev;
+            const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
+            if (prev.some(p => norm(p.name) === norm(removed.name) && norm(p.brand) === norm(removed.brand))) {
+              return prev;
+            }
+            const next = [...prev];
+            const insertAt = Math.min(index, next.length);
+            next.splice(insertAt, 0, removed);
+            return next;
+          });
+        },
+      },
+    });
   };
 
   const clearAll = () => {
