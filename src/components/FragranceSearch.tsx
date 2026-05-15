@@ -184,7 +184,7 @@ export const FragranceSearch = ({
       const filtered = more
         .filter((d) => d.brand.toLowerCase().includes(safeBrand.toLowerCase()))
         .map((d) => ({ name: d.name, brand: d.brand, imageUrl: d.image_url ?? undefined }));
-      setNameSuggestions((prev) => dedupe(mergeFragranceResults(prev, filtered)));
+      setNameSuggestions((prev) => sortByRelevance(dedupe(mergeFragranceResults(prev, filtered)), activeBrand, nameValue));
       setNextPage((p) => p + 1);
       setHasMore(more.length >= PAGE_SIZE);
     } finally {
