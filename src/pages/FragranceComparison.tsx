@@ -477,7 +477,23 @@ const FragranceComparison = () => {
                       <div className="text-center py-8">
                         <p className="font-medium">{item.name}</p>
                         <p className="text-sm text-muted-foreground">{item.brand}</p>
-                        <p className="text-xs text-muted-foreground mt-2">Details unavailable</p>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {item.error ? 'Failed to load details.' : 'Details unavailable'}
+                        </p>
+                        {item.error && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-3"
+                            onClick={() => {
+                              announce(`Retrying details for ${item.brand} ${item.name}.`);
+                              void fetchDetailsFor(item.name, item.brand);
+                            }}
+                            aria-label={`Retry loading details for ${item.brand} ${item.name}`}
+                          >
+                            Retry
+                          </Button>
+                        )}
                       </div>
                     )}
                   </CardContent>
