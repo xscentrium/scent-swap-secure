@@ -38,7 +38,18 @@ export const FragranceSearch = ({
   brandId = 'brand',
   required = false,
   disabled = false,
+  excludeItems = [],
 }: FragranceSearchProps) => {
+  const excludeSet = new Set(excludeItems.map((i) => normKey(i.brand, i.name)));
+  const dedupe = (arr: FragranceSuggestion[]) => {
+    const seen = new Set<string>();
+    return arr.filter((s) => {
+      const k = normKey(s.brand, s.name);
+      if (seen.has(k) || excludeSet.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+  };
   const [nameSuggestions, setNameSuggestions] = useState<FragranceSuggestion[]>([]);
   const [brandSuggestions, setBrandSuggestions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
