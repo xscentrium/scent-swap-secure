@@ -47,7 +47,31 @@ const FragranceComparison = () => {
   const [items, setItems] = useState<ComparisonItem[]>([]);
   const [searchName, setSearchName] = useState('');
   const [searchBrand, setSearchBrand] = useState('');
+  const [liveMessage, setLiveMessage] = useState('');
+  const [assertiveMessage, setAssertiveMessage] = useState('');
   const hasHydrated = useRef(false);
+
+  // Announce loading/skeleton state changes to screen readers
+  useEffect(() => {
+    const loadingCount = items.filter((i) => i.isLoading).length;
+    if (loadingCount > 0) {
+      setLiveMessage(
+        `Loading details for ${loadingCount} ${loadingCount === 1 ? 'fragrance' : 'fragrances'}. Placeholder cards shown.`,
+      );
+    } else if (items.length > 0) {
+      setLiveMessage(
+        `Comparison ready with ${items.length} ${items.length === 1 ? 'fragrance' : 'fragrances'}.`,
+      );
+    } else {
+      setLiveMessage('');
+    }
+  }, [items]);
+
+  const announceError = (msg: string) => {
+    setAssertiveMessage('');
+    // force re-announce even for repeated messages
+    requestAnimationFrame(() => setAssertiveMessage(msg));
+  };
 
   // Load persisted selection and refetch details
   useEffect(() => {
@@ -73,6 +97,8 @@ const FragranceComparison = () => {
               );
             } catch (err) {
               console.warn('Failed to load persisted fragrance details', err);
+              const errMsg = `Failed to load details for ${it.brand} — ${it.name}.`;
+              announceError(errMsg);
               toast.error('Failed to load fragrance details', {
                 description: `Could not load ${it.brand} — ${it.name}. You can remove it or try again later.`,
               });
@@ -136,6 +162,10 @@ const FragranceComparison = () => {
           : item
       ));
     } catch (e) {
+      announceError(`Failed to load details for ${brand} — ${name}.`);
+      toast.error('Failed to load fragrance details', {
+        description: `Could not load ${brand} — ${name}. Please try again.`,
+      });
       setItems(prev => prev.map(item => 
         item.name === name && item.brand === brand 
           ? { ...item, isLoading: false }
@@ -204,6 +234,13 @@ const FragranceComparison = () => {
       <SEO title="Compare Fragrances Side-by-Side | Xscentrium" description="Compare up to four fragrances side-by-side: notes, accords, longevity, sillage and price." path="/compare" />
       <Navigation />
       <main className="pt-20 pb-12">
+        {/* Screen-reader-only live regions for state changes */}
+        <div className="sr-only" aria-live="polite" aria-atomic="true" role="status">
+          {liveMessage}
+        </div>
+        <div className="sr-only" aria-live="assertive" aria-atomic="true" role="alert">
+          {assertiveMessage}
+        </div>
         <div className="container mx-auto px-4 max-w-7xl">
           <Button variant="ghost" className="mb-4" asChild>
             <Link to="/marketplace">
@@ -260,7 +297,16 @@ const FragranceComparison = () => {
               'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'
             }`}>
               {items.map((item, index) => (
-                <Card key={`${item.name}-${item.brand}`} className="relative">
+                <Card
+                  key={`${item.name}-${item.brand}`}
+                  className="relative"
+                  aria-busy={item.isLoading}
+                  aria-label={
+                    item.isLoading
+                      ? `Loading details for ${item.brand} ${item.name}`
+                      : `${item.brand} ${item.name} comparison card`
+                  }
+                >
                   <Button
                     variant="destructive"
                     size="sm"
@@ -274,7 +320,8 @@ const FragranceComparison = () => {
 
                   <CardContent className="p-4 pt-8">
                     {item.isLoading ? (
-                      <div className="space-y-4">
+                      <div className="space-y-4" role="status" aria-live="polite">
+                        <span className="sr-only">Loading {item.brand} {item.name} details…</span>
                         <Skeleton className="h-24 w-24 mx-auto rounded-lg" />
                         <Skeleton className="h-5 w-3/4 mx-auto" />
                         <Skeleton className="h-4 w-1/2 mx-auto" />
@@ -286,7 +333,6 @@ const FragranceComparison = () => {
                       </div>
                     ) : item.details ? (
                       <div className="space-y-4">
-                        {/* Image & Name */}
                         <div className="text-center">
                           <div className="w-24 h-24 mx-auto rounded-lg overflow-hidden bg-muted mb-3">
                             <img
