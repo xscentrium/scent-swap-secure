@@ -132,7 +132,7 @@ export const FragranceSearch = ({
       const remote = live
         .filter((d) => !brandValue.trim() || d.brand.toLowerCase().includes(brandValue.trim().toLowerCase()))
         .map((d) => ({ name: d.name, brand: d.brand, imageUrl: d.image_url ?? undefined }));
-      setNameSuggestions(dedupe(mergeFragranceResults(local, remote)).slice(0, 30));
+      setNameSuggestions(sortByRelevance(dedupe(mergeFragranceResults(local, remote)), brandValue, query).slice(0, 30));
       setShowName(true);
       setActiveIndex(-1);
     } catch (e) {
