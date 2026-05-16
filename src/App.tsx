@@ -13,6 +13,7 @@ import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { ThemeProvider } from "next-themes";
 import { AnimatePresence } from "framer-motion";
 import { CookieConsent } from "@/components/CookieConsent";
+import { useNativeApp } from "@/hooks/useNativeApp";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
@@ -124,7 +125,9 @@ const AnimatedRoutes = () => {
   );
 };
 
-const App = () => (
+const App = () => {
+  useNativeApp();
+  return (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
       <ErrorBoundary>
@@ -143,6 +146,7 @@ const App = () => (
       </ErrorBoundary>
     </ThemeProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;
